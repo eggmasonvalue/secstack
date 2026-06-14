@@ -1,0 +1,6 @@
+# Required
+edgartools>=5        # SEC EDGAR client (requires Python >= 3.10)
+pandas>=2            # dataframes / CSV export
+
+# Optional
+truststore>=0.9      # system-trust TLS for inspecting corporate proxies

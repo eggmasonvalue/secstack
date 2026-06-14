@@ -1,0 +1,4 @@
+# Python environment / artifacts
+.venv/
+__pycache__/
+*.pyc

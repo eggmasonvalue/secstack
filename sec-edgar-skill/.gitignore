@@ -1,0 +1,7 @@
+# Cached SEC downloads (regenerated on demand)
+sec-cache/
+
+# Python environment / artifacts
+.venv/
+__pycache__/
+*.pyc

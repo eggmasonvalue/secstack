@@ -1,0 +1,11 @@
+# Python environments / artifacts
+.venv/
+__pycache__/
+*.pyc
+
+# SEC EDGAR download cache (regenerated on demand)
+sec-cache/
+
+# OS cruft
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+# Required
+yfinance>=0.2       # market data (Yahoo Finance)
+pandas>=2           # dataframes / return math
+
+# Optional
+tabulate>=0.9       # pretty peer tables in fetch_market_data.py (pandas .to_markdown)

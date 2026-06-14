@@ -1,0 +1,7 @@
+# Python environment / artifacts
+.venv/
+__pycache__/
+*.pyc
+
+# SEC cache (regenerated on demand by the data layer when the stack runs here)
+sec-cache/
