@@ -73,15 +73,29 @@ Work through these phases in order, but let the **archetype** decide where the w
 a hypergrowth name lives in phases 3 and 6; a cyclical in 4; a special-situation in 5 and 7.
 Do not pad a phase just because it exists.
 
-1. **Orient and scope — filings first.** Run `sec-edgar-skill`'s `scripts/orient.py` before
-   anything else: it shows what the company *actually files* and how that has changed, so you
-   never assume a form set (a foreign private issuer files 20-F/6-K, not 10-K/10-Q — and
-   reporting status can change over time, so read the recent history, not your prior). Then
-   read the latest **annual report** (10-K, or 20-F for an FPI) — its business section and
-   MD&A — and skim the most recent **interim/current** reports (10-Q/8-K, or 6-K for an FPI)
-   to learn, in the company's own words, *how it makes money.* You cannot value a business you
-   cannot explain in one plain sentence. Pull the market snapshot (price, market cap, **the
-   peer set**, sector) from `market-scout` to frame size and comps — orientation, not evidence.
+1. **Orient and scope — filings first, always, before any web search.** Run
+   `sec-edgar-skill`'s `scripts/orient.py` as the **very first tool call** — before web
+   search, before `market-scout`, before anything else. This is non-negotiable even when the
+   user describes breaking news ("just reported," "a few hours ago," "announced today").
+   orient.py takes seconds and immediately shows you what was filed today; a web search for
+   the same information is slower, less authoritative, and often wrong about the company.
+
+   **Breaking-news pattern:** if the user mentions a same-day event, orient.py will show the
+   8-K filed today. Immediately follow with:
+   ```bash
+   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today>
+   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment list
+   # then fetch Exhibit 99.1 (the press release):
+   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment "ex-99.1"
+   ```
+   The press-release exhibit is the primary source; do not web-search for what it contains.
+
+   After orient, read the latest **annual report** (10-K, or 20-F for an FPI) — its business
+   section and MD&A — and skim the most recent **interim/current** reports (10-Q/8-K, or 6-K
+   for an FPI) to learn, in the company's own words, *how it makes money.* You cannot value a
+   business you cannot explain in one plain sentence. Pull the market snapshot (price, market
+   cap, **the peer set**, sector) from `market-scout` to frame size and comps — orientation,
+   not evidence.
 
 2. **Classify the archetype.** Almost every company is dominated by one shape, and the
    shape decides which DD emphases, metrics, disqualifiers, and valuation method carry the
@@ -171,6 +185,11 @@ real-time market share, pricing dynamics, and channel or customer checks. When y
 **attribute and date every web claim**, prefer primary sources (company IR, regulators,
 trade bodies) over aggregators, and never let a web assertion silently outrank a filing.
 Mark web-sourced claims distinctly in the memo so the reader can weight them.
+
+**Do not fire any web search until orient.py has returned and you have read at least one
+filing section.** This applies even for breaking news: orient.py will surface the 8-K
+filed today, and the 8-K's Exhibit 99.1 is the press release — the primary source that
+any web article is merely summarising. Fetch the exhibit; don't search for the summary.
 
 **When a tool errors, recover — don't escape to the web.** A failed `sec-edgar-skill` call —
 a fumbled `.to_context()`, a wrong item code, a form that doesn't exist for this issuer — is a

@@ -74,7 +74,12 @@ the exact lines you need into context. Four phases:
    prints the company's `.to_context()` summary, surveys the **mix of forms it has actually
    filed** (with date ranges), and lists the most recent filings — the cheapest way to see what
    a company files *now* and how that has changed, so you fetch the right forms instead of
-   assuming a form set. This is the non-negotiable first step. (For finer control, `.to_context()`
+   assuming a form set. This is the **non-negotiable first step — run it before any web
+   search, even for breaking news.** When the user says "just reported" or "a few hours ago,"
+   orient.py will show the 8-K filed today immediately; then fetch it with
+   `fetch_filing.py --form 8-K --date <today> --attachment list` to get the press-release
+   exhibit (Exhibit 99.1). The filing is always faster and more authoritative than a web
+   search for what the company itself disclosed. (For finer control, `.to_context()`
    on a `Company`, filing collection, or `XBRL` object gives the same preview inline — see
    `guide_core.md`.)
 2. **Download to the cache as Markdown.** Use the scripts to write filings to disk as
@@ -133,6 +138,9 @@ python scripts/fetch_filing.py --ticker AAPL --form 10-K --year 2023
 python scripts/fetch_filing.py --ticker AAPL --form 10-K --year 2023 --section "Item 1A"  # or: --section list
 python scripts/fetch_filing.py --ticker WIX  --form 6-K  --attachment "ex-99.1"   # or: list | all | <index>
 
+# Target a filing by date (e.g. an 8-K filed today) instead of just --year:
+python scripts/fetch_filing.py --ticker AAPL --form 8-K --date 2026-06-15
+
 # Many filings across a year range (add --attachments to capture e.g. 6-K exhibits)
 python scripts/fetch_filings.py --ticker AAPL --form 10-Q --start-year 2022 --end-year 2024
 
@@ -162,3 +170,9 @@ A tool error is almost always a fixable usage detail, not a dead end. When a scr
 fails, **recover here** — re-run `scripts/orient.py`, query `.docs`, or read the relevant
 guide — rather than abandoning EDGAR for web search. The filings are the authoritative,
 auditable source; don't let a transient error push the work onto unverifiable web results.
+
+**Amendment vs. original filing.** `fetch_filing.py` always skips amended forms
+(10-K/A, 10-Q/A, etc.) and picks the most recent *original* filing. Amendments typically
+contain only the amended items (e.g. Part III), not the full filing, so silently picking
+one would lose most of the content. If you specifically need an amendment's items, fetch
+it by accession number using inline Python as shown in `guide_financials.md`.

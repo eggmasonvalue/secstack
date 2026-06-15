@@ -22,6 +22,9 @@ def main():
                    help="Form type, e.g. 10-K, 10-Q, 8-K, 20-F, 40-F, 6-K, DEF 14A.")
     p.add_argument("--year", type=int, help="Calendar year of the filing.")
     p.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar quarter.")
+    p.add_argument("--date", help="Target a specific filing date (YYYY-MM-DD). "
+                   "Picks the filing whose filing_date matches exactly, or the "
+                   "most recent filing on or before that date.")
     p.add_argument("--section",
                    help='Extract one item by its SEC code, e.g. "Item 1A" '
                         '(10-K/8-K/20-F) or "Part II, Item 1A" (10-Q). Pass "list" '
@@ -37,7 +40,12 @@ def main():
     c.resolve_identity(args.identity)
     company = c.resolve_company(args.ticker)
 
-    kwargs = {"form": args.form}
+    # amendments=False: the edgartools API natively excludes amended forms
+    # (10-K/A, 10-Q/A, etc.) when this is set. Amendments typically contain
+    # only the amended items (e.g. Part III), not the full filing, so picking
+    # one silently instead of the original loses most of the content. This
+    # matches guide_financials.md's amendments=False recommendation.
+    kwargs = {"form": args.form, "amendments": False}
     if args.year:
         kwargs["year"] = args.year
     if args.quarter:
@@ -53,7 +61,29 @@ def main():
         sys.exit(1)
 
     filings.sort(key=lambda f: f.filing_date, reverse=True)
-    filing = filings[0]
+
+    # --date: pick the filing whose date matches exactly, or the most recent
+    # filing on or before the given date.  Useful for targeting a specific
+    # 8-K filed today without knowing its accession number.
+    if args.date:
+        from datetime import date as _date
+        try:
+            target = _date.fromisoformat(args.date)
+        except ValueError:
+            c.log(f"ERROR: --date must be YYYY-MM-DD, got '{args.date}'.")
+            sys.exit(1)
+        candidates = [f for f in filings
+                      if str(getattr(f, "filing_date", "")) <= args.date]
+        if not candidates:
+            c.log(f"ERROR: no {args.form} filings for {args.ticker} "
+                  f"on or before {args.date}.")
+            sys.exit(1)
+        # candidates is already sorted newest-first; pick the closest one.
+        filing = candidates[0]
+        c.log(f"--date {args.date}: selected filing dated {filing.filing_date}.")
+    else:
+        filing = filings[0]
+
     c.log(f"Resolved {filing.form} filed {filing.filing_date} "
           f"(accession {filing.accession_no}).")
 
