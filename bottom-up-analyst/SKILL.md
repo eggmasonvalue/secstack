@@ -25,9 +25,10 @@ deciding what the numbers mean.
 
 A bottom-up stack has three jobs, and they are deliberately kept separate:
 
-- **The hands** — `sec-edgar-skill` (SEC filings) and `market-scout` (price, returns, and
-  the peer set): unopinionated data/tools layers. They fetch and extract token-efficiently;
-  they *never* decide what matters.
+- **The hands** — `sec-edgar-skill` (SEC filings and 13F institutional holder data) and
+  `market-scout` (price, returns, the peer set, and earnings call transcripts):
+  unopinionated data/tools layers. They fetch and extract token-efficiently; they *never*
+  decide what matters.
 - **The analyst — this skill.** It is both **the brain and the conductor.** It decides
   *what* to pull and *why*, reasons over it, values the business, stress-tests the
   conclusion, and writes the memo. The agent that chooses the evidence and the agent that
@@ -97,6 +98,19 @@ Do not pad a phase just because it exists.
    cap, **the peer set**, sector) from `market-scout` to frame size and comps — orientation,
    not evidence.
 
+   **Pull the latest earnings call transcript.** After the filing read and market snapshot,
+   fetch the most recent earnings call transcript from `market-scout`:
+   ```bash
+   python scripts/fetch_transcripts.py --ticker <T> --latest 1
+   ```
+   Then read it (or grep it). The transcript is a **primary source** — management's own
+   words on the quarter, forward guidance, strategic priorities, and tone — and it surfaces
+   qualitative signals that filings alone do not convey: how management frames the
+   competitive landscape, what questions analysts are pressing on, where the CEO hedges or
+   deflects. The Q&A section is especially valuable: analyst questions often target exactly
+   the weak points you need to stress-test in phase 6. Do not substitute a web summary of
+   the call for the transcript itself — the summary loses the nuance that matters.
+
 2. **Classify the archetype.** Almost every company is dominated by one shape, and the
    shape decides which DD emphases, metrics, disqualifiers, and valuation method carry the
    weight. Pick one primary archetype (a secondary is fine) and **load that playbook** from
@@ -124,9 +138,16 @@ Do not pad a phase just because it exists.
    *relative* competitive advantage. **SEC filings are the default and the grounding**: the
    10-K's competition and risk-factor sections, and crucially the **peers' own filings**
    (their 8-Ks, 10-Qs, 10-Ks) for management commentary, pricing, and sentiment you can
-   cite. Use **web research only for what filings genuinely cannot give you** — relative
-   positioning, market-share dynamics, channel/customer checks — and label every web claim
-   as such. See `references/guide_competitive.md`.
+   cite. **Peers' earnings call transcripts** are equally valuable primary sources — a
+   competitor's CEO discussing pricing pressure, capacity additions, or market-share wins
+   on their own call is citable competitive intelligence:
+   ```bash
+   python scripts/fetch_transcripts.py --ticker <PEER> --latest 1
+   ```
+   Then grep the cached transcript for the subject company's name, the product category,
+   or pricing language. Use **web research only for what filings and transcripts genuinely
+   cannot give you** — relative positioning, market-share dynamics, channel/customer
+   checks — and label every web claim as such. See `references/guide_competitive.md`.
 
    **Quantify impact, don’t just list forces.** The most common failure in competitive
    analysis is cataloguing without sizing. For every moat mechanism, competitive threat,
@@ -162,6 +183,28 @@ Do not pad a phase just because it exists.
    gate (above). Most candidates should die here or get marked down — that is the system
    working, not failing. Re-tag every surviving claim as verified vs. assumed.
 
+   **Check the institutional ownership picture.** Before finalising the risk assessment,
+   pull the 13F holder data from `sec-edgar-skill`:
+   ```bash
+   python scripts/fetch_13f_holders.py --ticker <T> --top 15
+   python scripts/fetch_13f_holders.py --ticker <T> --history
+   ```
+   This reveals who is positioned and how ownership has shifted — signals that feed
+   directly into the risk and catalyst assessment:
+   - **Concentration risk:** if 3–5 holders own >30% of the float, a single redemption
+     cycle can crater the stock independent of fundamentals.
+   - **Smart-money conviction:** are high-conviction value managers (Royce, Needham,
+     Baupost) building or trimming? A rising share count from a known deep-diver is a
+     confirming signal; a quiet exit is a warning.
+   - **Activist presence:** a 13D/13G filer showing up in the holder list may signal an
+     upcoming catalyst (board fight, strategic review, buyback demand).
+   - **Passive vs. active mix:** a stock dominated by index funds (Vanguard, BlackRock,
+     State Street) has different liquidity and governance dynamics than one held by
+     concentrated active managers.
+   - **Ownership trend vs. price:** rising institutional ownership into a falling price
+     suggests accumulation; the reverse suggests distribution. Cross-reference with the
+     `--history` output.
+
 7. **Reach a verdict at the conviction the work supports.** State the call — **Long /
    Short / Pass / Watch** — with an honest conviction level, the **variant perception**
    (what you believe that the market doesn't, and why you're right), the catalysts or
@@ -193,19 +236,27 @@ each is loaded lazily so you carry just the lens you need.
 You are the one deciding what the hands fetch. Be deliberate and frugal:
 
 - **Reuse the cache.** `sec-edgar-skill` writes filings to `./sec-cache/{TICKER}/` with
-  deterministic, accession-keyed names. Before fetching, glob the cache; re-use what's there
-  rather than re-hitting the SEC.
+  deterministic, accession-keyed names. `market-scout` caches transcripts to
+  `./transcript-cache/{TICKER}/transcripts/`. Before fetching, glob the cache; re-use
+  what's there rather than re-hitting the source.
 - **Pull by section, not whole filings.** Use item codes (10-K Item 1/1A/7/8) and
   heading maps; grep the cached Markdown and read only the lines that matter. A 10-K can
   exceed 100k words — loading one whole buries the signal.
+- **Transcripts are greppable too.** Once cached, grep a transcript for "guidance",
+  "margin", a competitor's name, or a specific metric — you don't need to read the whole
+  45-minute call to find the passage that matters.
+- **13F holder data is live, not cached.** `fetch_13f_holders.py` prints to stdout and
+  does not write to disk (ownership data is time-sensitive). Run it when you need it;
+  it's one fast HTTP call.
 - **Spend tokens where the archetype says the value hides.** Don't fetch a proxy's
   compensation tables for a hypergrowth TAM question, or a deferred-revenue footnote for a
   liquidation. Let the playbook route you.
 - **For foreign private issuers** there is no 10-K/10-Q/DEF 14A — it's 20-F and 6-K, and the
   financials are IFRS. `sec-edgar-skill`'s guides cover the mechanics.
 
-If a tool detail is unclear, defer to `sec-edgar-skill`'s own guides and `--help`; do not
-re-document the hands here. Keep the tools unopinionated; keep the opinion in this skill.
+If a tool detail is unclear, defer to `sec-edgar-skill`'s and `market-scout`'s own guides
+and `--help`; do not re-document the hands here. Keep the tools unopinionated; keep the
+opinion in this skill.
 
 ## Web research — grounding first, web for the gaps
 

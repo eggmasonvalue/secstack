@@ -95,7 +95,22 @@ description (see `guide_valuation.md` § "Discount rate" for the full methodolog
 discount rate without a derivation is an unauditable assumption — the reader cannot
 disagree with it, which means they cannot trust it.
 
-### 7. Risks & pre-mortem
+### 7. Institutional ownership
+Who owns this stock and what does the ownership picture tell you? Pull from
+`sec-edgar-skill`'s `fetch_13f_holders.py`. Include:
+- **Top holders** (top 10–15 by value) and whether they are passive index funds or
+  active/concentrated managers.
+- **Ownership trend** — is institutional ownership rising or falling? Cross-reference
+  with price to distinguish accumulation from distribution.
+- **Notable holders** — any known deep-value, activist, or sector-specialist funds?
+  Their presence (or absence/exit) is a signal.
+- **Concentration risk** — if a handful of holders dominate the float, flag the
+  liquidity and forced-selling risk.
+
+This section is short (a table + a paragraph of interpretation), but it grounds the
+catalyst and risk sections that follow.
+
+### 8. Risks & pre-mortem
 The bear case, in your own words and as strong as you can make it. Run the archetype's
 disqualifiers explicitly. Assume it's a year out and the thesis failed — what broke?
 Re-tag the load-bearing claims as verified vs. assumed; the assumed ones are your risks.
@@ -107,18 +122,18 @@ without a sized impact is a worry, not an analysis. Where possible, assign a pro
 reference the sized risks from the competitive section, not re-invent them as vague
 fears.
 
-### 8. Catalysts & monitorables
+### 9. Catalysts & monitorables
 Specific, ideally dated events or metrics that would confirm or break the thesis — a
 buyback, an uplisting, a margin-inflection quarter, a cohort metric, a regulatory date.
 "Re-rating" is not a catalyst; a mechanism or a date is. List what you'll watch to know if
 you're wrong early.
 
-### 9. Verdict & conviction
+### 10. Verdict & conviction
 The call — **Long / Short / Pass / Watch** — at the conviction the work supports, with a
 one-line rationale tying back to the variant perception and the margin of safety. If the
 digging was thin in places, say where; an honest hedge is part of the verdict.
 
-### 10. Appendix — sources
+### 11. Appendix — sources
 The audit trail. Every filing used (form + accession number + section) and every web source
 (URL + date). This is what makes the memo checkable — and what a downstream pitch leans on
 when a skeptic pushes back.
