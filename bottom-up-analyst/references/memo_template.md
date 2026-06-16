@@ -60,10 +60,25 @@ The un-distorted earning power (see `guide_normalization.md`), not raw GAAP. Own
 **capital-allocation track record as a year-by-year table** — share count, debt,
 reinvestment and the return on it — because the trend is the argument.
 
+**When the thesis depends on a new revenue stream** (pre-revenue JV, partnership product,
+market entry enabled by a regulatory change, post-restructuring margin profile), include a
+**unit-economics bridge** that builds from per-unit inputs (price, cost, volume) to the
+stream’s contribution to FCF. A management TAM estimate plugged into a DCF growth rate is
+not a model — it is a hope with a discount rate. See `guide_normalization.md` § “When the
+thesis depends on a new revenue stream.”
+
 ### 5. Competitive position & industry
 Industry structure, the company's place in it, and *relative* competitive advantage —
 moat (or its absence) explained mechanically, not asserted. Ground in filings (incl. peers'
 filings); use web only for what filings can't give, and mark it [W].
+
+**Quantify, don't catalogue.** Every competitive strength, moat mechanism, and threat must
+be sized — how big, how fast it's moving, and what the dollar impact on *this company*
+would be if it plays out. “High switching costs” is a label; “3-year migration timelines
+and 95%+ renewal rates” is evidence. “Competition is intensifying” is mood; “Competitor X
+grew Y% last year and now holds Z% of the addressable market” is a fact the reader can
+reason from. A competitive force you can’t size is one you haven’t understood — mark it
+[A] and flag the gap. See `guide_competitive.md` § “Quantify impact.”
 
 ### 6. Valuation
 Triangulated, never a single point (see `guide_valuation.md`). Show each lens, weighted by
@@ -84,6 +99,13 @@ disagree with it, which means they cannot trust it.
 The bear case, in your own words and as strong as you can make it. Run the archetype's
 disqualifiers explicitly. Assume it's a year out and the thesis failed — what broke?
 Re-tag the load-bearing claims as verified vs. assumed; the assumed ones are your risks.
+
+**Every risk must pass the “so what” test.** State the *impact* — what happens to
+revenue, margins, or FCF if this risk materializes, and over what timeframe? A risk
+without a sized impact is a worry, not an analysis. Where possible, assign a probability
+(High/Medium/Low) and cite the evidence behind it. The pre-mortem narrative should
+reference the sized risks from the competitive section, not re-invent them as vague
+fears.
 
 ### 8. Catalysts & monitorables
 Specific, ideally dated events or metrics that would confirm or break the thesis — a

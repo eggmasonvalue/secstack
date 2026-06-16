@@ -65,3 +65,59 @@ A clear verdict on competitive position you can defend:
 
 Feed this straight into valuation: the strength and *durability* of the moat is what justifies
 the growth runway and the discount rate you'll defend in phase 5.
+
+## Quantify impact, don't just list forces
+
+The most common failure in competitive analysis is **cataloguing without quantifying.**
+Listing five barriers to entry or four competitive threats is not analysis — it is
+inventory. The reader needs to understand *how much each force matters* to the thesis.
+For every competitive strength, weakness, threat, or moat mechanism, answer three
+questions:
+
+1. **How big is it?** Attach a number, a share, a dollar figure, or a rate. “High
+   switching costs” is a label; “multi-year contracts with 95%+ renewal rates and
+   12–18 month migration timelines” is evidence. “Competition is intensifying” is mood;
+   “Motorola’s Command Center division grew 14% last year and now holds ~30% of the
+   call-handling market” is a fact you can reason from.
+
+2. **How fast is it moving?** A static snapshot is not enough. Is the competitor
+   gaining share, losing it, or flat? Is the technology threat emerging (R&D stage),
+   arriving (first deployments), or mature (already displacing incumbents)? A threat
+   that is five years away at current pace is a different input to the thesis than one
+   that is already taking share. Cite the trajectory, not just the position.
+
+3. **What is the dollar impact on *this company* if it plays out?** Translate the
+   competitive force into revenue, margin, or FCF impact on the subject. “Cloud-native
+   architectures could lower barriers” becomes “if a cloud-native entrant captured 10%
+   of the addressable NG9-1-1 market over 5 years, that’s ~$12M/yr of revenue at risk
+   for Allerium, or ~5% of current revenue.” Now the reader can weigh it. A risk you
+   can’t size is a risk you haven’t understood.
+
+### Applying this to strengths and moats
+
+The same discipline applies to the bull case. “Strong installed base” is a label;
+“4,200 PSAPs on the platform with an average contract life of 7 years and a historical
+churn rate below 3%” is a moat you can underwrite. “Switching costs are high” is an
+assertion; “the Kentucky statewide migration took 8 months of planning and 4 months of
+execution for 12 PSAPs, and the state has 120 total” tells you *how* high.
+
+When you can’t find the number, say so — mark it [A] and flag it as a gap the reader
+should investigate. An honest “I couldn’t quantify this” is more useful than a
+confident-sounding assertion that melts under scrutiny.
+
+### Applying this to risks and threats
+
+Every risk factor in the memo should pass a **“so what” test**: if this risk
+materializes, what happens to revenue, margins, or FCF — and over what timeframe?
+A risk without an impact estimate is a worry, not an analysis. The pre-mortem
+(phase 6) is where you stress-test the risks against the thesis; the competitive
+section is where you *size* them so the pre-mortem has something to work with.
+
+Examples of the shift from listing to quantifying:
+
+| Listing (weak) | Quantifying (strong) |
+| :-- | :-- |
+| “Competition from larger players” | “MSI’s Command Center revenue grew 14% YoY to ~$X00M; their VESTA NXT platform has been deployed in N states, directly overlapping with Allerium’s call-handling TAM” |
+| “Technology disruption risk” | “Cloud-native NG9-1-1 platforms (e.g., RapidSOS, Carbyne) have raised $X00M in VC funding and signed pilot contracts with N PSAPs; at current adoption rates, they could reach ~5% market penetration by 2028” |
+| “Customer concentration” | “Top carrier customer is ~25% of Allerium revenue (~$56M); the $130M extension runs through 2029, but loss at renewal would cut segment EBITDA by ~$15M” |
+| “High switching costs” | “Kentucky migration: 8 months planning + 4 months execution for 12 of 120 PSAPs; full state cutover expected to take 3+ years, creating a de facto lock-in for the contract term” |

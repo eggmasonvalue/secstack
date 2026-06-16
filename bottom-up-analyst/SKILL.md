@@ -110,6 +110,15 @@ Do not pad a phase just because it exists.
    allocation as a **year-by-year table** (share count, debt, reinvestment, returns on it) —
    a trend persuades where a single number cannot. See `references/guide_normalization.md`.
 
+   **When the thesis depends on a new revenue stream** — a pre-revenue JV, a partnership
+   product, a market entry unlocked by regulation, a post-restructuring margin profile —
+   build a **unit-economics bridge** from per-unit inputs (price, cost, volume) to the
+   stream’s FCF contribution. A management TAM estimate plugged into a DCF growth rate is
+   not a model; it launders a guess into a valuation. The bridge makes the assumption
+   auditable: a reader who disagrees with your per-unit fee or customer count can re-run
+   the math. See `references/guide_normalization.md` § “When the thesis depends on a new
+   revenue stream.”
+
 4. **Read the competitive and industry position.** A number is only as good as the moat
    under it. Establish industry structure, the company's place in it, and — the hard part —
    *relative* competitive advantage. **SEC filings are the default and the grounding**: the
@@ -118,6 +127,16 @@ Do not pad a phase just because it exists.
    cite. Use **web research only for what filings genuinely cannot give you** — relative
    positioning, market-share dynamics, channel/customer checks — and label every web claim
    as such. See `references/guide_competitive.md`.
+
+   **Quantify impact, don’t just list forces.** The most common failure in competitive
+   analysis is cataloguing without sizing. For every moat mechanism, competitive threat,
+   or risk factor, answer: *how big is it, how fast is it moving, and what is the dollar
+   impact on this company if it plays out?* “High switching costs” is a label; “3-year
+   migration timelines and 95%+ renewal rates” is evidence. “Competition is intensifying”
+   is mood; “Competitor X grew Y% and holds Z% of the addressable market” is a fact the
+   reader can reason from. A force you can’t size is one you haven’t understood — flag
+   it [A] and name the gap. This discipline carries into the risks section (phase 6):
+   every risk must pass a “so what” test with a sized impact on revenue, margins, or FCF.
 
 5. **Value it — by triangulation, weighted by archetype.** Never a single point estimate.
    Converge on an intrinsic-value *range* from independent lenses, weighted by what the

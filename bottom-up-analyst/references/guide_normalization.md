@@ -78,6 +78,54 @@ FY0            9.2         120
 Falling share count, falling debt, rising returns on retained capital — that picture tells
 the reader how management actually behaves, which no single ratio can.
 
+## When the thesis depends on a new revenue stream: model the unit economics
+
+Normalization looks backward — it un-distorts what the business *has* earned. But many
+theses (turnarounds, inflections, hypergrowth pivots, special situations) depend on a
+revenue stream or business model that **doesn’t yet exist in the trailing financials.**
+When the valuation’s base or bull case rests on a new stream, the memo must model its
+unit economics explicitly — not just cite a management TAM estimate and plug a growth
+rate into the DCF.
+
+### What “model the unit economics” means
+
+Build a **bottom-up revenue bridge** from the new stream’s inputs to its contribution
+to FCF. The bridge should answer:
+
+1. **What is the unit of sale?** A per-device chip fee, a per-store contribution, a
+   per-seat SaaS subscription, a per-unit margin on hardware — name it.
+2. **What does one unit cost to deliver?** COGS, fulfillment, support, platform costs.
+   If the company hasn’t disclosed this, benchmark against the closest analog and mark
+   it [A].
+3. **How many units does the scenario assume?** Tie this to something observable —
+   the number of customers in the pipeline, the addressable installed base, the
+   contract backlog — not just a top-down TAM percentage.
+4. **What is the resulting gross margin and contribution margin?** Show the math.
+5. **How does this flow through to FCF?** After incremental SG&A, R&D, capex, and
+   working capital required to support the new stream.
+
+The bridge makes the assumption *auditable*. A reader who disagrees with your per-unit
+fee or your customer count can re-run the math; a reader who sees only “$5–20M in
+annual SaaS revenue per customer [A]” cannot. The bridge also forces *you* to confront
+whether the numbers are internally consistent: if the per-device fee implies a price
+point higher than the competitor’s whole product, the thesis has a problem you’d rather
+find now.
+
+### When to do this
+
+Any time the valuation’s base or bull case assigns material value to a revenue stream
+that is pre-revenue, in pilot, or represents a business model change from the trailing
+financials. Examples:
+
+- A regulatory catalyst opens a new market the company hasn’t yet entered (ISPR’s IKE
+  age-gating chip in the flavored ENDS market)
+- A partnership or JV creates a new product category (WRBY’s Google smart-glasses)
+- A divestiture or restructuring changes the margin profile (CMTL’s Allerium post-S&S)
+- A platform or marketplace layer is being built on top of an existing product
+
+If the new stream is immaterial to the thesis (“a small adjacent opportunity”), a
+sentence suffices. If it’s load-bearing, the bridge is mandatory.
+
 ## The honesty check
 
 Every normalized figure is an [E]stimate built on an [A]ssumption. Mark them as such in the
