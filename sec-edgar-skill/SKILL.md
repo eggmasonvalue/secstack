@@ -121,7 +121,7 @@ quirks that make extraction correct.
 | `references/guide_filings.md` | Filing text: pulling a section by SEC item code (10-K/10-Q/8-K/20-F) vs. navigating free-form filings (DEF 14A/6-K) by their own contents, plus attachments and exhibits (incl. 6-K Exhibit 99.1). |
 | `references/guide_financials.md` | XBRL financial statements and individual facts (US-GAAP and IFRS), and the period-aggregation pitfalls. |
 | `references/guide_ownership.md` | Insider transactions (Forms 3/4/5), beneficial ownership, and executive compensation (DEF 14A; Form 20-F Item 6 for foreign issuers). |
-| `references/guide_holdings.md` | Institutional positions (13F) and 5%+ blockholders (Schedules 13D/13G). |
+| `references/guide_holdings.md` | Institutional positions (13F) — including the fast `fetch_13f_holders.py` route via 13f.info — and 5%+ blockholders (Schedules 13D/13G). |
 
 ## Scripts
 
@@ -150,6 +150,18 @@ python scripts/parse_financials.py --ticker AAPL --year 2024 --quarter 1 --state
 
 # Table of contents for a large cached filing
 python scripts/list_headings.py --file sec-cache/AAPL/10-K_2023-11-03_0000320193-23-000106.md
+
+# 13F institutional holders — who owns this stock? (via 13f.info, no SEC identity needed)
+python scripts/fetch_13f_holders.py --ticker AAPL --top 15
+
+# 13F holder history — how has institutional ownership changed?
+python scripts/fetch_13f_holders.py --ticker AAPL --history
+
+# 13F manager search — what does a specific fund hold?
+python scripts/fetch_13f_holders.py --manager "Berkshire Hathaway"
+
+# 13F cross-reference — one manager's position history in one stock
+python scripts/fetch_13f_holders.py --cik 0000906304 --cusip 205826209
 
 # Environment diagnostics
 python scripts/test_setup.py --live
