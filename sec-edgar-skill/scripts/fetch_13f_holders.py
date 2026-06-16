@@ -6,7 +6,7 @@ EDGAR. It offers three key views:
 
   **Stock-centric** (who owns this stock?):
     --ticker AAPL             → all institutional holders for the latest quarter
-    --ticker AAPL --history   → quarterly holder/value summary over time
+    --ticker AAPL --history   → quarterly holder/share-count summary over time
 
   **Manager-centric** (what does this fund hold?):
     --manager "Berkshire Hathaway"  → search for a manager, show their holdings
@@ -146,17 +146,6 @@ def _resolve_manager(query: str) -> tuple[str, str] | None:
 # Formatting helpers
 # ---------------------------------------------------------------------------
 
-def _fmt_value(v: int | float | None) -> str:
-    """Format a value in $000s to a human-readable string."""
-    if v is None:
-        return "n/a"
-    if v >= 1_000_000:
-        return f"${v / 1_000_000:,.1f}B"
-    if v >= 1_000:
-        return f"${v / 1_000:,.1f}M"
-    return f"${v:,.0f}K"
-
-
 def _fmt_shares(s: int | float | None) -> str:
     if s is None:
         return "n/a"
@@ -186,35 +175,39 @@ def _print_stock_holders(ticker: str, cusip: str, issuer: str,
         return
 
     holders = data["data"]
-    total_value = data.get("total_value")
+
+    # Determine period end date from the first entry
+    period_end = ""
+    if holders and isinstance(holders[0][1], list):
+        period_end = holders[0][1][0]  # e.g. "2026-03-31"
 
     print(f"# 13F Institutional Holders: {ticker} ({issuer})")
     print(f"")
     print(f"- **CUSIP:** {cusip}")
     print(f"- **Period:** Q{quarter} {year}")
+    if period_end:
+        print(f"- **Holdings as of:** {period_end}")
     print(f"- **Total holders reporting:** {len(holders)}")
-    if total_value:
-        print(f"- **Total reported value:** {_fmt_value(total_value)}")
     print(f"- **Source:** {_BASE}/cusip/{cusip}/{year}/{quarter}")
     print()
 
     # Each holder entry: [[manager_name, cik, cusip], [date, filing_slug], value, shares, principal]
-    print(f"## Top {min(top_n, len(holders))} Holders by Value")
+    print(f"## Top {min(top_n, len(holders))} Holders by Shares")
     print()
-    print("| # | Manager | Value ($000) | Shares | CIK |")
-    print("|---|---------|-------------|--------|-----|")
+    print("| # | Manager | Shares | CIK |")
+    print("|---|---------|--------|-----|")
 
-    for i, h in enumerate(holders[:top_n]):
-        manager_info = h[0]  # [name, cik, cusip]
-        # filing_info = h[1]  # [date, slug]
-        value = h[2]  # in $000s
+    # Sort by shares descending
+    ranked = sorted(holders, key=lambda h: h[3] or 0, reverse=True)
+
+    for i, h in enumerate(ranked[:top_n]):
+        manager_info = h[0]
         shares = h[3]
-        # principal = h[4]
 
         name = manager_info[0] if isinstance(manager_info, list) else str(manager_info)
         cik = manager_info[1] if isinstance(manager_info, list) and len(manager_info) > 1 else ""
 
-        print(f"| {i+1} | {name} | {_fmt_value(value)} | {_fmt_shares(shares)} | {cik} |")
+        print(f"| {i+1} | {name} | {_fmt_shares(shares)} | {cik} |")
 
     if len(holders) > top_n:
         print(f"\n*Showing top {top_n} of {len(holders)} holders. "
@@ -251,15 +244,14 @@ def _print_stock_history(ticker: str, cusip: str, issuer: str):
         re.DOTALL
     )
 
-    print("| Period | Holders | Shares (excl. options) | Value (excl. options) |")
-    print("|--------|---------|----------------------|----------------------|")
+    print("| Period | Holders | Shares (excl. options) |")
+    print("|--------|---------|----------------------|")
 
     for m in row_pattern.finditer(html):
         period = m.group(1).strip()
         filings = m.group(2).strip()
         shares = m.group(3).strip()
-        value = m.group(4).strip()
-        print(f"| {period} | {filings} | {shares} | {value} |")
+        print(f"| {period} | {filings} | {shares} |")
 
 
 # ---------------------------------------------------------------------------
@@ -308,18 +300,17 @@ def _print_manager_holdings(cik: str, manager_name: str):
         re.DOTALL
     )
 
-    print("| Quarter | Holdings | Value ($000) | Top Holdings | Type | Filed |")
-    print("|---------|----------|-------------|--------------|------|-------|")
+    print("| Quarter | Holdings | Top Holdings | Type | Filed |")
+    print("|---------|----------|--------------|------|-------|")
 
     count = 0
     for m in row_pattern.finditer(html):
         quarter = m.group(2).strip()
         holdings = m.group(3).strip()
-        value = m.group(4).strip()
         top = m.group(5).strip()
         form_type = m.group(6).strip()
         filed = m.group(7).strip()
-        print(f"| {quarter} | {holdings} | {value} | {top} | {form_type} | {filed} |")
+        print(f"| {quarter} | {holdings} | {top} | {form_type} | {filed} |")
         count += 1
         if count >= 20:
             break
@@ -350,20 +341,17 @@ def _print_manager_stock_history(cik: str, cusip: str,
     print()
 
     # Each entry: [[date, filing_slug], value, pct, shares, principal, date_filed, [year, quarter]]
-    print("| Period | Value ($000) | % of Portfolio | Shares | Filed |")
-    print("|--------|-------------|---------------|--------|-------|")
+    print("| Period | Shares | % of Portfolio | Filed |")
+    print("|--------|--------|---------------|-------|")
 
     for e in entries:
-        filing_info = e[0]  # [date, slug]
-        value = e[1]
         pct = e[2]
         shares = e[3]
-        # principal = e[4]
         date_filed = e[5]
         period_info = e[6]  # [year, quarter]
 
         period = f"Q{period_info[1]} {period_info[0]}"
-        print(f"| {period} | {_fmt_value(value)} | {_fmt_pct(pct)} | {_fmt_shares(shares)} | {date_filed} |")
+        print(f"| {period} | {_fmt_shares(shares)} | {_fmt_pct(pct)} | {date_filed} |")
 
 
 # ---------------------------------------------------------------------------
@@ -409,7 +397,7 @@ def main():
     # Stock-centric
     p.add_argument("--ticker", help="Stock ticker to look up holders for.")
     p.add_argument("--history", action="store_true",
-                   help="Show quarterly holder/value history (with --ticker).")
+                   help="Show quarterly holder/share-count history (with --ticker).")
     p.add_argument("--year", type=int, default=None,
                    help="Specific year for holder lookup (default: latest).")
     p.add_argument("--quarter", type=int, default=None, choices=[1, 2, 3, 4],
