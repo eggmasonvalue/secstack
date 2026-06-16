@@ -25,7 +25,7 @@ runway (new units, geographies, share gains) that isn't nearly exhausted.
   words.
 - The cash-flow statement and the revenue / deferred-revenue / lease footnotes — for the
   normalization that reveals true returns.
-- A multi-year financial history (`parse_financials.py` across years) — to prove ROIC is
+- A multi-year financial history (`sec-edgar-skill`'s `parse_financials.py` across years) — to prove ROIC is
   *durable*, not a one-year flatter.
 - The proxy (DEF 14A) — capital-allocation incentives; is management paid to compound or to
   empire-build?

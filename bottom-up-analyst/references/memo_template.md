@@ -97,7 +97,7 @@ disagree with it, which means they cannot trust it.
 
 ### 7. Institutional ownership
 Who owns this stock and what does the ownership picture tell you? Pull from
-`sec-edgar-skill`'s `fetch_13f_holders.py`. Include:
+`sec-edgar-skill`'s `scripts/fetch_13f_holders.py`. Include:
 - **Top holders** (top 10–15 by value) and whether they are passive index funds or
   active/concentrated managers.
 - **Ownership trend** — is institutional ownership rising or falling? Cross-reference

@@ -82,7 +82,7 @@ Do not pad a phase just because it exists.
    the same information is slower, less authoritative, and often wrong about the company.
 
    **Breaking-news pattern:** if the user mentions a same-day event, orient.py will show the
-   8-K filed today. Immediately follow with:
+   8-K filed today. Immediately follow with (`sec-edgar-skill` scripts):
    ```bash
    python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today>
    python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment list

@@ -8,7 +8,7 @@ per the prime directive — to **name every adjustment** so a reader can undo it
 unexplained "adjusted" number is exactly the kind of laundered guess this skill exists to
 avoid.
 
-Drive `sec-edgar-skill` to pull the statements (`parse_financials.py` → CSV) and the
+Drive `sec-edgar-skill` to pull the statements (`sec-edgar-skill`'s `parse_financials.py` → CSV) and the
 relevant footnotes (grep the cached 10-K); do the reasoning here.
 
 ## Owner earnings — the target number
