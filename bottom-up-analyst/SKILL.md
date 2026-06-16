@@ -214,6 +214,15 @@ reference; one canonical invocation each:
 python scripts/dcf.py --fcf0 1200 --growth 8,12,16 --years 10 --terminal-growth 3 \
   --discount 10 --shares 500 --net-debt 200
 
+# Forward three-stage DCF -> when the FCF trajectory has a structural bend: the near-term
+# growth rate differs materially from the long-run rate. Add --growth2 and --years2 to
+# split the forecast into two explicit phases. Outputs a stage-1 x stage-2 sensitivity
+# matrix. Common uses: turnaround cost-out, hypergrowth investing-then-harvesting,
+# cyclical recovery, post-acquisition synergy ramp, regulatory deployment wave.
+python scripts/dcf.py --fcf0 5 --growth 25,35,50 --years 3 \
+  --growth2 5,8 --years2 7 --terminal-growth 2.5 --discount 12 \
+  --shares 30 --net-debt 66 --price 2.75
+
 # Reverse DCF -> the stage-1 growth the current price already implies ("what's priced in")
 python scripts/dcf.py --mode reverse --price 150 --fcf0 1200 --years 10 \
   --terminal-growth 3 --discount 10 --shares 500 --net-debt 200

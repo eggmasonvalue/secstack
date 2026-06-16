@@ -47,8 +47,12 @@ the size of the addressable improvement vs. the current loss.
 
 ## Valuation lens
 **Scenario DCF** on post-inflection margins (bear = inflection stalls; base = partial; bull =
-full), with **EPV/asset value today as the downside floor**. The thesis is attractive only if
-that floor limits the loss while the inflection delivers the upside — quantify both ends.
+full), with **EPV/asset value today as the downside floor**. A turnaround’s FCF trajectory
+almost always has a structural bend — near-term acceleration from cost-outs, margin
+expansion, or debt paydown, followed by a different normalized growth rate. The **three-stage
+DCF** (`--growth2`, `--years2`) exists for exactly this shape; prefer it over forcing a
+single stage-1 rate to average across two distinct phases. The thesis is attractive only if
+the EPV floor limits the loss while the inflection delivers the upside — quantify both ends.
 
 ## Disqualifiers — kill it (or mark it down) if…
 - **No concrete mechanism** — the case rests on hope, sentiment, or "it's too cheap to go

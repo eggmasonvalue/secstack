@@ -37,6 +37,32 @@ python scripts/dcf.py --fcf0 1200 --growth 8,12,16 --years 10 --terminal-growth 
   --discount 10 --shares 500 --net-debt 200
 ```
 
+When the FCF trajectory has a **structural bend** — the near-term growth rate differs
+materially from the long-run rate — a single stage-1 rate is a forced average that
+misrepresents both phases. Use the **three-stage model** by adding `--growth2` and
+`--years2`. Stage 1 captures the distinct near-term phase, stage 2 captures the subsequent
+normalized phase, then the terminal value. The output is a stage-1 × stage-2 sensitivity
+matrix. Reach for it whenever the business has an identifiable reason for the growth rate
+to change — not just turnarounds, but any shape where one rate doesn’t fit:
+
+- **Turnaround / inflection:** cost-outs, margin expansion, or debt paydown free up FCF
+  faster than revenue grows (stage 1), then revenue-driven growth takes over (stage 2).
+- **Hypergrowth investing phase:** heavy S&M/R&D depresses FCF now; once the business
+  scales past the investment hump, FCF inflects sharply (stage 1), then grows at a
+  mature-compounder rate (stage 2).
+- **Cyclical recovery:** earnings snap back from trough to mid-cycle (stage 1), then grow
+  at trend (stage 2).
+- **Regulatory / deployment wave:** a defined tailwind (NG9-1-1 rollout, 5G buildout)
+  drives elevated growth for a bounded period (stage 1), then steady-state (stage 2).
+- **Post-acquisition synergies:** integration savings land over 2–3 years (stage 1),
+  then organic growth resumes (stage 2).
+
+```bash
+python scripts/dcf.py --fcf0 5 --growth 25,35,50 --years 3 \
+  --growth2 5,8 --years2 7 --terminal-growth 2.5 --discount 12 \
+  --shares 30 --net-debt 66 --price 2.75
+```
+
 ### 3. EPV — the no-growth floor
 Earnings Power Value capitalizes *current normalized* operating earnings with **no growth
 credit** — a conservative floor that answers "what's it worth if the growth never shows up?"
