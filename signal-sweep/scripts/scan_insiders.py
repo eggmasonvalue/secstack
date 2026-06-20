@@ -23,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import math
 import sys
 from collections import defaultdict
@@ -151,7 +150,7 @@ def tag_rip_dip(purchases_by_ticker: dict[str, list[dict]],
             else:
                 purchase["signal"] = None
 
-    c.log(f"  z-scores done.")
+    c.log("  z-scores done.")
 
 
 # ---------------------------------------------------------------------------
@@ -447,8 +446,8 @@ def _build_summary(purchases_by_ticker: dict[str, list[dict]],
     dip_count = sum(1 for b in all_purchases if b.get("signal") == "dip")
 
     lines.append("## Summary\n")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|--------|-------|")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
     lines.append(f"| Purchases (code P, {c.universe_label()}) | {total_purchases} |")
     lines.append(f"| Unique tickers | {unique_tickers} |")
     lines.append(f"| Unique insiders | {unique_insiders} |")

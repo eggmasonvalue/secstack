@@ -241,7 +241,7 @@ def main():
         print(f"**Intrinsic-value range: {min(ivs):,.2f} -- {max(ivs):,.2f} / share** "
               "(bear--bull across the growth cases above).")
     if args.price is not None:
-        lo, hi = min(ivs), max(ivs)
+        _lo, hi = min(ivs), max(ivs)
         mos = (1 - args.price / hi) * 100 if hi > 0 else float("nan")
         print(f"\nAt {args.price:,.2f}: margin of safety to the high case is {mos:.0f}%. "
               "Require the thesis to survive the *low* end before you trust it.")

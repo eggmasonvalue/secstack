@@ -264,11 +264,11 @@ thistle933,
 
 I would have preferred to see a cash offer but I think it's a positive that there is now a concrete announcement about a planned combination of the companies. Telemig will acquire 100% of Telemig Celular's shares and Vivo will acquire 100% of Telemig's shares in simultaneous share exchanges. This is a copy of the announcement:
 
-http://ir.telecom.pt/InternetResource/PTSite/UK/Canais/Investidores/Pressrel/Noticias/2009/COM230309.htm
+<http://ir.telecom.pt/InternetResource/PTSite/UK/Canais/Investidores/Pressrel/Noticias/2009/COM230309.htm>
 
 and the notice of material fact:
 
-http://vivo.mediagroup.com.br/download/1426_Relevant_Fact.pdf
+<http://vivo.mediagroup.com.br/download/1426_Relevant_Fact.pdf>
 
 There is a special committee at each of the Telemig companies that will be instrumental in setting the ratio. Surprisingly, they did not fill the committees solely with Vivo appointees. It is a three person committee in each case. On each commitee there will be a minority shareholder representative from the board. The appointee to the Telemig comittee was a nominee of one of the active shareholders involved, and the same is true at the Telemig Celular committee. Vivo has appointed one of its members to each of the committees. The third member was selected by the other 2 members. I am trying to get more color, but I am guardedly optimistic that a basic standard of governance will be observed in the process. It sounds like bankers will be obtained and there will be DCFs and formal valuation analyses.
 
@@ -284,7 +284,7 @@ thistle933,
 
 Here is a link to a valuation analysis that they had to file with the CVM in connection with the mandatory tender offer for the common last year.
 
-http://vivo.mediagroup.com.br/download/MTO_Valuation_Report.pdf
+<http://vivo.mediagroup.com.br/download/MTO_Valuation_Report.pdf>
 
 On page 36, their bankers break down the Telemig capex plan, citing information prepared by Telemig and Vivo. The non-expansion portion of capex is lower than R$80 mil for almost all of the future years.
 

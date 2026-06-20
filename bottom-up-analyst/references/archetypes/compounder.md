@@ -7,11 +7,13 @@ ally; you are underwriting a machine, then trying to buy it at a fair price. (On
 three value-investing shapes — see NVR, Sportsman's Guide in the `pitch-like-lou` corpus.)
 
 ## Tell it by
+
 Durable ROIC/ROE well above the cost of capital (sustained, not a single year), pricing
 power, low incremental capital intensity, expanding or stable margins, and a reinvestment
 runway (new units, geographies, share gains) that isn't nearly exhausted.
 
 ## Where the value hides
+
 - **Duration the market won't extrapolate.** Screens see a high multiple and stop; the edge
   is judging that the high return *persists* far longer than consensus assumes.
 - **Reinvestment math.** Value = return on incremental capital × the fraction reinvested. A
@@ -21,6 +23,7 @@ runway (new units, geographies, share gains) that isn't nearly exhausted.
   investment, deferred revenue, conservative depreciation).
 
 ## Pull these (drive sec-edgar)
+
 - 10-K Item 7 (MD&A) and Item 1 (Business) — the unit economics and the runway in management's
   words.
 - The cash-flow statement and the revenue / deferred-revenue / lease footnotes — for the
@@ -31,22 +34,26 @@ runway (new units, geographies, share gains) that isn't nearly exhausted.
   empire-build?
 
 ## Key metrics
+
 ROIC and **return on incremental invested capital** (the forward-looking one), reinvestment
 rate, organic revenue growth, gross-margin stability, FCF conversion, same-store / cohort /
 unit economics where disclosed.
 
 ## Normalize / adjust
+
 - Split maintenance vs. growth capex carefully — a compounder's value is highly sensitive to
   it (see `guide_normalization.md`).
 - Pull deferred revenue back into earning power; undo conservative-accounting drag.
 - Expense stock comp and bake dilution into the share count.
 
 ## Valuation lens
+
 Lead with a **forward two-stage DCF** that gives the long reinvestment runway room, then
 **reality-check with a reverse-DCF** (is the priced-in growth sane?) and floor it with EPV.
 The key question isn't today's multiple — it's whether the runway justifies it.
 
 ## Disqualifiers — kill it (or mark it down) if…
+
 - High ROIC is an **accounting mirage** — goodwill-light denominators, off-balance-sheet
   leverage, or returns that evaporate once you capitalize the real investment.
 - **Growth needs ever more capital at falling returns** — incremental ROIC is decaying toward

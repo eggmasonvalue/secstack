@@ -4,7 +4,7 @@
 
 Quilmes Industrial (Quinsa) is a very high quality business with excellent returns on capital.  Its stock sells at a cheap price and a change of control is going to occur.
 
-Quinsa is the dominant beer brewer in several South American countries.  Its beer brands account for 79% of the market in Argentina, which is the company’s main market (I will tackle Argentina issues in the Q&A).  Quinsa also controls 97% of the market in Bolivia, 95% in Paraguay and 98% in Uruguay.  One of the hallmarks of a great business is very little competition and as the Nielsen figures indicate, Quinsa’s competitors have not been very successful going up against the company.  To make matter worse for the competition, Quinsa acquired the operations of the #2 competitor in its markets two years ago and thereby increased its lead in Argentina, Paraguay and Uruguay.  Also as a result of that transaction, AmBev became a large shareholder of Quinsa.  AmBev will not be doing business in Quinsa’s markets except through its interest in Quinsa.  This removes the threat of a competitor entering from neighboring Brazil. 
+Quinsa is the dominant beer brewer in several South American countries.  Its beer brands account for 79% of the market in Argentina, which is the company’s main market (I will tackle Argentina issues in the Q&A).  Quinsa also controls 97% of the market in Bolivia, 95% in Paraguay and 98% in Uruguay.  One of the hallmarks of a great business is very little competition and as the Nielsen figures indicate, Quinsa’s competitors have not been very successful going up against the company.  To make matter worse for the competition, Quinsa acquired the operations of the #2 competitor in its markets two years ago and thereby increased its lead in Argentina, Paraguay and Uruguay.  Also as a result of that transaction, AmBev became a large shareholder of Quinsa.  AmBev will not be doing business in Quinsa’s markets except through its interest in Quinsa.  This removes the threat of a competitor entering from neighboring Brazil.
 
 What are the competitive advantages that allow Quinsa to maintain its monopoly-like position?
 
@@ -36,7 +36,7 @@ The company’s blended income tax rate is 34.5%.  However the company has $196 
 
 For those of you who want comps, these are the 2005 EBITDA multiples for some other global brewers.  These are Morgan Stanley’s figures.  
 
-AmBev  $30.02 per share  9.3x 
+AmBev  $30.02 per share  9.3x
 
 Anheuser-Busch  $46.54  10.4x
 
@@ -52,7 +52,7 @@ Change of Control
 
 When AmBev exchanged its operations in Argentina, Paraguay and Uruguay for a stake in Quinsa in 2003, it entered into a put/call agreement with Quinsa’s controlling shareholder.  The agreement gives the controlling shareholder the right to sell its stake to AmBev at a price determined by a formula in Schedule 1.04 of the agreement.  This put right is exercisable annually.  The next exercise date is in April 2006.  If the put is not exercised in the next few years then AmBev has a call option to purchase the shares at the formula price.  When there is a put and a call struck at the same price it is bound to be exercised by one of the parties.  
 
-	The formula is not simple enough to include in this write-up but it essentially values LQU at the greater of (1) 8x EBITDA and (2) the trailing EBITDA multiple for AmBev.  It then applies some discounts to determine the number of AmBev shares that would be issued for LQU shares.  According to my calculations, the formula would have produced a sale price of $48.25 per share of LQU if the put had been exercised in April 2005.  Applying the various discount factors would have left a price of $38 realizable in the form of AmBev shares.  As I mentioned earlier, EBITDA for 2005 could be substantially higher than last year so if the other variables remain the same then the put price could be higher at the exercise date in April 2006.
+ The formula is not simple enough to include in this write-up but it essentially values LQU at the greater of (1) 8x EBITDA and (2) the trailing EBITDA multiple for AmBev.  It then applies some discounts to determine the number of AmBev shares that would be issued for LQU shares.  According to my calculations, the formula would have produced a sale price of $48.25 per share of LQU if the put had been exercised in April 2005.  Applying the various discount factors would have left a price of $38 realizable in the form of AmBev shares.  As I mentioned earlier, EBITDA for 2005 could be substantially higher than last year so if the other variables remain the same then the put price could be higher at the exercise date in April 2006.
 
 Why should we care if 55% of the voting power is put to AmBev?  The European Union adopted the Takeover Directive in March 2004 to harmonize takeover laws.  It specifies mandatory bid requirements to be adopted by member states for acquisitions of companies in the EU.  If an acquirer obtains voting control of a target, the acquirer must follow with an offer for the remaining public shares.  The offer must be made at an “equitable price”, which is defined as the highest price paid by the acquirer for any shares within the last 12 months (EU members can make this as short as 6 months).  If control of Quinsa transfers to AmBev at $38 per share for example then laws implementing the Takeover Directive would require a mandatory offer to minority shareholders at $38 per share.
 
@@ -176,9 +176,9 @@ They argue that the listing costs are so small to AmBev that AmBev may rather wa
 
 Questions:
 
-1)  Does this even make sense?  It sounds like you are confident the fair price is set by the BAC transaction and there is no benefit to waiting.
+1) Does this even make sense?  It sounds like you are confident the fair price is set by the BAC transaction and there is no benefit to waiting.
 
-2)  Do you have a timetable for when AmBev would likely act?
+2) Do you have a timetable for when AmBev would likely act?
 
 UBS acknowledges that Quinsa is cheap (seems to ignore the price of the BAC transaction) but says there is macroenomic risk in the region and risk from 18% EBITDA exposure to Bolivia.
 
@@ -208,7 +208,7 @@ I have received the english translation of the luxembourg bill.  It is different
 
 With that confidence-inspiring preface, here are my replies to roc924's questions:
 
->Given the BAC/Ambev agreement isn't a public offer, do the majority/minority squeeze out rights come into play? 
+>Given the BAC/Ambev agreement isn't a public offer, do the majority/minority squeeze out rights come into play?
 
 If there is no offer then no it would not come into play.  If I was an acquirer and I wanted to be really diabolical though, I would try to meet the offer requirement by making a below-market or unattractive offer and then attempt a squeeze out.  Who knows if this would actually work, though.
 
@@ -226,13 +226,13 @@ Does anyone have an opinion on current events with Luxembourg takeover law as th
 
 Hack731 wanted me to compute scenarios using $410 mil in 2006 EBITDA.  I think he was envisioning a situation next year where EBITDA grows but the AmBev multiple declines.
 
->What EBITDA multiple to you calculate for Ambev 
+>What EBITDA multiple to you calculate for Ambev
 
 now?
 
 12.8x but I am using AmBev prices a little lower than today's close.
 
->Do you think they will authorize another 
+>Do you think they will authorize another
 
 buyback?
 
@@ -272,7 +272,7 @@ Also, if you do the math to calculate the estimate of 2005 EBITDA the company ba
 
 ### Norbert Lou (charlie479) (ID: 22955)
 
-Hi Luke, 
+Hi Luke,
 
 It actually increases the put option price a little bit.  The company increased its stake in QIB.  It bought that stake from BAC at 6x EBITDA, which is slightly lower than the multiple implied by the stock price of LQU.  If you think of it as a repurchase of approximately ~5% of the outstanding at a discount then it's easier to understand why the formula produces something slighltly higher now (>$39.50 by my calculations).
 
@@ -328,7 +328,7 @@ Thanks again for the great writeup.
 
 ### Norbert Lou (charlie479) (ID: 22943)
 
-The put agreement is here http://www.sec.gov/Archives/edgar/data/1010246/000095015702000348/ex2-2.txt
+The put agreement is here <http://www.sec.gov/Archives/edgar/data/1010246/000095015702000348/ex2-2.txt>
 
 If have $29 for the 8x scenario on the 2005E EBITDA figure.  I cannot fault you for focusing on the possibility of the 8x number.  Remember though, this case assumes a more than 33% decline in AmBev's multiple in just 9 months and we've also been assuming that Quinsa's 2005 EBITDA comes in well under the pace that it has been growing at last year and in the first quarter of this year.  Also, if the controlling shareholder and AmBev are indeed considering an offer before next April then they will be making their decision on how much to offer on what AmBev is trading at too.  Of course, this will give us little comfort if all breaks loose.
 
@@ -358,7 +358,7 @@ I think nearly all lawyers would agree that a law conforming to the Directive wo
 
 The specifics for determining "equitable price" are not as clear.  The A shares are essentially the economic equivalent of the B but with 10x the vote.  But will Lux law say that the price paid for the A shares is not the minimum equitable price for the B shares in the mandatory bid?  We shall see.  No matter what happens with the implementation of the directive, you'll retain your right to say no and wait for a better offer.
 
-I encourage anyone that gets involved here to read the directive themselves and to speak to Luxembourg counsel about the various scenarios.  The link to the takeover directive is http://europa.eu.int/eur-lex/pri/en/oj/dat/2004/l_142/l_14220040430en00120023.pdf
+I encourage anyone that gets involved here to read the directive themselves and to speak to Luxembourg counsel about the various scenarios.  The link to the takeover directive is <http://europa.eu.int/eur-lex/pri/en/oj/dat/2004/l_142/l_14220040430en00120023.pdf>
 
 ### Norbert Lou (charlie479) (ID: 22939)
 
@@ -375,4 +375,3 @@ I'll save your Luxembourg question for another post.  I see a bunch of Luxembour
 There are a few things different now than they were in 2000.  One is the devaluation of the peso.  So the pre-devaluation figures you are looking at are somewhat inflated as they are translated into US dollars at an exchange rate that was not freely floating.  It's easier to think of everything in pesos to understand some of the margin improvement.  Revenues in pesos are actually up dramatically versus 2000.  There is some natural operating leverage when revenues grow.  
 
 Also, at the beginning of 2003 they bought AmBev's operations in Argentina, Paraguay and Uruguay.  If you read through the materials during and following that period you can see the cost savings that management was able to produce.  There was consolidation of distribution, G&A efficiencies, production savings, etc.
-

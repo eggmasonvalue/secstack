@@ -340,7 +340,7 @@ def main():
         c.log(f"  [{i+1}/{len(transcripts)}] Downloading: {t['title']}")
         data = _fetch_transcript(t["url"])
         if not data or not data.get("blocks"):
-            c.log(f"    WARNING: no transcript content found, skipping.")
+            c.log("    WARNING: no transcript content found, skipping.")
             continue
 
         md = _render_markdown(ticker, t["url"], data)

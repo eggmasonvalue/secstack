@@ -7,12 +7,14 @@ multiple" basis is where the bargains hide. The whole game is **normalizing to m
 and knowing *where in the cycle you are*.
 
 ## Tell it by
+
 Revenue and margins that breathe with an external driver, history of boom/bust EPS, exposure
 to a commodity or a capital-spending cycle, operating leverage that amplifies both
 directions, and a balance sheet that matters more than usual (leverage kills cyclicals at the
 trough).
 
 ## Where the value hides
+
 - **Mid-cycle earning power**, not the printed number — what the business makes *on average*
   across a full cycle.
 - **Cycle position.** Buying near the trough (ugly trailing numbers, washed-out sentiment) and
@@ -22,6 +24,7 @@ trough).
   durable edge in a commodity business.
 
 ## Pull these (drive sec-edgar)
+
 - 10-K Item 7 (MD&A) across **multiple years spanning a full cycle** — pull a long history so
   you can see peak-to-trough, not one phase.
 - The balance sheet and debt maturities — can it survive the next trough without a dilutive
@@ -32,23 +35,27 @@ trough).
   supply/demand balance that sets where the cycle goes next.
 
 ## Key metrics
+
 Mid-cycle revenue and EBIT margin, peak-to-trough earnings range, capacity utilization,
 incremental/decremental margins (operating leverage), net debt / mid-cycle EBITDA, cost-curve
 position, returns on capital *averaged across the cycle*.
 
 ## Normalize / adjust
+
 - **Mid-cycle earnings:** average margins (or volumes × normalized price) across a full cycle,
   then apply to current capacity — don't anchor on the latest year either way.
 - Adjust for capacity added/retired since the last comparable cycle phase.
 - Stress the balance sheet at trough cash flows; a covenant breach changes everything.
 
 ## Valuation lens
+
 **EPV on mid-cycle EBIT** is the natural anchor (no growth credit on top of an already-rich
 mid-cycle number), cross-checked with a **normalized P/E** and the multiple the stock has
 historically commanded at this cycle phase. Beware: a *low* trailing P/E on peak earnings is a
 sell signal, not a buy.
 
 ## Disqualifiers — kill it (or mark it down) if…
+
 - **It's a peak, not a trough** — current earnings are cycle-high and you'd be paying a
   "cheap" multiple on a number about to fall.
 - **The balance sheet won't survive the trough** — too much debt, near-term maturities, or

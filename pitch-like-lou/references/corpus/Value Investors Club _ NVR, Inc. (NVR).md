@@ -351,4 +351,3 @@ With such cheap options, why isn't there bidding from other large home builders?
 If the options are truly so inexpensive, then NVR is benefitting from a severe market inefficiency which I would imagine must in the long run become more efficient due to competition.  If it takes 10 or 15 years for other homebuidlers to catch on and start bidding against NVR, then that is 10 or 15 years NVR will continue to have such phenomenal performance.
 
 Perhaps that is why NVR maintains such a low profile with investors - perhaps they are afraid that publicizing their success would attract other homebuilders to move into their markets using the same model.  This would cause multiple bidders for land purchase options, causing them to become more rationally priced, and causing NVR's advantage versus other homebuilders to eventually disappear.
-

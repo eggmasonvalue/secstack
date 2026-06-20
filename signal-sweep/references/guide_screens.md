@@ -43,6 +43,7 @@ the script reads the config and builds `yfinance.EquityQuery` objects dynamicall
 ## Available yfinance EquityQuery fields
 
 ### Equality fields (use with `eq`)
+
 - `exchange` — NYSE, NMS (NASDAQ), PNK, etc.
 - `sector` — Technology, Healthcare, Industrials, etc.
 - `industry` — specific industry name
@@ -50,6 +51,7 @@ the script reads the config and builds `yfinance.EquityQuery` objects dynamicall
 - `peer_group` — peer group identifier
 
 ### Price & return fields
+
 - `intradaymarketcap` — current market cap in dollars
 - `intradayprice` — current price
 - `lastclose52weeklow.lasttwelvemonths` — ratio of last close to 52-week low (1.0 = at the low, 1.15 = 15% above)
@@ -58,6 +60,7 @@ the script reads the config and builds `yfinance.EquityQuery` objects dynamicall
 - `fiftytwowkpercentchange` — 52-week % change (e.g. -10 means down 10%)
 
 ### Trading & ownership fields
+
 - `pctheldinsider` — insider ownership as decimal (0.15 = 15%)
 - `pctheldinst` — institutional ownership as decimal
 - `beta` — beta coefficient
@@ -65,11 +68,13 @@ the script reads the config and builds `yfinance.EquityQuery` objects dynamicall
 - `dayvolume` — today's volume
 
 ### Short interest fields
+
 - `short_percentage_of_float.value` — short % of float (15 = 15%)
 - `short_interest_percentage_change.value` — % change in short interest (-20 = SI dropped 20%)
 - `days_to_cover_short.value` — days to cover
 
 ### Valuation fields
+
 - `peratio.lasttwelvemonths` — trailing P/E ratio
 - `pegratio_5y` — 5-year PEG ratio
 - `lastclosetevtotalrevenue.lasttwelvemonths` — EV/Revenue (trailing)
@@ -129,6 +134,7 @@ To add a "cheap on EV/Revenue" screen:
 ```
 
 Add this object to the `"screens"` array in `screens.json` and run:
+
 ```bash
 python scripts/scan_market.py --screen cheap-ev-revenue
 ```

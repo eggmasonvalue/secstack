@@ -12,6 +12,7 @@ re-deriving it each time; `--help` is the flag reference. Reason about the *inpu
 ## The four lenses
 
 ### 1. Reverse-DCF — "what's already priced in" (first-class)
+
 Instead of forecasting, **invert**: solve for the stage-1 growth (or margin) the *current
 price* requires, then ask one question — *is that achievable?* This is the most honest lens
 when the future is uncertain, and for **hypergrowth** names it is often the *only* defensible
@@ -23,10 +24,12 @@ reality check, even when another lens leads.
 python scripts/dcf.py --mode reverse --price 150 --fcf0 1200 --years 10 \
   --terminal-growth 3 --discount 10 --shares 500 --net-debt 200
 ```
+
 Read the result against reality: if the price implies 22% FCF growth for a decade and the
 company has never exceeded 12%, the bar is too high regardless of how good the story sounds.
 
 ### 2. Forward DCF — intrinsic value under your assumptions
+
 A two-stage discounted cash flow on normalized owner earnings (phase 3). Best for businesses
 with *predictable* cash flows — compounders, stable cash generators. Drive it with
 **bear/base/bull** growth cases (the script accepts comma-separated growth for a quick
@@ -64,6 +67,7 @@ python scripts/dcf.py --fcf0 5 --growth 25,35,50 --years 3 \
 ```
 
 ### 3. EPV — the no-growth floor
+
 Earnings Power Value capitalizes *current normalized* operating earnings with **no growth
 credit** — a conservative floor that answers "what's it worth if the growth never shows up?"
 Especially clarifying for cyclicals (use mid-cycle EBIT), deep-value, and any case where you
@@ -74,6 +78,7 @@ python scripts/epv.py --ebit 600 --tax 21 --wacc 9 --shares 500 --net-debt 200
 ```
 
 ### 4. Relative multiples — the sanity check
+
 P/E, EV/EBIT, EV/Sales, P/FCF against the peer set (`market-scout` gives you the peers).
 Never a thesis on its own — "cheap vs. peers" can mean the whole group is
 mispriced or the company deserves its discount — but a vital cross-check on the absolute

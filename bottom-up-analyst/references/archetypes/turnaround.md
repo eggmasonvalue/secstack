@@ -8,12 +8,14 @@ case. The thesis is **discontinuity** — the future will not look like the trai
 and you must prove *why* with a mechanism, not a hope.
 
 ## Tell it by
+
 Poor or deteriorating trailing numbers but an identifiable catalyst for change; a new CEO
 with a credible plan; a regulatory/sectoral shift that alters the company's economics; early
 evidence of margin or demand inflection in the most recent quarters; a market still pricing
 the *old* trajectory.
 
 ## Where the value hides
+
 - **The gap between trailing and forward.** The market extrapolates the recent past; the edge
   is identifying a *real* break in trend before the financials confirm it.
 - **The mechanism.** A turnaround thesis lives or dies on a concrete cause — "new management
@@ -23,6 +25,7 @@ the *old* trajectory.
   is the inflected earning power — but only if the balance sheet buys enough time.
 
 ## Pull these (drive sec-edgar)
+
 - The **most recent** 8-Ks, 10-Qs, and earnings call/exhibit — this is where early inflection
   evidence shows up first; weight recency heavily.
 - 10-K MD&A and segment data — to locate exactly *where* the losses/drag sit and whether the
@@ -35,17 +38,20 @@ the *old* trajectory.
   [W] for the policy context filings won't carry.
 
 ## Key metrics
+
 Sequential (QoQ) margin and revenue trend (not just YoY), the specific cost/revenue line that's
 inflecting, incremental margins on the recovery, cash runway and burn, leverage and maturities,
 the size of the addressable improvement vs. the current loss.
 
 ## Normalize / adjust
+
 - Model **post-inflection** steady-state economics explicitly — and separately keep a
   **downside case where the inflection fails**.
 - Strip the segment/cost being fixed to see the "good company" underneath.
 - Be conservative on timing; inflections usually take longer than the bull case assumes.
 
 ## Valuation lens
+
 **Scenario DCF** on post-inflection margins (bear = inflection stalls; base = partial; bull =
 full), with **EPV/asset value today as the downside floor**. A turnaround’s FCF trajectory
 almost always has a structural bend — near-term acceleration from cost-outs, margin
@@ -55,6 +61,7 @@ single stage-1 rate to average across two distinct phases. The thesis is attract
 the EPV floor limits the loss while the inflection delivers the upside — quantify both ends.
 
 ## Disqualifiers — kill it (or mark it down) if…
+
 - **No concrete mechanism** — the case rests on hope, sentiment, or "it's too cheap to go
   lower" rather than a specific, traceable cause of change.
 - **The balance sheet runs out before the inflection lands** — insufficient runway; the next

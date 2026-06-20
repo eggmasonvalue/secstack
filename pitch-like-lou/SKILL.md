@@ -105,7 +105,9 @@ questions 1 and 4; a compounder on 2 and 3; an arbitrage on 1 and 4 with the str
 the spine. Do not pad a section just because it exists.
 
 ### 1. Stat header
+
 A compact, text-aligned block of the core metrics. Keep it; it orients the reader instantly.
+
 ```text
 Price: [px]                    EPS: [cur / fwd]
 Shares Out (M): [sh]           P/E: [x]
@@ -113,19 +115,24 @@ Market Cap ($M): [mc]          P/FCF: [x]
 Net Debt ($M): [nd]            EBIT: [ebit]
 TEV ($M): [tev]                TEV/EBIT: [x]
 ```
+
 *Calc discipline:* Net Debt = total debt − cash & marketable securities. TEV = market cap + net
 debt + the cost of option dilution (treasury-stock method — bake the dilution in, don't footnote it).
 FCF = operating cash flow − capex, and **name any adjustment you make** rather than burying it.
 
 ### 2. The hook
+
 One paragraph. State the core disconnect in the first breath.
+
 - *Compounder:* lead with the return-and-multiple gap — *"…an unleveraged return on equity of over
   35% and trades at 4.85x free cash flow."*
 - *Asset play / arb:* lead with the value-to-price gap and the reason it's safe — *"…net cash of
   $3.91 … trades for $1.70 … If the stock trades to net cash, the total return will be 130%."*
 
 ### 3. The body — the four questions a Lou pitch actually answers
+
 Write these as argument, not headings to check off:
+
 1. **Why is it this cheap — and why is that fear wrong?** Name the market's reason (cyclical,
    post-bankruptcy neglect, EM currency, "value trap") and dismantle it. For asset plays, prove
    there is no catch — the usual culprits are funded debt or an operating burn depleting the cash,
@@ -138,16 +145,19 @@ Write these as argument, not headings to check off:
    behavior — after you un-distort the accounting. Show the capital-allocation track record as a
    **year-by-year table** (the falling share count, the deleveraging), because the trend persuades
    where a single number does not.
+
    ```text
    12/31/95: 15.21M shares    12/31/98: 10.39M
    12/31/96: 13.57M           12/31/99:  9.17M
    12/31/97: 11.09M           04/18/01:  8.14M
    ```
+
 4. **Who controls the outcome, and are incentives aligned?** Controlling family, founder's age and
    estate, the put/call or takeover formula, the option pool. Price the bad parts in as a cost of
    ownership; map why the decision-maker is likely to do the value-realizing thing.
 
 ### 4. The catalyst
+
 A short numbered list of specific, near-dated events that close the gap — a buyback authorization,
 an exchange uplisting, a founder's retirement, a put/call exercise date, price hikes hitting next
 quarter's margins. Vague "re-rating" is not a catalyst; a date or a mechanism is.

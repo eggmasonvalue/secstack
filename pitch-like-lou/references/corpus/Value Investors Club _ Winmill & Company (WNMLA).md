@@ -6,9 +6,9 @@ Winmill & Company has net cash of $3.91.  The stock trades for $1.70.  If the st
 
 Generally, the "catch" in companies that are trading for below cash value is either (1) there are substantial liabilities or (2) there is a large operating burn rate that is depleting the cash assets.  Neither of these apply here:
 
-	WNMLA has no funded debt and only a very small amount of current liabilities.  After subtracting ALL liabilities (Cash and Marketable Securities minus Total Liabilities), net cash is $3.91.
+ WNMLA has no funded debt and only a very small amount of current liabilities.  After subtracting ALL liabilities (Cash and Marketable Securities minus Total Liabilities), net cash is $3.91.
 
-	Operating cash flow was a loss of $0.13 per share in the most recent quarter.  However, this was affected by a non-recurring payment on accrued taxes related to the sale in the prior year of a non-operating asset.  Adjusting for this working capital item produces operating cash flow in the most recent quarter of positive $0.01.  The most recent quarter's results do not include any contribution from the sold assets.
+ Operating cash flow was a loss of $0.13 per share in the most recent quarter.  However, this was affected by a non-recurring payment on accrued taxes related to the sale in the prior year of a non-operating asset.  Adjusting for this working capital item produces operating cash flow in the most recent quarter of positive $0.01.  The most recent quarter's results do not include any contribution from the sold assets.
 
 WNMLA is a securities firm that has been selling off its principal assets in the last two years.  Originally, the company was called Bull & Bear Group.  That company had 3 main assets:  a brokerage operation, a commercial real estate property which produced rental income, and a fund management division.  In 1999, the company sold its brokerage operation (and the rights to the Bull & Bear name) to Royal Bank of Canada.  In 2000, the company sold its real estate property.  What remains now is the cash and the fund management company, which I believe will be eventually sold as well.
 
@@ -20,11 +20,11 @@ The performance of the third category (open end funds) is the reason that WNMLA 
 
 ## Catalyst
 
-1.  Company trades for less than 50% of cash minus total liabilities.
+1. Company trades for less than 50% of cash minus total liabilities.
 
-2.  Company may be sold as Bassett Winmill (chairman) approaches retirement.  He is 71.
+2. Company may be sold as Bassett Winmill (chairman) approaches retirement.  He is 71.
 
-3.  WNMLA's mutual funds had decent performance in the 2nd quarter.  Midas Fund alone was up 9% in the quarter.  This should positively impact WNMLA's 2nd quarter results when they are announced.
+3. WNMLA's mutual funds had decent performance in the 2nd quarter.  Midas Fund alone was up 9% in the quarter.  This should positively impact WNMLA's 2nd quarter results when they are announced.
 
 ## Discussion / Q&A
 
@@ -102,7 +102,7 @@ Talked with the company....two open ended funds of any size Midas Fund (approx $
 
 What makes you think they are going to sell...Thomas Winmill(the son) manages Midas Fund and one teeny fund and Bassett Winmill (the dad) manages Special Equities and one teeny fund.  Marion Morris manages Dollar Reserves and the CEFs (fixed income funds).  Bassett and Marion each work from home....so they may not really be working much at all and Thomas probably likes his low stress job.  Why should they sell if they run the thing like a private company.  Dad and son make about 550k combined in salary (33% of "earned" revs, not counting interest income on cash and investments). They also readily reprice options from what I can see.  Also, what about the 600k sh award program in place...should I worry about substantial dilution.
 
-All in all....the mutual funds and CEFs are probably worth about $1.5M (or 1x revs) in a sale and they have about $6M in cash and investments net of the little debt(being conservative here) So...even with the 600k extra shares...your still looking at a company worth $3.50 per share after a lot of haircuts.....biggest issue is the use of the cash and securities...are they going to take it from us via bonuses or invest poorly in an expansion plan....pretty big margin of safety here. But where is the real catalyst? 
+All in all....the mutual funds and CEFs are probably worth about $1.5M (or 1x revs) in a sale and they have about $6M in cash and investments net of the little debt(being conservative here) So...even with the 600k extra shares...your still looking at a company worth $3.50 per share after a lot of haircuts.....biggest issue is the use of the cash and securities...are they going to take it from us via bonuses or invest poorly in an expansion plan....pretty big margin of safety here. But where is the real catalyst?
 
 Doesn't sound like they are
 
@@ -124,7 +124,7 @@ I'd also add that the size of the market cap has *nothing* to do with whether th
 
 ### Norbert Lou (charlie479) (ID: 6274)
 
-> I still maintain that it is NOT obviously a buy unless the controlling family plans to sell/liquidate.  There are 
+> I still maintain that it is NOT obviously a buy unless the controlling family plans to sell/liquidate.  There are
 
 a lot of asset-rich companies selling way below NAV, even when NAV is mostly cash, and they sell at those prices for a reason.  
 
@@ -142,7 +142,7 @@ Come on.  Market cap is $3 million, 3/31/01 cash was $6.5 million, with daily tr
 
 ### Member (duff234) (ID: 6272)
 
-You're right insofar as selling major chunks of the biz in the recent past was a good move.  Also, this may be a sign that the controlling family is ready to throw in the towel and sell the co.  If that is the case, then the stock is obviously a buy. 
+You're right insofar as selling major chunks of the biz in the recent past was a good move.  Also, this may be a sign that the controlling family is ready to throw in the towel and sell the co.  If that is the case, then the stock is obviously a buy.
 
 I still maintain that it is NOT obviously a buy unless the controlling family plans to sell/liquidate.  There are a lot of asset-rich companies selling way below NAV, even when NAV is mostly cash, and they sell at those prices for a reason.  Controlling shareholders have numerous ways to keep outsiders from getting their hands on the $, and when they have signalled that 1) they are not going to set the world on fire with 20%+ growth in intrinsic value per year ad infinitum, and 2) they are going to let the share price languish for years, then you have to be wary.
 
@@ -174,7 +174,7 @@ I am not sure I agree.  They made a poor decision to focus their mutual fund ope
 
 It is always amazing to me how many people will turn down the chance to buy $1.00 of cash for $0.40 because "you'll never see full value".  Let me ask you this:  would you ever pay $1.00 per share for a money-market fund with $1.00 per share of NAV?  If that same fund offered to give you (for no compensation) shares in another money market fund  worth $1.50 of NAV but that fund had a 5-year lockup, would you take those shares?  I'll bet your answer to the first question is yes (just about everyone who owns a brokerage account has bought a money market fund) and if you the answer to your first question is also yes, then the logic of panning WNMLA because "you'll never see full value" is worth revisiting.
 
->Do you have any special knowledge of the controlling 
+>Do you have any special knowledge of the controlling
 
 shareholders and their intentions?
 
@@ -195,4 +195,3 @@ Do you have any special knowledge of the controlling shareholders and their inte
 Thanks,
 
 D
-

@@ -17,7 +17,7 @@ own; together they form a pipeline.
 
 ## How they compose
 
-```
+```text
   signal-sweep  (surfaces tickers)
        │
        ▼

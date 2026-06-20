@@ -68,7 +68,7 @@ def main():
     if args.date:
         from datetime import date as _date
         try:
-            target = _date.fromisoformat(args.date)
+            _date.fromisoformat(args.date)
         except ValueError:
             c.log(f"ERROR: --date must be YYYY-MM-DD, got '{args.date}'.")
             sys.exit(1)

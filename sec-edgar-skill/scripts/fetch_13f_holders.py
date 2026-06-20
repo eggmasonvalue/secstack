@@ -218,7 +218,7 @@ def _build_stock_holders(ticker: str, cusip: str, issuer: str,
         lines.append(f"| {i+1} | {name} | {_fmt_shares(shares)} | {cik} |")
 
     if len(holders) > top_n:
-        lines.append(f"")
+        lines.append("")
         lines.append(f"*Showing top {top_n} of {len(holders)} holders. "
                      f"Use --top to adjust.*")
 

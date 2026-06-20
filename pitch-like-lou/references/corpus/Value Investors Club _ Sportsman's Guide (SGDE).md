@@ -4,19 +4,19 @@
 
 Sportsman’s Guide has an unleveraged return on equity of over 35% and trades at 4.85x free cash flow (defined as operating cash flow minus capital expenditures).
 
-The company is a retailer of sporting gear and other outdoor items.  It sells its products primarily through its catalogs and web site.  If you are not familiar with this company’s wares, please check out www.sportsmansguide.com and spend freely.
+The company is a retailer of sporting gear and other outdoor items.  It sells its products primarily through its catalogs and web site.  If you are not familiar with this company’s wares, please check out <www.sportsmansguide.com> and spend freely.
 
 1) The company has a strong niche brand.  Its customer following has been cultivated since Sportsman’s Guide was founded in 1970 as a catalog of products targeted at deer hunters.  Over the years, founder Gary Olen has broadened the original catalog into a business producing $180 mil in revenue per year through a series of monthly catalogs with a distribution of 46 million per year.
 
 Indicative of the loyalty of the customers is the success of the company’s recent Buyer’s Club initiative.  Buyer’s Club members purchase a yearly membership for $29.99 to receive catalogs with limited run items available only to members.  Members also receive 5%-10% discounts on most items.  The number of members was 310,000 at 12/31/02.  Membership grew 22% last year and has continued to grow in the 1st quarter.
 
-2) A key competitive advantage for a catalog marketer is its database of customer names.  85% of the company’s revenues come from existing names in its database of sporting and outdoor enthusiasts.  Sportsman’s Guide has 5.2 million names with demographic data and purchasing history in its customer files.  Of these, 1 million names have purchased a product within the last 12 months.  Over time, the company has used response data to subdivide this database into subsets of customers.  These subsets receive different specialty catalogs in addition to the main Sportsman’s catalog.  The specialty catalogs have different product focuses:  government surplus, camping, shooting, hunting, etc.  Subdivision improves response rates which reduces unnecessary mailing costs and improves economic returns.
+1) A key competitive advantage for a catalog marketer is its database of customer names.  85% of the company’s revenues come from existing names in its database of sporting and outdoor enthusiasts.  Sportsman’s Guide has 5.2 million names with demographic data and purchasing history in its customer files.  Of these, 1 million names have purchased a product within the last 12 months.  Over time, the company has used response data to subdivide this database into subsets of customers.  These subsets receive different specialty catalogs in addition to the main Sportsman’s catalog.  The specialty catalogs have different product focuses:  government surplus, camping, shooting, hunting, etc.  Subdivision improves response rates which reduces unnecessary mailing costs and improves economic returns.
 
 Ever since the launch of the online Sportman’s catalog, the database has also been supplemented with email lists.  There are approximately 900k names in the email database and nearly all of them receive a broadcast email every 1 or 2 weeks.
 
-3) The company’s “bargain” focus is hard to replicate.  The company has developed a customer following partially because of its history of value-priced bargain items in its catalogs.  These items are 25%-60% off retail.  The company is able to offer these prices to customers because the company's buying agents comb for discontinued/liquidation/overstock items through a network of 1200 supplier contacts.  Because the supply of overstock items is irregular, it’s critical to have the ability to purchase opportunistically and store cheaply.  All inventory is stocked in Sportsman’s warehouses in Minneapolis.  Catalogs are customized to include these overstock items shortly before printing so the inventory carrying period is minimized.  The company’s customer base of bargain hunters allows SGDE to move these items faster than other competing retailers.  What cannot be sold via its regular catalogs and online store is liquidated through its bargainoutfitters.com site and a small retail location the company has in Minnesota.  Everything from the low grade paper in the company’s catalogs to the incentive systems for maintaining high shipping accuracy is aimed at selling cheaply and producing a solid return on capital.  
+1) The company’s “bargain” focus is hard to replicate.  The company has developed a customer following partially because of its history of value-priced bargain items in its catalogs.  These items are 25%-60% off retail.  The company is able to offer these prices to customers because the company's buying agents comb for discontinued/liquidation/overstock items through a network of 1200 supplier contacts.  Because the supply of overstock items is irregular, it’s critical to have the ability to purchase opportunistically and store cheaply.  All inventory is stocked in Sportsman’s warehouses in Minneapolis.  Catalogs are customized to include these overstock items shortly before printing so the inventory carrying period is minimized.  The company’s customer base of bargain hunters allows SGDE to move these items faster than other competing retailers.  What cannot be sold via its regular catalogs and online store is liquidated through its bargainoutfitters.com site and a small retail location the company has in Minnesota.  Everything from the low grade paper in the company’s catalogs to the incentive systems for maintaining high shipping accuracy is aimed at selling cheaply and producing a solid return on capital.  
 
-4) I believe there is a fundamental shift in SGDE’s business that is reducing costs in the company and improving return on capital.  It’s this fancy new thing called the internet.
+2) I believe there is a fundamental shift in SGDE’s business that is reducing costs in the company and improving return on capital.  It’s this fancy new thing called the internet.
 
 Up until 1998, all of the company’s business was done through print catalogs.  Millions of these catalogs were distributed each year with each one incurring shipping and printing costs.  There’s also higher production costs and longer product lead time required when doing business by catalog.
 
@@ -62,7 +62,7 @@ Charlie, thanks for the great idea.  The company continues to execute and is doi
 
 ### Norbert Lou (charlie479) (ID: 13298)
 
-SOUTH ST. PAUL, Minn., Oct. 9 /PRNewswire-FirstCall/ -- The Sportsman's Guide, Inc. (Nasdaq: SGDE) today announced that the Company expects to report total sales of approximately $41.0 million and earnings per share of $0.12 to $0.13 for its third quarter ended September 30, 2003.  This would compare to third quarter 2002 results of $36.7 million in sales and earnings of $0.05 per share.  Earnings will be above the consensus First Call(R) estimate, which is $0.09 per share.  The Company plans to report its final quarterly results at 5:00 pm CDT on Tuesday, October 28, 2003. 
+SOUTH ST. PAUL, Minn., Oct. 9 /PRNewswire-FirstCall/ -- The Sportsman's Guide, Inc. (Nasdaq: SGDE) today announced that the Company expects to report total sales of approximately $41.0 million and earnings per share of $0.12 to $0.13 for its third quarter ended September 30, 2003.  This would compare to third quarter 2002 results of $36.7 million in sales and earnings of $0.05 per share.  Earnings will be above the consensus First Call(R) estimate, which is $0.09 per share.  The Company plans to report its final quarterly results at 5:00 pm CDT on Tuesday, October 28, 2003.
 
 Gregory R. Binkley, President and Chief Executive Officer of the Company, stated, "Our trend of reporting stronger than anticipated results continues with our third quarter. Internet-related sales as a percentage of total sales will
 
@@ -132,17 +132,17 @@ I have to agree with Paul118; the options grants are pretty hefty for a company 
 
 pardon my ignorance, but some basic questions?
 
- - you at all concerned about the option grants, 250k the last 2 years on a 10m share base?  Seems more than a little excessive on the face of it
+- you at all concerned about the option grants, 250k the last 2 years on a 10m share base?  Seems more than a little excessive on the face of it
 
- - what happened in 2000?  Start-up costs?  what is that severance committments they talk about?  equity placement?
+- what happened in 2000?  Start-up costs?  what is that severance committments they talk about?  equity placement?
 
- - since book value is essentially inventory, what assurance do we have that the inventory is worth what they say it is worth?
+- since book value is essentially inventory, what assurance do we have that the inventory is worth what they say it is worth?
 
- - if this company has produced this much free cash flow, why do they only have 20m in book value at this point?
+- if this company has produced this much free cash flow, why do they only have 20m in book value at this point?
 
- - could you speak to the proxy?  Esp. trends over the past few years?  The CEO's latest pay - 219k base, 394k bonus, 50,000 options looks pretty fat for a company this size
+- could you speak to the proxy?  Esp. trends over the past few years?  The CEO's latest pay - 219k base, 394k bonus, 50,000 options looks pretty fat for a company this size
 
- - what is your estimate, guess as to the long-term growth prospects from here?
+- what is your estimate, guess as to the long-term growth prospects from here?
 
 Thanks for posting this idea...
 
@@ -150,9 +150,9 @@ Thanks for posting this idea...
 
 Charlie,
 
-I would not say that dividends are any more efficient, but they are more attractive. Let's look at the possibilities. The company has committed to buying back 10% of their stock, which is about 476,000 shares. At $10.32/share, that's $4.9 million that they are spending on buybacks. Or they could use that same money and declare a special dividend of $1. Or they could institute regular dividends of $0.50 per share per year, for a 4.8% yield, which would represent about 55% of earnings. Given the low investment yields in today's market place, a 4.8% dividend yield that has the potential to grow will look very attractive to the equity income crowd. 
+I would not say that dividends are any more efficient, but they are more attractive. Let's look at the possibilities. The company has committed to buying back 10% of their stock, which is about 476,000 shares. At $10.32/share, that's $4.9 million that they are spending on buybacks. Or they could use that same money and declare a special dividend of $1. Or they could institute regular dividends of $0.50 per share per year, for a 4.8% yield, which would represent about 55% of earnings. Given the low investment yields in today's market place, a 4.8% dividend yield that has the potential to grow will look very attractive to the equity income crowd.
 
-It is pretty easy to understand when a company buys back its stock when its trading at a significant discount to book value. I can almost rationalize your argument that buy backs below your intrinsic value are okay, but your value is really dependent upon steady cash flow. That's not necessarily bad, just subject to more flucuations, and hence more risk. 
+It is pretty easy to understand when a company buys back its stock when its trading at a significant discount to book value. I can almost rationalize your argument that buy backs below your intrinsic value are okay, but your value is really dependent upon steady cash flow. That's not necessarily bad, just subject to more flucuations, and hence more risk.
 
 Consider for a moment CI. They spent something like $4-5 billion on buybacks in the last 5 years and the purchases were all made well above book value. When they ran into problems last year, the stock got crushed and obliterated any benefit from the buybacks. I am not saying that will happen to SGDE, but it does highlight the risk. The benefits of buy backs above book are dependent upon a steady earnings stream.
 
@@ -282,21 +282,20 @@ Charlie, I also really liked your QUIPS write-up and your legal analysis was 100
 
 Thanks for posting this.  Wish you had told us about it two years ago before it went from $2 to $10.  
 
-It appears to me that this is not trading for the free cash flow multiple you outlined in the post. 
+It appears to me that this is not trading for the free cash flow multiple you outlined in the post.
 
-For the trailing 4 quarters, 
+For the trailing 4 quarters,
 
-It looks to me like 7.4 million 
+It looks to me like 7.4 million
 
-and capex looks like .9 million 
+and capex looks like .9 million
 
-so free cash was 6.5 million 
+so free cash was 6.5 million
 
-On a 45 million dollar market cap that is a 6.9 free cash flow multiple 
+On a 45 million dollar market cap that is a 6.9 free cash flow multiple
 
 If we subtract 11 million in net cash on the balance sheet from the 45 million dollar market cap we get 34 million dollar enterprise value
 
-So Enterprise value / Free cash is 5.2 times. 
+So Enterprise value / Free cash is 5.2 times.
 
 Please help me understand how you came up with your 4.85 times free cash number for this
-

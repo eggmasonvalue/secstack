@@ -18,13 +18,13 @@ Under the US bankruptcy code, senior claims of an entity must be paid in full be
 
 ## Catalyst
 
-1.  Filing of a plan of reorganization in mid 2003.  
+1. Filing of a plan of reorganization in mid 2003.  
 
-2.  Gradual public realization of structural seniority of the MCI QUIPS to the Worldcom bonds.
+2. Gradual public realization of structural seniority of the MCI QUIPS to the Worldcom bonds.
 
-3.  Emergency from bankrutpcy
+3. Emergency from bankrutpcy
 
-4.  Elimination of view of QUIPS as a tainted security when it moves off the pink sheets.
+4. Elimination of view of QUIPS as a tainted security when it moves off the pink sheets.
 
 ## Discussion / Q&A
 
@@ -60,7 +60,7 @@ I'd like to add my thanks as well.  This was an intriguing, challenging, and ult
 
 ### Member (pat110) (ID: 12353)
 
-Charlie, 
+Charlie,
 
 This one had some great twists and turns.  I wish I were a better trader but did manage to do pretty well.  It was a good learning experience --plus I got paid.  
 
@@ -92,7 +92,7 @@ This story certainly has taken some "interesting" turns.  I have a small positio
 
 QUIP attorneys at Kramer, Levin filed a docket early this week that, if you hold it sideways and squint through one eye, seems like it might imply settlement talks are about to begin.
 
-The WCOM senior lenders really blew it. If they'd just paid the MCI creditors in full instead of trying to pull this substantive consolidation crap the state tax evasion scheme (yesterday's WSJ) never would have come to light. Now they've 50 states with budget deficits after them. It's one thing to be greedy, but to be both greedy and stupid..... 
+The WCOM senior lenders really blew it. If they'd just paid the MCI creditors in full instead of trying to pull this substantive consolidation crap the state tax evasion scheme (yesterday's WSJ) never would have come to light. Now they've 50 states with budget deficits after them. It's one thing to be greedy, but to be both greedy and stupid.....
 
 Keeping Bernie's legacy alive, I supppose.
 
@@ -134,29 +134,29 @@ Is there a silver lining anywhere in this Cumulonimbus?
 
 ### Member (jim77) (ID: 12341)
 
-Central to the dispute is WorldCom's proposal to consolidate the estates of WorldCom's holding company and its MCI unit. 
+Central to the dispute is WorldCom's proposal to consolidate the estates of WorldCom's holding company and its MCI unit.
 
-The debtor's disclosure statement and reorganization plan assert that substantive consolidation is necessary because of the impossibility of untangling more than $1 trillion in intercompany claims that WorldCom's many units hold against each other. 
+The debtor's disclosure statement and reorganization plan assert that substantive consolidation is necessary because of the impossibility of untangling more than $1 trillion in intercompany claims that WorldCom's many units hold against each other.
 
-Under the plan, investors with trade claims at the MCI WorldCom Network Services subsidiary would receive about 36 cents on the dollar. Because of information in bond indentures and obtained through discovery, they say they are structurally senior and should receive 100% recovery. 
+Under the plan, investors with trade claims at the MCI WorldCom Network Services subsidiary would receive about 36 cents on the dollar. Because of information in bond indentures and obtained through discovery, they say they are structurally senior and should receive 100% recovery.
 
-MCI subordinated noteholders would receive nothing under the plan. They argue that since their claims are against MCI, where they say 90% to 95% of WorldCom's value resides, they should also receive 100%. The investors point to WorldCom holding company bondholders, who are farther from the assets in the corporate structure yet get about 36 cents on the dollar. 
+MCI subordinated noteholders would receive nothing under the plan. They argue that since their claims are against MCI, where they say 90% to 95% of WorldCom's value resides, they should also receive 100%. The investors point to WorldCom holding company bondholders, who are farther from the assets in the corporate structure yet get about 36 cents on the dollar.
 
-MCI's senior bondholders, by comparison, get 80 cents on the dollar. 
+MCI's senior bondholders, by comparison, get 80 cents on the dollar.
 
-Weisfelner and Mayer said the consolidation improperly diverts $3 billion in value from MCI creditors. The lawyers allege that the debtor didn't adequately consider fairer alternatives and left decisions about recoveries to vocal claimants with large pieces of WorldCom holding company debt to expedite the process. 
+Weisfelner and Mayer said the consolidation improperly diverts $3 billion in value from MCI creditors. The lawyers allege that the debtor didn't adequately consider fairer alternatives and left decisions about recoveries to vocal claimants with large pieces of WorldCom holding company debt to expedite the process.
 
-Counsel for WorldCom said the parties' complaints were really about the outcome of the plan, and not the way the plan was created. 
+Counsel for WorldCom said the parties' complaints were really about the outcome of the plan, and not the way the plan was created.
 
-"They have their remedies," said Goldstein, explaining that dissenters could object to or vote against the proposal. 
+"They have their remedies," said Goldstein, explaining that dissenters could object to or vote against the proposal.
 
-Weisfelner said that a report from FTI Consulting, the forensic accountant for the creditors committee, suggested that a three-way consolidation would cut through much of the uncertainty about the intercompany claims. Under this method, he said, MCI would owe WorldCom a net of $24 billion in intercompany claims, $19.5 billion of which are royalty fees. 
+Weisfelner said that a report from FTI Consulting, the forensic accountant for the creditors committee, suggested that a three-way consolidation would cut through much of the uncertainty about the intercompany claims. Under this method, he said, MCI would owe WorldCom a net of $24 billion in intercompany claims, $19.5 billion of which are royalty fees.
 
-The lawyer said the royalty fees were for items like the benefit of the WorldCom name among other matters, and argued that they would not hold up in court. 
+The lawyer said the royalty fees were for items like the benefit of the WorldCom name among other matters, and argued that they would not hold up in court.
 
-Lawyers for the debtor and the committee questioned the committee's evidence and motives. 
+Lawyers for the debtor and the committee questioned the committee's evidence and motives.
 
-"The conclusions came before the analysis," said Doug Maynard of Akin, Gump, Strauss, Hauer & Feld LLP, a lawyer for the unsecured committee, explaining that the movants decided what result they wanted and then tailored their discovery to the end. 
+"The conclusions came before the analysis," said Doug Maynard of Akin, Gump, Strauss, Hauer & Feld LLP, a lawyer for the unsecured committee, explaining that the movants decided what result they wanted and then tailored their discovery to the end.
 
 Several lawyers argued that advisors to WorldCom and the committee had grappled with the claims for six months, and rightly concluded that they could not be reconciled.
 
@@ -166,31 +166,31 @@ Judge rejects request for MCI trustee
 
 by Chris Nolter 16, May 2003
 
-One the eve of WorldCom Inc.’s disclosure statement hearing, U.S. Bankruptcy Judge Arthur Gonzalez denied the request of two creditor groups to appoint a Chapter 11 trustee to serve as a fiduciary for the telecom's MCI Group subsidiary. 
+One the eve of WorldCom Inc.’s disclosure statement hearing, U.S. Bankruptcy Judge Arthur Gonzalez denied the request of two creditor groups to appoint a Chapter 11 trustee to serve as a fiduciary for the telecom's MCI Group subsidiary.
 
-The ruling, laid out in a 25-page decision issued late Friday, May 16, addresses the most contentious dispute among claim holders in the telecom's mammoth bankruptcy filing. 
+The ruling, laid out in a 25-page decision issued late Friday, May 16, addresses the most contentious dispute among claim holders in the telecom's mammoth bankruptcy filing.
 
-Two groups of investors holding claims against the debtors' MCI subsidiary had asked Gonzalez to appoint a limited-purpose Chapter 11 trustee for the unit. The creditors, who have attacked WorldCom's efforts to substantively consolidate the estates of MCI and WorldCom, allege that there is no fiduciary looking out for MCI and its creditors. 
+Two groups of investors holding claims against the debtors' MCI subsidiary had asked Gonzalez to appoint a limited-purpose Chapter 11 trustee for the unit. The creditors, who have attacked WorldCom's efforts to substantively consolidate the estates of MCI and WorldCom, allege that there is no fiduciary looking out for MCI and its creditors.
 
 On Friday, however, Gonzalez ruled that the creditors did not meet the standard for cause and that their objections would be more appropriate at WorldCom’s confirmation hearing.
 
 The judge noted that appointing a trustee would be an event of default under WorldCom’s debtor-in-possession credit facility. He also said the delay to the reorganization would be “substantial” and would “seriously and adversely” affect the debtor.
 
-“We’re extremely disappointed by the court’s conclusion, and we’ll consider all of our appellate rights," said Ed Weisfelner of law firm Brown Rudnick Berlack Israels LLP, which represents a group of distressed investors who purchased claims in the MCI WorldCom Network Services unit. 
+“We’re extremely disappointed by the court’s conclusion, and we’ll consider all of our appellate rights," said Ed Weisfelner of law firm Brown Rudnick Berlack Israels LLP, which represents a group of distressed investors who purchased claims in the MCI WorldCom Network Services unit.
 
-WorldCom’s disclosure statement hearing is scheduled for Monday, May 19. The debtor will face objections from the MCI creditors, regional Bells, AT&T Corp., state attorneys general and several other parties. 
+WorldCom’s disclosure statement hearing is scheduled for Monday, May 19. The debtor will face objections from the MCI creditors, regional Bells, AT&T Corp., state attorneys general and several other parties.
 
-Gonzalez took a day to issue his decision following an eight-hour hearing Thursday in which the parties made their arguments until 10 p.m. EDT. 
+Gonzalez took a day to issue his decision following an eight-hour hearing Thursday in which the parties made their arguments until 10 p.m. EDT.
 
-Speaking at the hearing, Weisfelner listed several reasons for appointing a trustee. 
+Speaking at the hearing, Weisfelner listed several reasons for appointing a trustee.
 
-The lawyer argued that the debtors had disregarded several sections of the bankruptcy code by abdicating their fiduciary responsibility to MCI and improperly soliciting votes for the plan. He also asserted, among other things, that they failed to hold a substantive consolidation hearing and did not consider less-harmful approaches to consolidating the various bankruptcy estates. 
+The lawyer argued that the debtors had disregarded several sections of the bankruptcy code by abdicating their fiduciary responsibility to MCI and improperly soliciting votes for the plan. He also asserted, among other things, that they failed to hold a substantive consolidation hearing and did not consider less-harmful approaches to consolidating the various bankruptcy estates.
 
-"The irony of getting ripped off" by the fiduciaries of WorldCom is "unbearable," Weisfelner said at the hearing, alluding to the prepetition fraud allegedly perpetrated by the company's former management. 
+"The irony of getting ripped off" by the fiduciaries of WorldCom is "unbearable," Weisfelner said at the hearing, alluding to the prepetition fraud allegedly perpetrated by the company's former management.
 
-Thomas Moers Mayer of Kramer Levin Naftalis & Frankel LLP, counsel to a group of MCI subordinated noteholders that includes some small investors, voiced similar arguments. 
+Thomas Moers Mayer of Kramer Levin Naftalis & Frankel LLP, counsel to a group of MCI subordinated noteholders that includes some small investors, voiced similar arguments.
 
-Marcia Goldstein of Weil, Gotshal & Manges LLP derided the accusatory tone of the two lawyers at the hearing, pointing to WorldCom's achievements in corporate governance since filing for bankruptcy protection eight months ago. Goldstein said that words such as "theft" and "flagrant disregard" were used to "dress up" complaints stemming from poor investment decisions. 
+Marcia Goldstein of Weil, Gotshal & Manges LLP derided the accusatory tone of the two lawyers at the hearing, pointing to WorldCom's achievements in corporate governance since filing for bankruptcy protection eight months ago. Goldstein said that words such as "theft" and "flagrant disregard" were used to "dress up" complaints stemming from poor investment decisions.
 
 The lawyer also warned that assigning a trustee would delay the reorganization and provide ammunition to competitors such as Verizon Communications Corp., which has petitioned federal regulators to liquidate WorldCom.
 
@@ -212,33 +212,33 @@ by Chris Nolter
 
 Updated 06:47 PM EST, May-15-2003
 
-Round one of the biggest creditor fight in the biggest Chapter 11 case in history got underway Thursday, May 15, as U.S. Bankruptcy Judge Arthur Gonzalez opened a hearing to consider whether a Chapter 11 trustee should be appointed to look out for the interests of WorldCom Inc.'s MCI subsidiary. 
+Round one of the biggest creditor fight in the biggest Chapter 11 case in history got underway Thursday, May 15, as U.S. Bankruptcy Judge Arthur Gonzalez opened a hearing to consider whether a Chapter 11 trustee should be appointed to look out for the interests of WorldCom Inc.'s MCI subsidiary.
 
-Two groups of investors holding claims against MCI have asked Gonzalez for the appointment. The creditors, who have attacked WorldCom's efforts to substantively consolidate the estates of MCI and WorldCom, allege that there is no fiduciary who is looking out for the unit and its creditors. 
+Two groups of investors holding claims against MCI have asked Gonzalez for the appointment. The creditors, who have attacked WorldCom's efforts to substantively consolidate the estates of MCI and WorldCom, allege that there is no fiduciary who is looking out for the unit and its creditors.
 
-WorldCom and its unsecured creditors committee have dismissed the trustee-seekers as "out of the money" creditors "relying on innuendo, hyperbole and not burdened by the facts." 
+WorldCom and its unsecured creditors committee have dismissed the trustee-seekers as "out of the money" creditors "relying on innuendo, hyperbole and not burdened by the facts."
 
-The hearing, originally estimated to take 8 hours, was still underway at 6 p.m. EDT on Thursday. 
+The hearing, originally estimated to take 8 hours, was still underway at 6 p.m. EDT on Thursday.
 
-Distressed investors with MCI trade claims, represented by Brown Rudnick Berlack Israels LLP, and a group of dissenting MCI bondholders, retaining Kramer Levin Naftalis & Frankel LLP, have coordinated their efforts to obtain a trustee. 
+Distressed investors with MCI trade claims, represented by Brown Rudnick Berlack Israels LLP, and a group of dissenting MCI bondholders, retaining Kramer Levin Naftalis & Frankel LLP, have coordinated their efforts to obtain a trustee.
 
-In pleadings, they have argued that the debtor's reorganization plan would improperly take $3 billion in value from MCI creditors by substantively consolidating the estates of WorldCom and the unit. 
+In pleadings, they have argued that the debtor's reorganization plan would improperly take $3 billion in value from MCI creditors by substantively consolidating the estates of WorldCom and the unit.
 
-They also assert that neither the debtor nor the creditors committee undertook "serious investigation" of several key points underlying the plan. These include the level of entanglement between MCI and other units and intercompany claims, among other matters. 
+They also assert that neither the debtor nor the creditors committee undertook "serious investigation" of several key points underlying the plan. These include the level of entanglement between MCI and other units and intercompany claims, among other matters.
 
-WorldCom's objection asserted that the motions for a trustee are "no more than premature objections to the proposed plan" and that the debtor extensively investigated and analyzed issues related to consolidation. 
+WorldCom's objection asserted that the motions for a trustee are "no more than premature objections to the proposed plan" and that the debtor extensively investigated and analyzed issues related to consolidation.
 
-"Movants know there was nothing wrong with the 'process'; they simply dislike the 'result,'" said the pleading by Weil Gotshal. 
+"Movants know there was nothing wrong with the 'process'; they simply dislike the 'result,'" said the pleading by Weil Gotshal.
 
-The unsecured creditors committee said the disgruntled creditors are attempting to "hold hostage the final stages of WorldCom's phenomenal restructuring efforts" on the eve of its disclosure statement hearing, which is set for Monday, May 19. 
+The unsecured creditors committee said the disgruntled creditors are attempting to "hold hostage the final stages of WorldCom's phenomenal restructuring efforts" on the eve of its disclosure statement hearing, which is set for Monday, May 19.
 
-Filings for the committee by Akin Gump Strauss Hauer & Feld LLP also say that the dissenting creditor groups are just "unhappy with their respective postpetition investment decisions" and assert that the investors have just 1.4% of WorldCom's total prepetition debt. 
+Filings for the committee by Akin Gump Strauss Hauer & Feld LLP also say that the dissenting creditor groups are just "unhappy with their respective postpetition investment decisions" and assert that the investors have just 1.4% of WorldCom's total prepetition debt.
 
-Under WorldCom's April 14 reorganization plan, investors with trade claims at the MCI WorldCom Network Services subsidiary receive about 36 cents on the dollar. Because of information in bond indentures and obtained through discovery, they say they should receive 100% recovery. 
+Under WorldCom's April 14 reorganization plan, investors with trade claims at the MCI WorldCom Network Services subsidiary receive about 36 cents on the dollar. Because of information in bond indentures and obtained through discovery, they say they should receive 100% recovery.
 
-MCI subordinated noteholders receive nothing under the plan. They argue that since their claims are against MCI, where they say 90% to 95% of WorldCom's value resides, they should also receive 100%. They point to WorldCom holding company bondholders, who are farther from the assets in the corporate structure yet get about 36 cents on the dollar. 
+MCI subordinated noteholders receive nothing under the plan. They argue that since their claims are against MCI, where they say 90% to 95% of WorldCom's value resides, they should also receive 100%. They point to WorldCom holding company bondholders, who are farther from the assets in the corporate structure yet get about 36 cents on the dollar.
 
-HSBC Bank USA, the indenture trustee for the notes, has filed a joinder to the motion for the trustee. 
+HSBC Bank USA, the indenture trustee for the notes, has filed a joinder to the motion for the trustee.
 
 Inphomation Inc., the bankrupt former parent of the Psychic Friends Network, is also backing the motion. The company, which filed for bankruptcy protection in 1998, has liquidated all of its assets except for a potential award from an arbitration case against MCI.
 
@@ -264,7 +264,7 @@ I talked to Tom Mayer.  He is representing holders of MCI
 
 QUIPs ($200 million + face) and MCI Senior Debt ($180 million + face).  To my slight suprise he returned my call in about 10 minutes.  He is looking for smaller holders of QUIP's (We own $750,000 face) to help boost the case.  He will tell you specifically why and how you can help.  
 
-If anyone owns this I encourage you to call or email him - no matter how small (or large) your position might be. 
+If anyone owns this I encourage you to call or email him - no matter how small (or large) your position might be.
 
 You can find his contact info on Kramer Levin web site.  Just type in Kramer Levin in search engine and web site for law firm will come up.  
 
@@ -278,41 +278,41 @@ by Chris Nolter
 
 Updated 09:24 PM EST, Apr-18-2003
 
-Disgruntled creditors of WorldCom Inc.'s MCI subsidiary ratcheted up the pressure on the bankrupt parent company Friday, asking the U.S. Bankruptcy Court for the Southern District of New York to appoint a chapter 11 trustee to oversee the treatment of MCI claims in the proceedings. 
+Disgruntled creditors of WorldCom Inc.'s MCI subsidiary ratcheted up the pressure on the bankrupt parent company Friday, asking the U.S. Bankruptcy Court for the Southern District of New York to appoint a chapter 11 trustee to oversee the treatment of MCI claims in the proceedings.
 
-A motion filed by Ed Weisfelner of Brown Rudnick Berlack Israels LLP, representing distressed investors who purchased about $325 million in MCI trade debt, argued that the subsidiary needs a fiduciary to look out for its interests. 
+A motion filed by Ed Weisfelner of Brown Rudnick Berlack Israels LLP, representing distressed investors who purchased about $325 million in MCI trade debt, argued that the subsidiary needs a fiduciary to look out for its interests.
 
-A group of MCI subordinated bondholders with claims of about $244 million expects to file a supporting motion seeking similar relief early next week. The bondholders are represented by Thomas Moers Mayer of Kramer Levin Naftalis & Frankel LLP. 
+A group of MCI subordinated bondholders with claims of about $244 million expects to file a supporting motion seeking similar relief early next week. The bondholders are represented by Thomas Moers Mayer of Kramer Levin Naftalis & Frankel LLP.
 
-The telecom's recently-filed plan of reorganization proposes substantive consolidation of the WorldCom holding company and its MCI unit, saying that the businesses didn't maintain separate books and that their affairs are "irreparably entangled." 
+The telecom's recently-filed plan of reorganization proposes substantive consolidation of the WorldCom holding company and its MCI unit, saying that the businesses didn't maintain separate books and that their affairs are "irreparably entangled."
 
-The MCI trade and subordinated note committees, who own a fraction of WorldCom's total claims, have attacked the plan, arguing that consolidation is unjustified and treats their claims unfairly. 
+The MCI trade and subordinated note committees, who own a fraction of WorldCom's total claims, have attacked the plan, arguing that consolidation is unjustified and treats their claims unfairly.
 
-The trade group's motion asserts that CEO Michael Capellas' goal of filing a plan by April 15 put the company at the mercy of "a vocal and active group of bondholders" with large positions in WorldCom notes. The pleadings state that management "ceded control" of the plan negotiations to these investors, at the neglect of MCI creditors. 
+The trade group's motion asserts that CEO Michael Capellas' goal of filing a plan by April 15 put the company at the mercy of "a vocal and active group of bondholders" with large positions in WorldCom notes. The pleadings state that management "ceded control" of the plan negotiations to these investors, at the neglect of MCI creditors.
 
-The MCI trade creditors and subordinated noteholders receive less than the WorldCom holding company bondholders under the plan. The groups argued that they have structural seniority over holding company bondholders because MCI has WorldCom's most lucrative assets, pointing to bond prospectuses and other public documents. 
+The MCI trade creditors and subordinated noteholders receive less than the WorldCom holding company bondholders under the plan. The groups argued that they have structural seniority over holding company bondholders because MCI has WorldCom's most lucrative assets, pointing to bond prospectuses and other public documents.
 
-They also noted that WorldCom's lawyers gave the MCI senior bondholders an 80% recovery, citing the desire to avoid a protracted battle over substantive consolidation. 
+They also noted that WorldCom's lawyers gave the MCI senior bondholders an 80% recovery, citing the desire to avoid a protracted battle over substantive consolidation.
 
-The argument for consolidation hinges largely on intercompany claims that trace the transfer of money between WorldCom and its subsidiaries. Court filings by the debtor state that there are roughly $1 trillion of these notes, and that more than $380 billion of them lack "sufficient detail" to be deciphered. On balance, the claims would apparently dilute MCI's assets. 
+The argument for consolidation hinges largely on intercompany claims that trace the transfer of money between WorldCom and its subsidiaries. Court filings by the debtor state that there are roughly $1 trillion of these notes, and that more than $380 billion of them lack "sufficient detail" to be deciphered. On balance, the claims would apparently dilute MCI's assets.
 
-The trade creditors' motion denies the validity of intercompany notes, saying they were created to conceal WorldCom's fraudulent accounting practices as the company was being engulfed in scandal. Even if the notes were legitimate, the motion states, they should be considered capital contributions and treated as equity rather than debt. 
+The trade creditors' motion denies the validity of intercompany notes, saying they were created to conceal WorldCom's fraudulent accounting practices as the company was being engulfed in scandal. Even if the notes were legitimate, the motion states, they should be considered capital contributions and treated as equity rather than debt.
 
-While the U.S. Trustee has appointed former U.S. attorney general Richard Thornburgh as an examiner in the case, the trade creditors note that he has not released his final report and has not apparently investigated the intercompany claims. 
+While the U.S. Trustee has appointed former U.S. attorney general Richard Thornburgh as an examiner in the case, the trade creditors note that he has not released his final report and has not apparently investigated the intercompany claims.
 
-The MCI subordinated bondholders have also criticized the legitimacy of the claims. 
+The MCI subordinated bondholders have also criticized the legitimacy of the claims.
 
-"The only justification for why my people should get zero while WorldCom bonds that are structurally subordinated to [them] get $10 billion are ledger entries brought to you by the same team that was responsible for the biggest corporate fraud in the history of the United States," said Mayer, counsel to the subordinated noteholders. 
+"The only justification for why my people should get zero while WorldCom bonds that are structurally subordinated to [them] get $10 billion are ledger entries brought to you by the same team that was responsible for the biggest corporate fraud in the history of the United States," said Mayer, counsel to the subordinated noteholders.
 
-"We've seen just one side of this so we'll see what the debtor says, but this is the type of motion that requires an evidentiary hearing and discovery," commented Rick Tilton, CEO of the restructuring firm Greenacre Asset Advisors LLC, noting that the dispute could delay approval of the plan. 
+"We've seen just one side of this so we'll see what the debtor says, but this is the type of motion that requires an evidentiary hearing and discovery," commented Rick Tilton, CEO of the restructuring firm Greenacre Asset Advisors LLC, noting that the dispute could delay approval of the plan.
 
-"Even if they don't get a trustee, the substantive consolidation issue can be raised at the confirmation hearing," Tilton said, though the sides could just as easily cut a deal. "It¹s not unusual to file a plan and go back and renegotiate." 
+"Even if they don't get a trustee, the substantive consolidation issue can be raised at the confirmation hearing," Tilton said, though the sides could just as easily cut a deal. "It¹s not unusual to file a plan and go back and renegotiate."
 
 WorldCom Inc. and its counsel could not be reached for a response on Friday. The company has said that creditors with 90% of the value of all claims support the plan, though Weisfelner and Mayer say that number is too high.
 
 ### Member (doggy835) (ID: 12330)
 
-Disclosure statement is at www.elawforworldcom.com docket number 4257 filed 4/14/03.
+Disclosure statement is at <www.elawforworldcom.com> docket number 4257 filed 4/14/03.
 
 ### Member (max685) (ID: 12329)
 
@@ -331,4 +331,3 @@ The emergence of a trillion dollars or whatever in intercompany payables/transfe
 ### Member (max685) (ID: 12327)
 
 The May 1996 indenture for the QUIPs indicates that MCI may "consolidate with or merge into" another company, but only if the new company executes a supplemental indenture under which it assumes all of the obligations under the QUIP indenture.  Does anyone know whether this supplemental indenture was executed when Worldcom acquired MCI, or was it not necessary because Worldcom acquired the stock of MCI and didn't "consolidate with or merge into" MCI?  The presence of a supplemental indenture would seem to be a "bad fact" for the QUIPs.
-

@@ -7,7 +7,7 @@ and produces actionable shortlists of tickers with reasons — the top of the fu
 
 ## Where it sits
 
-```
+```text
   signal-sweep  (this skill — produces tickers)
        │
        ▼
@@ -35,9 +35,11 @@ See [SKILL.md](SKILL.md) for invocation details and flags.
 ## Setup
 
 1. **Install dependencies** (Python ≥ 3.10):
+
    ```bash
    pip install -r requirements.txt    # edgartools, yfinance, pandas, requests
    ```
+
 2. **Set `EDGAR_IDENTITY`** — required for insider, theme, and conference scans (see
    [repo-level setup](../README.md#setup)).
 3. Market screens (`scan_market.py`) use Yahoo Finance only and need no identity.
@@ -55,6 +57,7 @@ The insider scan is designed to run daily on a cron. The workflow at
 Discord, and uploads the Markdown output as a build artifact (90-day retention).
 
 **Required secrets:**
+
 - `EDGAR_IDENTITY` — your SEC identity (see [repo-level setup](../README.md#setup))
 - `DISCORD_WEBHOOK_URL` — (optional) Discord webhook for posting alerts
 

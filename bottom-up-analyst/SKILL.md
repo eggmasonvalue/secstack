@@ -79,12 +79,14 @@ Do not pad a phase just because it exists.
 
    **Breaking-news pattern:** if the user mentions a same-day event, orient.py will show the
    8-K filed today. Immediately follow with (`sec-edgar-skill` scripts):
+
    ```bash
    python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today>
    python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment list
    # then fetch Exhibit 99.1 (the press release):
    python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment "ex-99.1"
    ```
+
    The press-release exhibit is the primary source; do not web-search for what it contains.
 
    After orient, read the latest **annual report** (10-K, or 20-F for an FPI) - its business
@@ -97,9 +99,11 @@ Do not pad a phase just because it exists.
    **Pull the latest earnings call transcript.** After the filing read and market snapshot,
    fetch the most recent earnings call transcript. This is a `market-scout` script (resolve
    the path against the `market-scout` skill directory, not this one):
+
    ```bash
    python scripts/fetch_transcripts.py --ticker <T> --latest 1
    ```
+
    Then read it (or grep it). The transcript is a **primary source** — management's own
    words on guidance, strategy, and tone. The Q&A section is especially valuable: analyst
    questions often target exactly the weak points you need to stress-test in phase 6.
@@ -134,9 +138,11 @@ Do not pad a phase just because it exists.
    cite. **Peers' earnings call transcripts** are equally valuable primary sources - a
    competitor's CEO discussing pricing pressure, capacity additions, or market-share wins
    on their own call is citable competitive intelligence (`market-scout` script):
+
    ```bash
    python scripts/fetch_transcripts.py --ticker <PEER> --latest 1
    ```
+
    Then grep the cached transcript for the subject company's name, the product category,
    or pricing language. Use **web research only for what filings and transcripts genuinely
    cannot give you** - relative positioning, market-share dynamics, channel/customer
@@ -168,10 +174,12 @@ Do not pad a phase just because it exists.
    **Check the institutional ownership picture.** Before finalising the risk assessment,
    pull the 13F holder data. This is a `sec-edgar-skill` script (resolve the path against
    the `sec-edgar-skill` skill directory):
+
    ```bash
    python scripts/fetch_13f_holders.py --ticker <T> --top 15
    python scripts/fetch_13f_holders.py --ticker <T> --history
    ```
+
    The output reports **share counts**, not dollar values (13F values are stale
    quarter-end prices). To convert to ownership percentages, divide by total shares
    outstanding from the `market-scout` snapshot or the latest 10-Q.
@@ -199,11 +207,13 @@ Do not pad a phase just because it exists.
    in fundamental analysis; a management team selling into your thesis is a warning you
    cannot ignore. Pull the insider data. This is a `sec-edgar-skill` script (resolve the
    path against the `sec-edgar-skill` skill directory):
+
    ```bash
    python scripts/fetch_insider_trades.py --ticker <T>
    python scripts/fetch_insider_trades.py --ticker <T> --start <12mo-ago> --end <today>
    python scripts/fetch_insider_trades.py --ticker <T> --buys-only
    ```
+
    The output reports recent Form 4 transactions — open-market purchases (code P), sales
    (code S), option exercises (code M), and tax withholdings (code F) — with share counts,
    prices, and each insider's remaining holdings.

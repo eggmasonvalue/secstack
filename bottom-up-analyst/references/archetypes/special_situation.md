@@ -9,12 +9,14 @@ the capital structure — and you reach a conclusion that nearly *has* to resolv
 `pitch-like-lou` corpus.)
 
 ## Tell it by
+
 The thesis hinges on an event or a legal/structural mechanism rather than earnings growth:
 corporate actions (spin, merger, tender, reorg), unusual securities (pink-sheet preferreds,
 stubs, post-reorg equity), or a binding formula/statute that forces value to a class of
 holders.
 
 ## Where the value hides
+
 - **In the document itself.** The put/call formula in an exhibit, the seniority of a security
   in the waterfall, the squeeze-out price mechanism in foreign company law. The market prices
   the *headline*; the edge is reading the *fine print* and computing the consequence.
@@ -25,6 +27,7 @@ holders.
   That is the one thing you must verify yourself, not relay second-hand.
 
 ## Pull these (drive sec-edgar)
+
 - **The primary document** — the merger agreement, indenture, plan of reorganization, 13D
   exhibit, Form 10 spin filing, or the foreign-law statute. Read the *exhibit*, not the
   summary. `sec-edgar-skill` can pull attachments/exhibits directly.
@@ -36,11 +39,13 @@ holders.
 - Capital-structure detail to rebuild the **post-event** balance sheet and the waterfall.
 
 ## Key metrics / objects
+
 The payoff under each outcome (deal closes / breaks; put exercised / not), the **probability
 and timing** of each, the position in the capital structure, the spread vs. downside, the
 sum-of-the-parts value, the formula output you computed yourself.
 
 ## Normalize / adjust
+
 - **Compute the formula yourself** from the document — do not trust a summary or a third-hand
   characterization (the MCI lesson: ~$24B of intercompany claims surfaced *after* a "books are
   clean" was relayed second-hand).
@@ -48,12 +53,14 @@ sum-of-the-parts value, the formula output you computed yourself.
 - For foreign issuers, reconcile foreign-GAAP/IFRS to a comparable basis before valuing.
 
 ## Valuation lens
+
 **Event payoff / sum-of-the-parts**, probability-weighted across outcomes, with the spread
 measured against a hard downside. For spins, value the pieces separately on **multiples**; for
 arb, it's payoff × probability vs. break risk; for structural/legal, it's the formula output
 discounted for time and the (small) chance the fact doesn't bind.
 
 ## Disqualifiers — kill it (or mark it down) if…
+
 - **The legal/structural fact doesn't actually bind** — the formula has an out, the statute
   doesn't apply, the seniority is subordinated by a clause you missed.
 - **Minorities have no protection** — a controller can take the value without sharing it

@@ -173,7 +173,7 @@ def _build_markdown(ticker: str, transactions: list[dict],
     """Build a Markdown summary of insider transactions."""
     lines = []
     lines.append(f"# Insider Transactions: {ticker}")
-    lines.append(f"")
+    lines.append("")
     lines.append(f"- **Period:** {start.isoformat()} to {end.isoformat()}")
     lines.append("")
 

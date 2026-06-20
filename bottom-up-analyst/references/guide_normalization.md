@@ -16,7 +16,7 @@ relevant footnotes (grep the cached 10-K); do the reasoning here.
 Start from the Buffett definition and adjust toward cash an owner could remove without
 harming the business:
 
-```
+```text
 Owner earnings = net income
               + depreciation & amortization
               + other non-cash charges
@@ -28,6 +28,7 @@ Owner earnings = net income
 The art is in three places, and each is a judgment you must show your work on:
 
 ### 1. Maintenance vs. growth capex
+
 Total capex on the cash-flow statement bundles "keep the lights on" with "build the future."
 Only **maintenance** capex belongs in owner earnings; growth capex is optional spending you
 can value separately. Estimate maintenance capex from D&A as a floor, from management's own
@@ -36,11 +37,13 @@ state), or from history (capex in no-growth years). State which method and why �
 compounder's value swings hard on this number.
 
 ### 2. Working capital — separate structural from one-off
+
 A growing business consumes working capital; a shrinking or seasonal one releases it. Pull
 the *normalized* draw, not a single year's swing, and watch for channel-stuffing or a
 one-time release flattering operating cash flow.
 
 ### 3. Stock-based comp is a real expense
+
 It is non-cash but not free — it transfers ownership. Subtract it, and fold the resulting
 dilution into the share count (treasury-stock method) rather than admiring a "cash" number
 that quietly grows the shares 4% a year. For hypergrowth names this is often *the* swing

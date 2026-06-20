@@ -39,7 +39,7 @@ risk = report["Item 1A"]         # just that item's text, not the whole 100k-wor
 
 The codes are fixed by SEC rule, which is why you can address them from memory:
 
-```
+```text
 10-K   Item 1 Business · Item 1A Risk Factors · Item 7 MD&A · Item 7A Market Risk · Item 8 Financial Statements
 10-Q   keyed by Part:  "Part I, Item 2" MD&A · "Part II, Item 1" Legal · "Part II, Item 1A" Risk Factors
 8-K    Item 1.01 Material Agreement · Item 2.02 Results of Operations (earnings) · Item 5.02 Director/Officer change · Item 9.01 Exhibits
@@ -99,7 +99,7 @@ Script: `fetch_filing.py --attachment "ex-99.1"` (or `list` | `all` | an index),
 > **Index attachments via a list.** `filing.attachments` looks items up by their 1-based
 > SEC *sequence number*, which can skip values — so integer indexing on the raw collection
 > can return the wrong item or none. Cast to `list(...)` first and use 0-based indices.
-
+>
 > **Foreign private issuers and Form 6-K.** A 6-K is how an FPI reports interim results and
 > material events — its 8-K/10-Q equivalent — but it's free-form (no item codes), and its
 > main body is often just a brief cover note. The actual results or press release is an
