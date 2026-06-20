@@ -1,6 +1,6 @@
 # US Market Research Skills
 
-A composable stack of [agent skills](https://www.skills.sh/) for rigorous bottom-up equity
+A composable stack of [agent skills](https://agentskills.io/home) for rigorous bottom-up equity
 research on US-listed companies — from idea discovery through primary data (SEC filings +
 market data), through an analytical framework, to a finished pitch. Each skill stands on its
 own; together they form a pipeline.
@@ -44,7 +44,7 @@ own; together they form a pipeline.
 
 ## Install
 
-Install the whole stack, or any single skill on its own, with [skills.sh](https://www.skills.sh/)
+Install the whole stack, or any single skill on its own, with [skills.sh](https://agentskills.io/home)
 — point it at this repository, or at a single skill subfolder. Each skill is a self-contained
 folder with its own `SKILL.md`.
 
@@ -68,8 +68,8 @@ problems — it is not authentication.
 
 - **`signal-sweep`** — `pip install -r signal-sweep/requirements.txt`
 - **`sec-edgar-skill`** — `pip install -r sec-edgar-skill/requirements.txt`
-- **`market-scout`** — `pip install -r market-scout/requirements.txt`. No identity needed.
-  For earnings call transcripts: `npm install -g dev-browser && dev-browser install`.
+- **`market-scout`** — install both before use: `pip install -r market-scout/requirements.txt`
+  and `npm install -g agent-browser && agent-browser install`. No identity needed.
 - **`bottom-up-analyst`** — valuation scripts are standard-library only; no install needed.
 - **`pitch-like-lou`** — documentation and a reference corpus; nothing to install.
 

@@ -1,6 +1,6 @@
 """Fetch earnings call transcripts from Yahoo Finance for a given ticker.
 
-Uses ``dev-browser`` (a headless-capable browser automation CLI) to scrape the
+Uses ``agent-browser`` (a browser automation CLI) to scrape the
 public Yahoo Finance earnings-call pages (powered by Quartr). Yahoo Finance
 requires JavaScript rendering and blocks plain HTTP clients, so a real browser
 is the only reliable approach.
@@ -22,18 +22,18 @@ Output is one ``.md`` file per transcript, structured for LLM consumption:
 Files are written to ``<cache>/<TICKER>/transcripts/`` and absolute paths are
 printed to stdout (one per line). Progress goes to stderr.
 
-Prerequisite: ``dev-browser`` must be installed and on PATH.
+Prerequisite: ``agent-browser`` must be installed and on PATH.
 Run ``--help`` for the full flag reference.
 """
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -63,53 +63,60 @@ def _transcript_dir(root: Path, ticker: str) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# dev-browser helpers
+# agent-browser helpers
 # ---------------------------------------------------------------------------
 
-def _find_dev_browser() -> str:
+def _find_agent_browser() -> str:
     import shutil
-    for name in ["dev-browser", "dev-browser.cmd"]:
+    for name in ["agent-browser", "agent-browser.cmd"]:
         found = shutil.which(name)
         if found:
             return found
-    return "dev-browser"
+    return "agent-browser"
 
 
-def _run_browser_script(script: str, timeout: int = 45) -> str:
-    """Run a JS snippet via dev-browser, return stdout."""
-    exe = _find_dev_browser()
-    # Write script to a temp file to avoid shell quoting issues
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".js", delete=False, encoding="utf-8"
-    ) as f:
-        f.write(script)
-        tmp_path = f.name
+def _run_agent_browser(args: list[str], timeout: int = 45) -> str:
+    """Run an agent-browser command and return stdout."""
+    exe = _find_agent_browser()
     try:
         result = subprocess.run(
-            [exe, "--headless", "--timeout", str(timeout), "run", tmp_path],
+            [exe, *args],
             capture_output=True, text=True, timeout=timeout + 15,
-            shell=(sys.platform == "win32"),
+            shell=False,
         )
         if result.returncode != 0:
             stderr = result.stderr.strip()
             if stderr:
-                c.log(f"  dev-browser stderr: {stderr[:300]}")
+                c.log(f"  agent-browser stderr: {stderr[:300]}")
             return ""
         return result.stdout.strip()
     except FileNotFoundError:
         c.log(
-            "ERROR: dev-browser is not installed or not on PATH.\n"
-            "Install it:  npm install -g dev-browser && dev-browser install"
+            "ERROR: agent-browser is not installed or not on PATH.\n"
+            "Install it:  npm install -g agent-browser && agent-browser install"
         )
         sys.exit(2)
     except subprocess.TimeoutExpired:
-        c.log("WARNING: dev-browser script timed out.")
+        c.log("WARNING: agent-browser command timed out.")
         return ""
-    finally:
+
+
+def _open_url(url: str, timeout: int = 45) -> bool:
+    return bool(_run_agent_browser(["open", url], timeout=timeout))
+
+
+def _run_browser_script(script: str, timeout: int = 45) -> str:
+    """Run page-context JS via `agent-browser eval`, return stdout."""
+    b64 = base64.b64encode(script.encode("utf-8")).decode("ascii")
+    out = _run_agent_browser(["eval", "-b", b64], timeout=timeout)
+    if out.startswith('"') and out.endswith('"'):
         try:
-            os.unlink(tmp_path)
-        except OSError:
+            unwrapped = json.loads(out)
+            if isinstance(unwrapped, str):
+                return unwrapped
+        except Exception:
             pass
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -119,24 +126,10 @@ def _run_browser_script(script: str, timeout: int = 45) -> str:
 def _fetch_listing(ticker: str) -> list[dict]:
     """Fetch the list of available transcripts for a ticker."""
     url = f"{_BASE}/quote/{ticker}/earnings-calls/"
-    script = f"""
-const page = await browser.getPage("yfin-transcripts");
-await page.goto("{url}", {{ waitUntil: "domcontentloaded" }});
-await new Promise(r => setTimeout(r, 3000));
-const data = await page.evaluate(() => {{
-  const links = [];
-  const allLinks = document.querySelectorAll('a[href*="earnings_call"]');
-  for (const link of allLinks) {{
-    const href = link.getAttribute("href");
-    const h3 = link.querySelector("h3");
-    if (h3 && href) {{
-      links.push({{ url: href, title: h3.textContent.trim() }});
-    }}
-  }}
-  return links;
-}});
-console.log(JSON.stringify(data));
-"""
+    if not _open_url(url, timeout=45):
+        return []
+    time.sleep(3)
+    script = "JSON.stringify(Array.from(document.querySelectorAll('a[href*=\"earnings_call\"]')).map(a=>({url:a.getAttribute(\"href\"),title:(a.textContent||\"\").trim()||a.getAttribute(\"aria-label\")||a.getAttribute(\"href\")})).filter(x=>x.url).filter((x,i,arr)=>arr.findIndex(y=>y.url===x.url)===i))"
     raw = _run_browser_script(script)
     if not raw:
         return []
@@ -154,24 +147,24 @@ console.log(JSON.stringify(data));
 def _fetch_transcript(url: str) -> "dict | None":
     """Fetch and parse a single transcript page."""
     full_url = f"{_BASE}{url}" if url.startswith("/") else url
-    script = f"""
-const page = await browser.getPage("yfin-transcript-dl");
-await page.goto("{full_url}", {{ waitUntil: "domcontentloaded" }});
-await new Promise(r => setTimeout(r, 4000));
-const data = await page.evaluate(() => {{
+    if not _open_url(full_url, timeout=50):
+        return None
+    time.sleep(4)
+    script = r"""
+JSON.stringify((() => {
   const main = document.querySelector("main");
-  if (!main) return {{ error: "no main element" }};
+  if (!main) return { error: "no main element" };
   const h1 = main.querySelector("h1");
   const title = h1 ? h1.textContent.trim() : "";
   const dateMatch = document.body.textContent.match(
-    /[A-Z][a-z]{{2}}\\s+\\d{{1,2}},\\s+\\d{{4}},?\\s+\\d{{1,2}}:\\d{{2}}\\s+[AP]M\\s+\\w+/
+    /[A-Z][a-z]{2}\s+\d{1,2},\s+\d{4},?\s+\d{1,2}:\d{2}\s+[AP]M\s+\w+/
   );
   const date = dateMatch ? dateMatch[0] : "";
   const summaryP = document.querySelector(".summary p");
   const summary = summaryP ? summaryP.textContent.trim() : "";
   const items = document.querySelectorAll(".items > .item");
   const blocks = [];
-  for (const item of items) {{
+  for (const item of items) {
     const speakerSpan = item.querySelector(".speakerInfo > span");
     const speakerDesc = item.querySelector(".speakerDesc");
     const headline = item.querySelector(".headline");
@@ -181,13 +174,12 @@ const data = await page.evaluate(() => {{
     const role = speakerDesc ? speakerDesc.textContent.trim() : "";
     const timestamp = timestampP ? timestampP.textContent.trim() : "";
     const text = contentP ? contentP.textContent.trim() : "";
-    if (text) {{
-      blocks.push({{ speaker, role, timestamp, text }});
-    }}
-  }}
-  return {{ title, date, summary, blocks }};
-}});
-console.log(JSON.stringify(data));
+    if (text) {
+      blocks.push({ speaker, role, timestamp, text });
+    }
+  }
+  return { title, date, summary, blocks };
+})())
 """
     raw = _run_browser_script(script, timeout=50)
     if not raw:

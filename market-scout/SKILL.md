@@ -18,19 +18,17 @@ for US-listed stocks. Unopinionated: it surfaces prices, returns, peers, ranking
 management commentary; it does not decide what is cheap or worth buying — leave that to
 whatever framework is driving.
 
-## Setup
+## Setup (install first)
+
+Install both dependencies before running any script:
 
 ```bash
 pip install -r requirements.txt    # yfinance + pandas (Python ≥ 3.10)
+npm install -g agent-browser && agent-browser install
 ```
 
-For earnings call transcripts, `dev-browser` must also be installed:
-
-```bash
-npm install -g dev-browser && dev-browser install
-```
-
-No API key or identity is needed — Yahoo Finance is public.
+- `agent-browser` is required for earnings-call transcripts (`fetch_transcripts.py`).
+- No API key or identity is needed — Yahoo Finance is public.
 
 ## Market snapshot and peers
 
@@ -45,7 +43,7 @@ python scripts/fetch_market_data.py --ticker AAPL --industry --peers
 ## Earnings call transcripts
 
 `fetch_transcripts.py` scrapes Yahoo Finance's Quartr-powered transcript pages via
-`dev-browser` (Yahoo requires JS rendering). It lists available transcripts or downloads
+`agent-browser` (Yahoo requires JS rendering). It lists available transcripts or downloads
 them as LLM-friendly Markdown to `transcript-cache/<TICKER>/transcripts/`. Files are
 named `Q3-FY2026.md` etc., cached and reused across runs. `--help` for all flags:
 
