@@ -9,13 +9,15 @@ own; together they form a pipeline.
 
 | Layer | Skill | Job |
 |---|---|---|
-| **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data across the $50M–$10B universe to surface new investment ideas: insider cluster buys, market screens, keyword/theme search, conference discovery. |
+| **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data across the $50M–$10B universe to surface new investment ideas: insider cluster/rip/dip buys, activist 13D filings, market screens, keyword/theme search, conference discovery. |
 | **Data** | [`sec-edgar-skill`](sec-edgar-skill/) | Retrieve & extract SEC EDGAR filings (10-K/10-Q/8-K, 20-F/6-K, XBRL financials, ownership, holdings) and 13F institutional holder data (via 13f.info), token-efficiently. Unopinionated. |
 | **Data** | [`market-scout`](market-scout/) | Pull price, returns, peers, sector screens, and earnings call transcripts via Yahoo Finance. Unopinionated. |
 | **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one ticker into an earned, auditable investment memo — drives the data skills, classifies the archetype, values it, tries to kill it. |
 | **Voice** | [`pitch-like-lou`](pitch-like-lou/) | Render a Norbert Lou–style Value Investors Club pitch from a finished thesis. |
 
-## How they compose
+## Salient Features
+
+### Composability
 
 ```text
   signal-sweep  (surfaces tickers)
@@ -42,10 +44,41 @@ own; together they form a pipeline.
 
 **Production order:** signal-sweep → analyst → memo → (optionally) Lou pitches from it.
 
+### Progressive discovery at the center of design - lets your model's intelligence shine through
+
+#### v0.1.0
+
+```text
+------------------------------------------------------------------------------------------
+File                                        blank        comment           code
+------------------------------------------------------------------------------------------
+./bottom-up-analyst/SKILL.md                   64              0            308
+./pitch-like-lou/SKILL.md                      39              0            164
+./sec-edgar-skill/SKILL.md                     36              0            135
+./signal-sweep/SKILL.md                        27              0             82
+./market-scout/SKILL.md                        19              0             60
+------------------------------------------------------------------------------------------
+SUM:                                          185              0            749
+------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Markdown                        34           1704              0           3370
+Python                          19            746            627           2919
+JSON                             2              0              0            109
+YAML                             2             15              2             75
+TOML                             1              5              2             30
+Text                             3              3              0             17
+-------------------------------------------------------------------------------
+SUM:                            61           2473            631           6520
+-------------------------------------------------------------------------------
+```
+
 ## Install
 
-Install the whole stack, or any single skill on its own, with [skills.sh](https://agentskills.io/home)
-— point it at this repository, or at a single skill subfolder. Each skill is a self-contained
+Install the whole stack, or any single skill on its own - point your agent at 
+this repository, or at a single skill subfolder. Each skill is a self-contained
 folder with its own `SKILL.md`.
 
 ## Setup

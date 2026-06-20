@@ -25,7 +25,7 @@ mind. This skill answers the prior question: *which companies should you look at
 
 | Capability | Script | Cadence |
 |---|---|---|
-| **Insider cluster buys + 13D alerts** | `scan_insiders.py` | Daily CI (cron) or on-demand |
+| **Insider cluster/rip/dip buys + 13D filings** | `scan_insiders.py` | Daily CI (cron) or on-demand |
 | **Market screens** (7 presets, config-driven) | `scan_market.py` | On-demand |
 | **Keyword / theme discovery** (EFTS full-text search) | `search_themes.py` | On-demand |
 | **Conference discovery** (8-K Item 8.01) | `scan_conferences.py` | On-demand |
