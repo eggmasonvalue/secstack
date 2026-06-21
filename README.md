@@ -106,6 +106,15 @@ problems — it is not authentication.
 - **`bottom-up-analyst`** — valuation scripts are standard-library only; no install needed.
 - **`pitch-like-lou`** — documentation and a reference corpus; nothing to install.
 
+## Contributing
+
+This repo is agent-maintained. Start at [`AGENTS.md`](AGENTS.md), then see
+[`context/MAP.md`](context/MAP.md) (where things live),
+[`context/DECISIONS.md`](context/DECISIONS.md) (why), and
+[`context/CONVENTIONS.md`](context/CONVENTIONS.md) (code rules). Lint with
+`uv run ruff check .` and `npx markdownlint-cli2 "**/*.md"`. Work on a branch and
+open a PR — never commit to `main` directly.
+
 ## A note on scope
 
 These skills produce **research, not advice**. They are tools for doing diligence rigorously and
