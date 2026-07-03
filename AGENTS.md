@@ -26,7 +26,8 @@ Do not read everything by default. Read on demand:
 - Touching module structure or data flow → read `context/MAP.md` first.
 - Changing or re-litigating a tradeoff → read `context/DECISIONS.md` first.
 - Writing code → read `context/CONVENTIONS.md`.
-- Starting any task → check the `todo` tool for open items.
+- Starting any task → run `todo list` for open items, then `todo claim` before
+  execution so parallel sessions do not collide.
 
 ## Write triggers (event-based)
 
@@ -51,9 +52,13 @@ the convention link to it.
 
 ## Todos ↔ Decisions
 
-Todos are ephemeral. When closing a todo that involved a real tradeoff,
-**graduate the durable part into `context/DECISIONS.md`** before the todo
-disappears.
+The `todo` tool is stateful, not a scratchpad: todos are persisted under
+`.pi/todos` with status, tags, body notes, subtasks, and `claim`/`release`
+assignment. Keep active working context in the todo body while a task is live.
+
+Closed/done todos are garbage-collected (default ~7 days after creation), so
+when closing a todo that involved a real tradeoff, **graduate the durable part
+into `context/DECISIONS.md`** first. Closing is not archiving.
 
 ## Definition of Done
 
