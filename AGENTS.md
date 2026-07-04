@@ -1,66 +1,64 @@
 # AGENTS.md
 
-Universal entry point for agents working in this repo. Read this first.
+Agent-maintained docs are for durable context only. Code is the source of truth;
+docs route agents and preserve non-obvious project rationale.
 
-## Guiding principle
+## Guardrails
 
-Only document what an agent **cannot quickly recover by reading the code**. Code
-is the source of truth for *what the code does*. Docs exist for *where things
-live* (`context/MAP.md`) and *why the tradeoffs were made* (`context/DECISIONS.md`).
-Everything else rots — do not write it.
-
-## Hard guardrails
-
-- **Never commit to `main` directly.** Always work on a branch and open a PR.
-- **Never commit secrets.** `EDGAR_IDENTITY` and `DISCORD_WEBHOOK_URL` are
-  supplied via environment / CI secrets, never hard-coded.
-- **Never commit cache output.** `sec-cache/`, `signal-sweep-cache/`, and
-  `transcript-cache/` are regenerated on demand and are git-ignored.
-- **Lint and format must pass** before a PR (see `context/CONVENTIONS.md`). CI
-  runs `ruff check`, `ruff format --check`, and `markdownlint-cli2`.
+- Never commit directly to `main`; work on a branch and open a PR.
+- Never commit secrets. `EDGAR_IDENTITY` and `DISCORD_WEBHOOK_URL` are supplied via environment / CI secrets, never hard-coded.
+- Never commit cache output. `sec-cache/`, `signal-sweep-cache/`, and `transcript-cache/` are regenerated on demand and are git-ignored.
+- Lint and format must pass before a PR (see `context/CONVENTIONS.md`). CI runs `ruff check`, `ruff format --check`, and `markdownlint-cli2`.
+- Keep changes scoped; avoid incidental refactors.
+- Verify behavior with commands before documenting claims.
 
 ## Read routing
 
-Do not read everything by default. Read on demand:
+- Read `context/MAP.md` before changing module layout, ownership, or data flow.
+- Read `context/DECISIONS.md` before changing a recorded tradeoff.
+- Read `context/CONVENTIONS.md` while writing or editing code.
+- Run `todo list` at task start; `todo claim <id>` before editing orchestrated
+  todos.
 
-- Touching module structure or data flow → read `context/MAP.md` first.
-- Changing or re-litigating a tradeoff → read `context/DECISIONS.md` first.
-- Writing code → read `context/CONVENTIONS.md`.
-- Starting any task → run `todo list` for open items, then `todo claim` before
-  execution so parallel sessions do not collide.
+## Write triggers
 
-## Write triggers (event-based)
+- `context/MAP.md`: files/modules added, removed, moved, or data flow changed.
+- `context/DECISIONS.md`: only choices that pass the decision-log bar below.
+- `context/CONVENTIONS.md`: new repeatable coding/testing rule.
+- `README.md`: user-facing setup or usage changed.
 
-- Module added / moved / removed, or data flow changed → update `context/MAP.md`.
-- Intentional tradeoff made → **append to `context/DECISIONS.md`** (mandatory;
-  this is the most-forgotten artifact).
-- New repeatable pattern or standard adopted → add to `context/CONVENTIONS.md`.
-- User-facing behavior or usage changed → update `README.md`.
+## Decision-log bar
 
-## Do NOT document
+`context/DECISIONS.md` is a curated ADR file, not a worklog. Append only when a
+choice changes architecture, public behavior, data shape, dependency ownership,
+or an expensive migration path **and** future agents need non-obvious rationale
+to avoid re-litigating it.
 
-- Changelog / worklog — that is git history.
-- Feature or status lists — code already shows what exists.
-- Restatements of what the code plainly does.
-- Decisions with no real tradeoff.
+Do not append decisions for bug fixes, cleanup, dead-code removal, renames,
+mechanical refactors, one-feature implementation tactics, or routine test/lint
+chores. Before appending, prefer amending or superseding an existing decision.
+When in doubt, do not append; keep task-local rationale in the todo, PR, commit
+message, or final response.
+
+## What not to document
+
+- Changelogs/worklogs; git already has history.
+- Feature/status checklists duplicated from code/tests.
+- Restatements of obvious code behavior.
+- Decisions that fail the decision-log bar.
 
 ## CONVENTIONS vs DECISIONS
 
-A convention is **one imperative line with no "because"**. The moment it needs a
-"because", it is a decision — move the rationale to `context/DECISIONS.md` and let
-the convention link to it.
+- `CONVENTIONS.md` contains terse imperative rules only.
+- Rationale belongs in `DECISIONS.md` only if it passes the decision-log bar.
 
 ## Todos ↔ Decisions
 
-The `todo` tool is stateful, not a scratchpad: todos are persisted under
-`.pi/todos` with status, tags, body notes, subtasks, and `claim`/`release`
-assignment. Keep active working context in the todo body while a task is live.
-
-Closed/done todos are garbage-collected (default ~7 days after creation), so
-when closing a todo that involved a real tradeoff, **graduate the durable part
-into `context/DECISIONS.md`** first. Closing is not archiving.
+Use todos as stateful task records, not scratch notes. Keep live working context
+in the todo body. Before closing a todo, graduate durable rationale to
+`context/DECISIONS.md` only if it passes the decision-log bar.
 
 ## Definition of Done
 
-A task is done only when the matching durable artifacts reflect the change. An
-unrecorded tradeoff means **not done**.
+Code, tests/lint, and durable docs must agree. If a change passes the
+decision-log bar, its rationale must be recorded before the task is done.

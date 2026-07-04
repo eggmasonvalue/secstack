@@ -1,5 +1,7 @@
 # DECISIONS.md
 
+This is a curated ADR file for durable, non-obvious project-level choices. It is not a changelog or implementation worklog.
+
 Append-only log of intentional tradeoffs. Newest entries on top. Read before
 changing or re-litigating a choice.
 
