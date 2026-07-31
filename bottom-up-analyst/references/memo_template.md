@@ -94,53 +94,29 @@ archetype, including a **reverse-DCF of what today's price implies**. Lay out
 **bear / base / bull** scenarios with their key assumptions, converge on an **intrinsic-value
 range**, and state the **margin of safety** at the current price.
 
-This section **must** include a subsection titled **"Discount Rate Derivation"** (or
-similar) that shows the reasoning behind the discount rate used in the DCF and EPV. The
-subsection should show: the peer set used for beta benchmarking, their levered and
-unlevered betas, the re-levered beta for the subject company's capital structure, the
-resulting CAPM cost of equity, the WACC, and a sanity check against the business
-description (see `guide_valuation.md` § "Discount rate" for the full methodology). A
-discount rate without a derivation is an unauditable assumption — the reader cannot
-disagree with it, which means they cannot trust it.
+This section **must** include a **"Discount Rate Derivation"** subsection showing how the
+rate was reasoned - peer betas, the re-levered beta, the CAPM cost of equity, the WACC, and
+the sanity check against the business type (methodology in `guide_valuation.md` § "Discount
+rate"). A rate without a derivation is unauditable - the reader cannot disagree with it, so
+cannot trust it.
 
 ### 7. Ownership — institutional holders and insider activity
 
-Who owns this stock — from the outside and from the inside — and what does the
-ownership picture tell you about alignment, adverse selection, and risk?
+Who owns this stock, inside and out, and what the picture says about alignment and adverse
+selection. Pull 13F and Form 4 data via `sec-edgar-skill`, then read each pattern against
+`guide_ownership_signals.md`. Include:
 
-**Institutional holders.** Pull from `sec-edgar-skill`'s
-`scripts/fetch_13f_holders.py`. Include:
+- **Institutional (13F):** top 10–15 holders (passive index vs. active/concentrated), the
+  ownership trend vs. price (accumulation or distribution), any notable
+  deep-value/activist/specialist holders, and concentration/forced-selling risk.
+- **Insider (Form 4):** a table of open-market buys/sells over the past 6–12 months
+  (distinguish voluntary P/S from routine M/F), the net buy/sell ratio, the key
+  buyers/sellers by name and role, aggregate insider ownership vs. compensation, and the FPI
+  Section-16 gap where it applies.
 
-- **Top holders** (top 10–15 by shares) and whether they are passive index funds or
-  active/concentrated managers.
-- **Ownership trend** — is institutional ownership rising or falling? Cross-reference
-  with price to distinguish accumulation from distribution.
-- **Notable holders** — any known deep-value, activist, or sector-specialist funds?
-  Their presence (or absence/exit) is a signal.
-- **Concentration risk** — if a handful of holders dominate the float, flag the
-  liquidity and forced-selling risk.
-
-**Insider ownership and activity.** Pull from `sec-edgar-skill`'s
-`scripts/fetch_insider_trades.py`. Include:
-
-- **Recent insider transactions** — a table of open-market purchases and sales over
-  the past 6–12 months. Distinguish voluntary open-market trades (code P/S) from
-  routine option exercises (M) and tax withholdings (F).
-- **Buy/sell ratio** — are insiders net buyers or net sellers? A strong buy/sell ratio
-  is a confirming signal; net selling into your long thesis is an adverse-selection
-  warning.
-- **Key buyers/sellers** — name the individuals and their roles. A CEO buying $1M of
-  stock carries more weight than a director buying $20K.
-- **Ownership level** — how much do insiders own in aggregate? Cross-reference
-  remaining holdings against compensation (from the proxy) to gauge skin in the game.
-- **FPI note** — if the company is a foreign private issuer exempt from Section 16,
-  state that Form 4 data is unavailable and note any home-jurisdiction disclosures
-  found (or the gap, if none).
-
-This section is short (a table or two + a paragraph of interpretation per sub-topic),
-but it grounds the catalyst and risk sections that follow. The insider picture in
-particular is a direct check on adverse selection — if the people with the best
-information are not aligned with your thesis, that fact belongs in the risk section.
+Keep it to a table or two plus a paragraph of interpretation; it grounds the catalyst and
+risk sections. If the best-informed people are not aligned with your thesis, that fact
+belongs in the risk section.
 
 ### 8. Risks & pre-mortem
 
