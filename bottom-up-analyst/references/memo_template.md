@@ -7,7 +7,7 @@ stand on it without inventing anything.
 A memo is an argument, not a form. Use this structure as a skeleton, but let the
 **archetype** decide where the weight goes — a compounder earns its keep in the economics
 and moat sections; a special-situation in the structural fact and the payoff; a hypergrowth
-name in the reverse-DCF and unit economics. Do not pad a section to fill it. A tight
+name in the reverse-DCF and unit economics. Weight each section to the archetype; a tight
 six-page memo beats a padded twenty.
 
 ## The honesty markup (use it throughout)
