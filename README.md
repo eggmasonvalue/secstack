@@ -51,11 +51,30 @@ own; together they form a pipeline.
 From the repository root, reproduce these reports with:
 
 ```bash
+# Agent-loaded entry points
 cloc --by-file --include-lang=Markdown bottom-up-analyst/SKILL.md pitch-like-lou/SKILL.md sec-edgar-skill/SKILL.md signal-sweep/SKILL.md market-scout/SKILL.md
-cloc --exclude-dir=.git,.venv,docs .
+
+# Referenced skill surface only
+cloc \
+  bottom-up-analyst/SKILL.md \
+  bottom-up-analyst/references/memo_template.md \
+  bottom-up-analyst/references/guide_normalization.md \
+  bottom-up-analyst/references/guide_competitive.md \
+  bottom-up-analyst/references/guide_valuation.md \
+  bottom-up-analyst/references/guide_ownership_signals.md \
+  bottom-up-analyst/references/archetypes/*.md \
+  bottom-up-analyst/scripts/dcf.py bottom-up-analyst/scripts/epv.py \
+  market-scout/SKILL.md market-scout/requirements.txt market-scout/scripts/fetch_market_data.py market-scout/scripts/fetch_transcripts.py \
+  pitch-like-lou/SKILL.md pitch-like-lou/references/corpus/*.md \
+  sec-edgar-skill/SKILL.md \
+  sec-edgar-skill/references/guide_core.md sec-edgar-skill/references/guide_filings.md sec-edgar-skill/references/guide_financials.md sec-edgar-skill/references/guide_ownership.md sec-edgar-skill/references/guide_holdings.md \
+  sec-edgar-skill/scripts/orient.py sec-edgar-skill/scripts/fetch_filing.py sec-edgar-skill/scripts/fetch_filings.py sec-edgar-skill/scripts/parse_financials.py sec-edgar-skill/scripts/list_headings.py sec-edgar-skill/scripts/fetch_insider_trades.py sec-edgar-skill/scripts/fetch_13f_holders.py sec-edgar-skill/scripts/test_setup.py \
+  signal-sweep/SKILL.md signal-sweep/screens.json signal-sweep/references/guide_screens.md \
+  signal-sweep/scripts/scan_insiders.py signal-sweep/scripts/scan_market.py signal-sweep/scripts/search_themes.py signal-sweep/scripts/scan_conferences.py
 ```
 
-The repository total excludes the human-facing design notes under `signal-sweep/docs/`.
+The second command lists the referenced skill paths explicitly, so repository-level docs and
+unreferenced proposals are not counted.
 
 ```text
 ------------------------------------------------------------------------------------------
@@ -73,14 +92,12 @@ SUM:                                          172              0            668
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Markdown                        39           1762              0           3518
-Python                          19            805            620           3133
-JSON                             2              0              0            109
-YAML                             2             15              2             75
-TOML                             1              6              2             38
-Text                             3              3              0             17
+Markdown                        29           1608              0           3025
+Python                          16            711            534           2890
+JSON                             1              0              0             99
+Text                             1              1              0              5
 -------------------------------------------------------------------------------
-SUM:                            66           2591            624           6890
+SUM:                            47           2320            534           6019
 -------------------------------------------------------------------------------
 ```
 
