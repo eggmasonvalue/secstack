@@ -29,7 +29,8 @@ Root config: `pyproject.toml` (ruff + package metadata), `uv.lock`,
 - `market-scout/` — `scripts/fetch_market_data.py`, `fetch_transcripts.py`,
   shared `scripts/_common.py`.
 - `bottom-up-analyst/` — valuation `scripts/dcf.py`, `epv.py`; archetypes and
-  guides in `references/`.
+  guides in `references/`, including `guide_ownership_signals.md` for Phase 6
+  interpretation.
 - `pitch-like-lou/` — reference corpus only, no scripts.
 
 ## Data flow
