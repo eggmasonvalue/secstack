@@ -32,6 +32,7 @@ Terse imperative code rules. No rationale here — rationale lives in
 
 - Keep each `SKILL.md` terse; defer detail to `references/` (progressive disclosure).
 - Ensure `AGENTS.md`, `README.md`, and everything in `context/` pass markdownlint.
+- Append to `context/DECISIONS.md` only when the choice crosses the decision-log bar in `AGENTS.md`.
 
 ## Git
 

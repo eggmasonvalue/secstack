@@ -44,31 +44,25 @@ without inventing anything.
 Every conclusion in the memo must trace to something you actually verified in a document
 or computed yourself. This is not a style note - it is the whole point. A confident memo
 built on an unchecked assumption is worse than no memo, because it *launders a guess into a
-recommendation*. The discipline that prevents this is borrowed from the `pitch-like-lou`
-corpus, and it is a **necessary condition on every memo regardless of company type**:
+recommendation*.
 
-- **Separate what you *know* from what you *believe*.** State which claims are verified
-  (with the source) and which are estimates or assumptions. Mark them differently in the
-  memo so a reader can audit your confidence.
-- **Concede the weak points out loud.** The bear case is part of *your* job, not the
-  reader's. A thesis you have not tried to kill is not yet a thesis.
-- **Tag second-hand claims as second-hand.** The cautionary tale from the corpus: a
-  brilliant structural thesis (MCI QUIPS) nearly blew up because its author relayed
-  *third-hand* that the books were clean; ~$24B of intercompany claims surfaced later. Know
-  which claims you checked yourself, and flag the ones you didn't.
-- **Demand a margin of safety.** Price the bad parts in - bad governance, dilution, cyclical
-  risk - and require that the thesis survives anyway.
+The quality gate that prevents this is **Lou's honesty gate** - separate what you *know*
+from what you *believe*, concede the weak points out loud, tag second-hand claims as
+second-hand, and demand a margin of safety that survives the bad parts (governance,
+dilution, cyclical risk). It is a **necessary condition on every memo regardless of company
+type**. The gate lives in one place - `pitch-like-lou`, "the one inviolable rule" (with the
+MCI QUIPS cautionary tale of a thesis nearly sunk by an unverified third-hand claim). Read
+it there; apply it to every memo here.
 
-Lou's discipline is *necessary but not sufficient.* It is the quality gate every memo passes
-through. It does **not** dictate the analysis - this skill researches companies Lou never
-touched (hypergrowth tech, regulatory-tailwind inflections, turnarounds). The *method* below
-supplies the sufficiency; Lou's temperament supplies the honesty.
+Lou's gate is *necessary but not sufficient.* It does **not** dictate the analysis - this
+skill researches companies Lou never touched (hypergrowth tech, regulatory-tailwind
+inflections, turnarounds). The *method* below supplies the sufficiency; Lou's temperament
+supplies the honesty.
 
 ## The loop
 
 Work through these phases in order, but let the **archetype** decide where the weight goes -
 a hypergrowth name lives in phases 3 and 6; a cyclical in 4; a special-situation in 5 and 7.
-Do not pad a phase just because it exists.
 
 1. **Orient and scope - filings first, always, before any web search.** Run
    `sec-edgar-skill`'s `scripts/orient.py` as the **very first tool call** - before web
@@ -78,16 +72,9 @@ Do not pad a phase just because it exists.
    the same information is slower, less authoritative, and often wrong about the company.
 
    **Breaking-news pattern:** if the user mentions a same-day event, orient.py will show the
-   8-K filed today. Immediately follow with (`sec-edgar-skill` scripts):
-
-   ```bash
-   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today>
-   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment list
-   # then fetch Exhibit 99.1 (the press release):
-   python scripts/fetch_filing.py --ticker <T> --form 8-K --date <today> --attachment "ex-99.1"
-   ```
-
-   The press-release exhibit is the primary source; do not web-search for what it contains.
+   8-K filed today. Pull it and its press-release exhibit (Exhibit 99.1) via `sec-edgar-skill`,
+   which documents the exact breaking-news fetch sequence. That exhibit is the primary
+   source; read it rather than web-searching for what it contains.
 
    After orient, read the latest **annual report** (10-K, or 20-F for an FPI) - its business
    section and MD&A - and skim the most recent **interim/current** reports (10-Q/8-K, or 6-K
@@ -96,17 +83,10 @@ Do not pad a phase just because it exists.
    cap, **the peer set**, sector) from `market-scout` to frame size and comps - orientation,
    not evidence.
 
-   **Pull the latest earnings call transcript.** After the filing read and market snapshot,
-   fetch the most recent earnings call transcript. This is a `market-scout` script (resolve
-   the path against the `market-scout` skill directory, not this one):
-
-   ```bash
-   python scripts/fetch_transcripts.py --ticker <T> --latest 1
-   ```
-
-   Then read it (or grep it). The transcript is a **primary source** — management's own
-   words on guidance, strategy, and tone. The Q&A section is especially valuable: analyst
-   questions often target exactly the weak points you need to stress-test in phase 6.
+   **Pull the latest earnings call transcript** via `market-scout`, then read or grep it.
+   The transcript is a **primary source** — management's own words on guidance, strategy,
+   and tone. The Q&A section is especially valuable: analyst questions often target exactly
+   the weak points you need to stress-test in phase 6.
 
 2. **Classify the archetype.** Almost every company is dominated by one shape, and the
    shape decides which DD emphases, metrics, disqualifiers, and valuation method carry the
@@ -137,14 +117,9 @@ Do not pad a phase just because it exists.
    (their 8-Ks, 10-Qs, 10-Ks) for management commentary, pricing, and sentiment you can
    cite. **Peers' earnings call transcripts** are equally valuable primary sources - a
    competitor's CEO discussing pricing pressure, capacity additions, or market-share wins
-   on their own call is citable competitive intelligence (`market-scout` script):
-
-   ```bash
-   python scripts/fetch_transcripts.py --ticker <PEER> --latest 1
-   ```
-
-   Then grep the cached transcript for the subject company's name, the product category,
-   or pricing language. Use **web research only for what filings and transcripts genuinely
+   on their own call is citable competitive intelligence - pull peer transcripts via
+   `market-scout` and grep the cached file for the subject company's name, the product
+   category, or pricing language. Use **web research only for what filings and transcripts genuinely
    cannot give you** - relative positioning, market-share dynamics, channel/customer
    checks - and label every web claim as such. See `references/guide_competitive.md`.
 
@@ -168,85 +143,18 @@ Do not pad a phase just because it exists.
 
 6. **Try to kill it - pre-mortem.** Assume it's a year later and the thesis failed; write
    down why. Run the **archetype's disqualifiers** (each playbook lists them) *and* Lou's
-   gate (above). Most candidates should die here or get marked down - that is the system
-   working, not failing. Re-tag every surviving claim as verified vs. assumed.
+   honesty gate (above). Most candidates should die here or get marked down - that is the
+   system working, not failing. Re-tag every surviving claim as verified vs. assumed.
 
-   **Check the institutional ownership picture.** Before finalising the risk assessment,
-   pull the 13F holder data. This is a `sec-edgar-skill` script (resolve the path against
-   the `sec-edgar-skill` skill directory):
-
-   ```bash
-   python scripts/fetch_13f_holders.py --ticker <T> --top 15
-   python scripts/fetch_13f_holders.py --ticker <T> --history
-   ```
-
-   The output reports **share counts**, not dollar values (13F values are stale
-   quarter-end prices). To convert to ownership percentages, divide by total shares
-   outstanding from the `market-scout` snapshot or the latest 10-Q.
-
-   This reveals who is positioned and how ownership has shifted - signals that feed
-   directly into the risk and catalyst assessment:
-   - **Concentration risk:** if 3-5 holders own >30% of the float, a single redemption
-     cycle can crater the stock independent of fundamentals.
-   - **Smart-money conviction:** are high-conviction value managers (Royce, Needham,
-     Baupost) building or trimming? A rising share count from a known deep-diver is a
-     confirming signal; a quiet exit is a warning.
-   - **Activist presence:** a 13D/13G filer showing up in the holder list may signal an
-     upcoming catalyst (board fight, strategic review, buyback demand).
-   - **Passive vs. active mix:** a stock dominated by index funds (Vanguard, BlackRock,
-     State Street) has different liquidity and governance dynamics than one held by
-     concentrated active managers.
-   - **Ownership trend vs. price:** rising institutional ownership into a falling price
-     suggests accumulation; the reverse suggests distribution. Cross-reference with the
-     `--history` output.
-
-   **Check insider ownership and recent activity.** Insider transactions are a direct,
-   auditable signal of whether the people running the business are aligned with outside
-   shareholders — or quietly heading for the exits. A management team buying stock with
-   their own money while the price is depressed is one of the strongest confirming signals
-   in fundamental analysis; a management team selling into your thesis is a warning you
-   cannot ignore. Pull the insider data. This is a `sec-edgar-skill` script (resolve the
-   path against the `sec-edgar-skill` skill directory):
-
-   ```bash
-   python scripts/fetch_insider_trades.py --ticker <T>
-   python scripts/fetch_insider_trades.py --ticker <T> --start <12mo-ago> --end <today>
-   python scripts/fetch_insider_trades.py --ticker <T> --buys-only
-   ```
-
-   The output reports recent Form 4 transactions — open-market purchases (code P), sales
-   (code S), option exercises (code M), and tax withholdings (code F) — with share counts,
-   prices, and each insider's remaining holdings.
-
-   Read the insider picture for what it tells you about adverse selection risk and
-   alignment:
-   - **Open-market purchases by officers/directors** are the strongest signal — these are
-     voluntary, with the insider's own capital, and filed publicly. A CEO or CFO buying
-     $500K+ of stock at current prices is putting their money where their mouth is.
-     Multiple insiders buying in the same window (a "cluster buy") is even stronger.
-   - **Selling context matters.** Not all insider sales are bearish — 10b5-1 plans,
-     diversification, and tax-driven exercises are routine. But *discretionary* sales by
-     senior officers outside a pre-announced plan, especially into strength or ahead of a
-     known risk, are a red flag. Look at the pattern: is the CEO selling every quarter
-     like clockwork (plan), or did three executives dump shares the week after an earnings
-     beat (discretionary)?
-   - **Ownership level vs. compensation.** Cross-reference insider holdings (the
-     "Remaining Shares" column) against the proxy's compensation tables. An executive
-     whose stock holdings are 10x+ their annual salary has real skin in the game; one
-     whose holdings are a rounding error relative to their cash comp does not.
-   - **Buy/sell ratio and trend.** The summary table shows the aggregate buy/sell ratio.
-     A ratio well above 1x (net buying) over the past 6-12 months is confirming; a ratio
-     well below 1x (net selling) into a thesis you're building long is a direct adverse-
-     selection warning — the people with the best information are reducing exposure.
-   - **Insider activity at inflection points.** The most informative insider trades happen
-     around events — after a selloff, before a catalyst, during a turnaround. An insider
-     buying after a 40% drawdown is telling you they think the market overreacted. An
-     insider selling ahead of a product launch they've been hyping is telling you
-     something else entirely.
-   - **Foreign private issuers (FPIs):** FPIs are exempt from Section 16 and do not file
-     Forms 3/4/5 on EDGAR. Insider transaction data will not be available; note this gap
-     in the memo and check the home-jurisdiction regulator if the thesis depends on
-     insider alignment (e.g. SEDAR+ for Canadian filers).
+   Before finalising the risk assessment, read the **ownership signal**: pull institutional
+   (13F) and insider (Form 4) data via `sec-edgar-skill`, then interpret it against the
+   thesis. This is where adverse selection surfaces - a concentrated holder base that can
+   crater the float, smart money accumulating or quietly exiting, insiders buying with their
+   own capital or selling into your long. Account for every cluster buy and every
+   discretionary senior-officer sale; a signal you skip is a risk you took blind. See
+   `references/guide_ownership_signals.md` for how to read each pattern (13F reports stale
+   quarter-end prices, so use the **share counts** and divide by shares outstanding from the
+   `market-scout` snapshot for ownership %).
 
 7. **Reach a verdict at the conviction the work supports.** State the call - **Long /
    Short / Pass / Watch** - with an honest conviction level, the **variant perception**
@@ -288,12 +196,10 @@ You are the one deciding what the hands fetch. Be deliberate and frugal:
 - **Transcripts are greppable too.** Once cached, grep a transcript for "guidance",
   "margin", a competitor's name, or a specific metric - you don't need to read the whole
   45-minute call to find the passage that matters.
-- **Ownership data is cached like everything else.** `fetch_13f_holders.py` writes to
-  `sec-cache/{TICKER}/13f-holders_{YEAR}-Q{Q}.md` (or `13f-history_{TICKER}.md` for
-  `--history`). `fetch_insider_trades.py` writes to
-  `sec-cache/{TICKER}/insider-trades_{START}_{END}.md`. The quarter or date range in the
-  filename makes the scope explicit. Glob the cache before re-fetching — if the window
-  you need is already on disk, grep and read it rather than re-hitting the source.
+- **Ownership data is cached like everything else.** `sec-edgar-skill` writes 13F and
+  insider output to the same `sec-cache/{TICKER}/` tree under scope-keyed filenames. Glob
+  the cache before re-fetching — if the window you need is already on disk, grep and read
+  it rather than re-hitting the source.
 - **Spend tokens where the archetype says the value hides.** Don't fetch a proxy's
   compensation tables for a hypergrowth TAM question, or a deferred-revenue footnote for a
   liquidation. Let the playbook route you.
@@ -357,16 +263,17 @@ use three-stage vs two-stage, and how to set the discount rate and terminal valu
 | `references/guide_normalization.md` | Phase 3 - un-distorting the financials into owner earnings. |
 | `references/guide_competitive.md` | Phase 4 - SEC-first competitive work; when to go to the web. |
 | `references/guide_valuation.md` | Phase 5 - triangulation, reverse-DCF, discount/terminal discipline. |
+| `references/guide_ownership_signals.md` | Phase 6 - reading the 13F and insider ownership signal. |
 | `references/archetypes/*.md` | Phase 2 - load the one matching the company's shape. |
 | `scripts/dcf.py`, `scripts/epv.py` | Phase 5 - the valuation arithmetic. `--help` for flags. |
 
-## The two questions every memo must pass
+## Definition of done: pitch-ready
 
-Before you ship, ask the two questions the best write-ups always pass:
+The memo ships when it passes **Lou's honesty gate** end to end - concretely:
 
-1. *Is every claim here something I actually verified in a document or computed myself -
-   and is everything I didn't verify marked as such?*
-2. *Have I been as honest and specific about what's wrong with this as I am about what's
-   right?*
+1. every claim is verified in a document or computed yourself, and everything unverified is
+   marked as such; and
+2. you have been as honest and specific about what is wrong with the thesis as about what
+   is right.
 
-If yes to both, the memo is pitch-ready.
+Both true - the memo is pitch-ready.

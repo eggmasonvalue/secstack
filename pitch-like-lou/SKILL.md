@@ -102,7 +102,7 @@ Each move below earns its place; the parenthetical is *why* it works. Short quot
 
 Use the skeleton, but let the *situation* decide where the weight goes. A cigar-butt leans on
 questions 1 and 4; a compounder on 2 and 3; an arbitrage on 1 and 4 with the structural fact as
-the spine. Do not pad a section just because it exists.
+the spine. Weight each section to the situation.
 
 ### 1. Stat header
 
