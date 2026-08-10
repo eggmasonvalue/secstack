@@ -44,34 +44,34 @@ own; together they form a pipeline.
 
 **Production order:** signal-sweep → analyst → memo → (optionally) Lou pitches from it.
 
-### Progressive discovery at the center of design - lets your model's intelligence shine through
+### Progressive disclosure at the center of design - lets your model's intelligence shine through
 
-#### v0.1.0
+#### Current snapshot (`cloc --exclude-dir=.git,.venv,docs .`)
 
 ```text
 ------------------------------------------------------------------------------------------
 File                                        blank        comment           code
 ------------------------------------------------------------------------------------------
-./bottom-up-analyst/SKILL.md                   64              0            308
+./bottom-up-analyst/SKILL.md                   51              0            228
 ./pitch-like-lou/SKILL.md                      39              0            164
 ./sec-edgar-skill/SKILL.md                     36              0            135
-./signal-sweep/SKILL.md                        27              0             82
+./signal-sweep/SKILL.md                        27              0             81
 ./market-scout/SKILL.md                        19              0             60
 ------------------------------------------------------------------------------------------
-SUM:                                          185              0            749
+SUM:                                          172              0            668
 ------------------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Markdown                        34           1704              0           3370
-Python                          19            746            627           2919
+Markdown                        39           1759              0           3512
+Python                          19            805            620           3133
 JSON                             2              0              0            109
 YAML                             2             15              2             75
-TOML                             1              5              2             30
+TOML                             1              6              2             38
 Text                             3              3              0             17
 -------------------------------------------------------------------------------
-SUM:                            61           2473            631           6520
+SUM:                            66           2588            624           6884
 -------------------------------------------------------------------------------
 ```
 
