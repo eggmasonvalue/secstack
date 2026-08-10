@@ -47,8 +47,7 @@ sum-of-the-parts value, the formula output you computed yourself.
 ## Normalize / adjust
 
 - **Compute the formula yourself** from the document — do not trust a summary or a third-hand
-  characterization (the MCI lesson: ~$24B of intercompany claims surfaced *after* a "books are
-  clean" was relayed second-hand).
+  characterization (`pitch-like-lou`'s inviolable rule, the MCI lesson).
 - Rebuild the **pro-forma** capital structure as it exists *after* the event.
 - For foreign issuers, reconcile foreign-GAAP/IFRS to a comparable basis before valuing.
 

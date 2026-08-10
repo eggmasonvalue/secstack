@@ -1,5 +1,11 @@
 # Technical Analysis: Implementing a Flip-Buy Insider Filter
 
+> **Not a skill instruction — do not act on this file.** This is a human-facing *design
+> proposal* for an unbuilt feature, kept in `docs/` for developers. It is deliberately not
+> referenced from `SKILL.md` or any script. An agent running `signal-sweep` must ignore it:
+> the flip-buy filter and the draft code below **do not exist** in the skill. Use only the
+> capabilities documented in `SKILL.md`.
+
 This document provides a comprehensive feasibility and difficulty analysis for implementing a **Flip-Buy** filter within the `signal-sweep` workspace. A flip-buy is defined as an open-market purchase (code `P`) by an corporate insider who has a history of recent open-market sales (code `S`).
 
 ---

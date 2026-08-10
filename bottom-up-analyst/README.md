@@ -36,7 +36,7 @@ the data skills decide nothing and Lou assumes the work is already done. See the
 - `SKILL.md` — the skill itself (the entry point an agent loads): the loop, archetype routing,
   how it drives the tools, and the valuation tooling.
 - `references/` — lazily-loaded guides: the memo template, normalization, competitive analysis,
-  valuation, and one playbook per archetype (`references/archetypes/`).
+  valuation, ownership signals, and one playbook per archetype (`references/archetypes/`).
 - `scripts/` — thin, self-documenting valuation tools:
   - `dcf.py` — two-stage DCF, **forward** (assumptions → intrinsic value) and **reverse**
     (price → implied growth), with a bear/base/bull sensitivity table.

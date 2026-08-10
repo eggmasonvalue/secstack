@@ -2,15 +2,14 @@
 name: signal-sweep
 description: >-
   Surface new investment ideas for a long-only investor by scanning SEC filings and market
-  data across the $50M–$10B US-listed universe. Use this skill whenever the user wants to
-  discover new tickers — not research a specific one they already have. Triggers include
-  "what should I look at", "show me insider buying", "any cluster buys", "what's near its
-  52-week low", "run the screens", "who's exposed to [theme]", "which companies mention
-  [keyword] in filings", "who's presenting at conferences this week", "find me new ideas",
-  "surface some names", "what's interesting in small caps", or any request to scan, screen,
-  or sweep for investment candidates. Do NOT use this for single-company deep dives (that's
-  bottom-up-analyst), individual stock quotes (market-scout), or pulling a specific filing
-  (sec-edgar-skill). This skill produces tickers; the rest of the stack researches them.
+  data across the $50M–$10B US-listed universe. Use this skill to discover tickers you do not
+  yet have, via four scans: insider buying (cluster/dip/rip buys from Form 4), market screens
+  (near-52-week-low, high-short-interest, forgotten, and other presets), keyword/theme
+  exposure across filing full-text, and conference presenters. Triggers include "find me new
+  ideas", "show me insider buying", "run the screens", "who's exposed to [theme]", and "who's
+  presenting this week". This skill *produces* tickers for the rest of the stack to research:
+  reach for bottom-up-analyst to deep-dive a name you already have, market-scout for a quote,
+  sec-edgar-skill for a specific filing.
 ---
 
 # Signal Sweep
