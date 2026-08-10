@@ -46,7 +46,16 @@ own; together they form a pipeline.
 
 ### Progressive disclosure at the center of design - lets your model's intelligence shine through
 
-#### Current snapshot (`cloc --exclude-dir=.git,.venv,docs .`)
+#### Current snapshot
+
+From the repository root, reproduce these reports with:
+
+```bash
+cloc --by-file --include-lang=Markdown bottom-up-analyst/SKILL.md pitch-like-lou/SKILL.md sec-edgar-skill/SKILL.md signal-sweep/SKILL.md market-scout/SKILL.md
+cloc --exclude-dir=.git,.venv,docs .
+```
+
+The repository total excludes the human-facing design notes under `signal-sweep/docs/`.
 
 ```text
 ------------------------------------------------------------------------------------------
@@ -64,14 +73,14 @@ SUM:                                          172              0            668
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Markdown                        39           1759              0           3512
+Markdown                        39           1762              0           3518
 Python                          19            805            620           3133
 JSON                             2              0              0            109
 YAML                             2             15              2             75
 TOML                             1              6              2             38
 Text                             3              3              0             17
 -------------------------------------------------------------------------------
-SUM:                            66           2588            624           6884
+SUM:                            66           2591            624           6890
 -------------------------------------------------------------------------------
 ```
 
