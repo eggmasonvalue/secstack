@@ -28,13 +28,13 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r signal-sweep/requirements.txt
+        run: pip install -r skills/signal-sweep/requirements.txt
 
       - name: Run insider scan
         env:
           EDGAR_IDENTITY: ${{ secrets.EDGAR_IDENTITY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        working-directory: signal-sweep
+        working-directory: skills/signal-sweep
         run: |
           DATE="${{ github.event.inputs.date || 'yesterday' }}"
           LOOKBACK="${{ github.event.inputs.lookback || '5' }}"
@@ -56,5 +56,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: insider-scan-${{ github.run_id }}
-          path: signal-sweep/signal-sweep-cache/insiders/
+          path: skills/signal-sweep/signal-sweep-cache/insiders/
           retention-days: 90

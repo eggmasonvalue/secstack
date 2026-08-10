@@ -41,7 +41,7 @@ See [SKILL.md](SKILL.md) for invocation details and flags.
    ```
 
 2. **Set `EDGAR_IDENTITY`** — required for insider, theme, and conference scans (see
-   [repo-level setup](../README.md#setup)).
+   [profile setup](../../README.md#one-time-runtime-setup)).
 3. Market screens (`scan_market.py`) use Yahoo Finance only and need no identity.
 
 ## Screen customization
@@ -58,11 +58,11 @@ Discord, and uploads the Markdown output as a build artifact (90-day retention).
 
 **Required secrets:**
 
-- `EDGAR_IDENTITY` — your SEC identity (see [repo-level setup](../README.md#setup))
+- `EDGAR_IDENTITY` — your SEC identity (see [profile setup](../../README.md#one-time-runtime-setup))
 - `DISCORD_WEBHOOK_URL` — (optional) Discord webhook for posting alerts
 
 The workflow also supports `workflow_dispatch` for manual runs with custom date,
 lookback, and z-score threshold inputs.
 
 ---
-Part of the [us-market-research-skills](../README.md) stack.
+Part of the [SecStack skills](../README.md) collection.

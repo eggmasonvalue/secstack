@@ -78,17 +78,29 @@ non-excluded occurrence.
 Current exclusion list:
 
 ```python
-["conference call", "conference call and webcast",
- "exclusive forum", "forum selection", "alternative forum"]
+[
+    "conference call",
+    "conference call and webcast",
+    "exclusive forum",
+    "forum selection",
+    "alternative forum",
+]
 ```
 
 **2b. Attendance verb check** (`_has_attendance_verb`):  
 Require at least one regex pattern to match:
 
 ```python
-["will present", "presenting at", "participate in",
- "scheduled to present", "speak at", "participation at",
- "will attend", "will be attending"]
+[
+    "will present",
+    "presenting at",
+    "participate in",
+    "scheduled to present",
+    "speak at",
+    "participation at",
+    "will attend",
+    "will be attending",
+]
 ```
 
 `"will attend"` was added after a live test showed the AGA Financial Forum filing
@@ -187,7 +199,7 @@ A template is in the `jules-autoresearch` skill at
 ```bash
 python <jules-autoresearch>/scripts/autoresearch.py \
   --source "sources/github/eggmasonvalue/secstack" \
-  --eval-script "signal-sweep/scripts/eval_harness.py" \
+  --eval-script "skills/signal-sweep/scripts/eval_harness.py" \
   --params '{
     "exclusions": ["conference call", "conference call and webcast",
                    "exclusive forum", "forum selection", "alternative forum"],

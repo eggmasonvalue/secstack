@@ -1,0 +1,18 @@
+{
+  "name": "eggmasonvalue-secstack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "US market research skills for Pi",
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "skills": [
+      "./skills/signal-sweep",
+      "./skills/sec-edgar-skill",
+      "./skills/market-scout",
+      "./skills/bottom-up-analyst",
+      "./skills/pitch-like-lou"
+    ]
+  }
+}
