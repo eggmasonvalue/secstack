@@ -17,6 +17,40 @@ Status: active | superseded by <date/title>
 
 ---
 
+## 2026-08-12 — Replace Pi's coding identity without duplicating tool or skill guidance
+
+Context: A profile-level `SYSTEM.md` replaces Pi's default prompt, which removes the
+coding-agent identity as required but also suppresses Pi's dynamic tool snippets and guidelines.
+A copied system file would also become stale after `pi update --extensions`.
+Decision: Keep a one-line research identity in the SecStack package; bootstrap creates a relative
+profile `SYSTEM.md` symlink to it. A package extension reconstructs Pi's prompt envelope from
+live tool metadata, leaving all research procedure in the matching skills.
+Tradeoff: The extension mirrors a small, stable part of Pi's prompt assembly, but preserves
+active-tool changes automatically and avoids a second copy of tool or research guidance.
+Status: active
+
+## 2026-08-12 — Keep the profile free of coding-task resources
+
+Context: The shared `pi-setup` package now includes global coding guidance and coding-oriented
+skills, but SecStack is a dedicated research profile.
+Decision: Load only SecStack's selected `pi-setup` extensions and themes. Do not link
+`AGENTS.md` or `APPEND_SYSTEM.md`, and exclude `repo-nav` and `bootstrap-docs` by keeping the
+package's skill filter empty.
+Tradeoff: The profile does not inherit general coding workflow improvements, preserving a
+smaller research-specific context and avoiding unrelated instructions.
+Status: active
+
+## 2026-08-12 — Keep research in the primary Pi context
+
+Context: Sub-agent tools consume substantial context for their descriptors, can hide vital
+research context, and introduce uncertain quality and cost tradeoffs when only weaker models
+are available for delegation.
+Decision: Do not install or invoke `pi-subagent`; the research workflow runs in the primary
+Pi context.
+Tradeoff: Research cannot be split across independent agents, but the full evidence trail and
+model judgement stay together without an extra model-selection or context-budget dependency.
+Status: active
+
 ## 2025-06-21 — market-scout uses agent-browser instead of a direct HTTP client
 
 Context: Yahoo Finance transcript and market endpoints are unstable and

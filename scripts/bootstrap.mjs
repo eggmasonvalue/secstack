@@ -4,7 +4,7 @@
  * SecStack profile.
  *
  * This script deliberately changes only the SecStack profile's package list,
- * shell command prefix, APPEND_SYSTEM.md link, and optional Bash launcher.
+ * shell command prefix, and optional Bash launcher.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -12,6 +12,7 @@ import {
   lstatSync,
   mkdirSync,
   readFileSync,
+  readlinkSync,
   renameSync,
   rmSync,
   symlinkSync,
@@ -20,25 +21,19 @@ import {
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 const agentDir = resolve(join(homedir(), ".pi", "secstack-agent"));
 const settingsPath = join(agentDir, "settings.json");
 const npmBin = join(agentDir, "npm", "node_modules", ".bin");
 const venvDir = join(agentDir, ".venv");
-const appendPath = join(agentDir, "APPEND_SYSTEM.md");
+const systemPromptPath = join(agentDir, "SYSTEM.md");
 const bashrcPath = join(homedir(), ".bashrc");
 const secstackSource = "git:github.com/eggmasonvalue/secstack";
 const piSetupSource = "git:github.com/eggmasonvalue/pi-setup";
-const subagentSource = "git:github.com/eggmasonvalue/pi-subagent";
 const agentBrowserSource = "npm:agent-browser";
 
-const managedSources = [
-  secstackSource,
-  piSetupSource,
-  subagentSource,
-  agentBrowserSource,
-];
+const managedSources = [secstackSource, piSetupSource, agentBrowserSource];
 
 const desiredPackages = [
   secstackSource,
@@ -59,7 +54,6 @@ const desiredPackages = [
       "themes/pastel-light.json",
     ],
   },
-  subagentSource,
   agentBrowserSource,
 ];
 
@@ -118,7 +112,14 @@ function venvPython() {
 }
 
 function installedSecStackPath(...parts) {
-  return join(agentDir, "git", "github.com", "eggmasonvalue", "secstack", ...parts);
+  return join(
+    agentDir,
+    "git",
+    "github.com",
+    "eggmasonvalue",
+    "secstack",
+    ...parts,
+  );
 }
 
 function mergeSettings() {
@@ -140,9 +141,14 @@ function mergeSettings() {
   // as well as Bash on macOS/Linux.
   const pathCommand =
     'export PATH="$HOME/.pi/secstack-agent/.venv/Scripts:$HOME/.pi/secstack-agent/.venv/bin:$HOME/.pi/secstack-agent/npm/node_modules/.bin:$PATH"';
-  const prefix = typeof settings.shellCommandPrefix === "string" ? settings.shellCommandPrefix : "";
+  const prefix =
+    typeof settings.shellCommandPrefix === "string"
+      ? settings.shellCommandPrefix
+      : "";
   if (!prefix.includes(managedPathMarker)) {
-    settings.shellCommandPrefix = prefix ? `${prefix}\n${pathCommand}` : pathCommand;
+    settings.shellCommandPrefix = prefix
+      ? `${prefix}\n${pathCommand}`
+      : pathCommand;
   }
 
   const temp = join(agentDir, `.settings.${process.pid}.tmp`);
@@ -170,61 +176,39 @@ function ensurePythonEnvironment() {
   }
 }
 
-function removeOldResourceLink(name) {
-  const path = join(agentDir, name);
-  if (!existsSync(path)) return;
-  try {
-    if (lstatSync(path).isSymbolicLink()) {
-      rmSync(path, { recursive: true, force: true });
-      console.log(`Removed old resource link: ${path}`);
-    } else {
-      console.warn(`Not removing non-link resource directory: ${path}`);
-    }
-  } catch (error) {
-    console.warn(`Could not inspect ${path}: ${error.message}`);
-  }
-}
-
-function linkAppendSystem() {
-  const installed = join(
-    agentDir,
-    "git",
-    "github.com",
-    "eggmasonvalue",
-    "pi-setup",
-    "APPEND_SYSTEM.md",
-  );
+function linkSystemPrompt() {
+  const installed = installedSecStackPath("SYSTEM.md");
   if (!existsSync(installed)) {
-    throw new Error(`Installed pi-setup package is missing APPEND_SYSTEM.md: ${installed}`);
+    throw new Error(
+      `Installed SecStack package is missing SYSTEM.md: ${installed}`,
+    );
   }
 
-  let existing;
+  const target = relative(agentDir, installed);
   try {
-    existing = lstatSync(appendPath);
+    if (lstatSync(systemPromptPath).isSymbolicLink()) {
+      if (readlinkSync(systemPromptPath) === target) return;
+      rmSync(systemPromptPath, { force: true });
+    } else {
+      const backup = `${systemPromptPath}.local-backup`;
+      if (existsSync(backup)) {
+        throw new Error(
+          `A regular ${systemPromptPath} and its backup ${backup} already exist; refusing to overwrite either file.`,
+        );
+      }
+      renameSync(systemPromptPath, backup);
+      console.warn(`Preserved the previous regular file as ${backup}`);
+    }
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
 
-  if (existing?.isSymbolicLink()) {
-    rmSync(appendPath, { force: true });
-  } else if (existing) {
-    const backup = `${appendPath}.local-backup`;
-    if (!existsSync(backup)) {
-      renameSync(appendPath, backup);
-      console.warn(`Preserved the previous regular file as ${backup}`);
-    } else {
-      throw new Error(
-        `A regular ${appendPath} already exists and ${backup} is also present; refusing to overwrite either file.`,
-      );
-    }
-  }
-
   try {
-    symlinkSync(installed, appendPath, "file");
-    console.log(`Linked ${appendPath} -> ${installed}`);
+    symlinkSync(target, systemPromptPath, "file");
+    console.log(`Linked ${systemPromptPath} -> ${target}`);
   } catch (error) {
     throw new Error(
-      `Could not create the APPEND_SYSTEM.md symlink. Enable Windows Developer Mode or grant symlink privileges, then rerun bootstrap. Original error: ${error.message}`,
+      `Could not create the SYSTEM.md symlink. Enable Windows Developer Mode or grant symlink privileges, then rerun bootstrap. Original error: ${error.message}`,
     );
   }
 }
@@ -249,7 +233,9 @@ ${launcherEnd}`;
 
 function installLauncher() {
   mkdirSync(dirname(bashrcPath), { recursive: true });
-  const existing = existsSync(bashrcPath) ? readFileSync(bashrcPath, "utf8") : "";
+  const existing = existsSync(bashrcPath)
+    ? readFileSync(bashrcPath, "utf8")
+    : "";
   const block = launcherBlock();
   const pattern = new RegExp(
     `${escapeRegExp(launcherStart)}[\\s\\S]*?${escapeRegExp(launcherEnd)}\\n?`,
@@ -270,13 +256,17 @@ function escapeRegExp(value) {
 
 async function offerLauncher() {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    console.log(`Launcher not offered because bootstrap is not running in an interactive Bash terminal.`);
+    console.log(
+      `Launcher not offered because bootstrap is not running in an interactive Bash terminal.`,
+    );
     return;
   }
 
   const rl = createInterface({ input, output });
   try {
-    const answer = (await rl.question("Create the secstack-pi Bash launcher? [Y/n] "))
+    const answer = (
+      await rl.question("Create the secstack-pi Bash launcher? [Y/n] ")
+    )
       .trim()
       .toLowerCase();
     if (answer === "" || answer === "y" || answer === "yes") {
@@ -294,20 +284,20 @@ async function main() {
   for (const source of managedSources) {
     runPi(["install", source]);
   }
-
   mergeSettings();
+  linkSystemPrompt();
   mkdirSync(npmBin, { recursive: true });
   ensurePythonEnvironment();
-  for (const name of ["extensions", "skills", "prompts", "themes"]) {
-    removeOldResourceLink(name);
-  }
-  linkAppendSystem();
   await offerLauncher();
 
   console.log("\nSecStack Pi bootstrap complete.");
   console.log("Update everything Pi-managed with:");
-  console.log('  PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions');
-  console.log("One-time browser setup (if not already done): agent-browser install");
+  console.log(
+    '  PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions',
+  );
+  console.log(
+    "One-time browser setup (if not already done): agent-browser install",
+  );
   console.log("Verify from the SecStack profile: agent-browser --version");
 }
 
