@@ -1,0 +1,15 @@
+[project]
+name = "secstack-signal-sweep"
+version = "0.1.0"
+description = "Signal discovery scripts for SecStack"
+requires-python = ">=3.11"
+dependencies = [
+    "edgartools>=5",
+    "pandas>=2",
+    "requests>=2",
+    "truststore>=0.9",
+    "yfinance>=0.2",
+]
+
+[tool.uv]
+package = false

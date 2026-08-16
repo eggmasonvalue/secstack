@@ -19,11 +19,12 @@ Prerequisites:
 - Pi
 - Bash (Git Bash on Windows)
 - Python 3.11 or newer
+- uv
 
 From Bash, bootstrap the profile with one command:
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 https://github.com/eggmasonvalue/secstack "$tmp" && node "$tmp/scripts/bootstrap.mjs"; status=$?; rm -rf "$tmp"; exit $status
+(tmp=$(mktemp -d) && git clone --depth 1 https://github.com/eggmasonvalue/secstack "$tmp" && node "$tmp/scripts/bootstrap.mjs"; status=$?; rm -rf "$tmp"; [ "$status" -eq 0 ])
 ```
 
 The bootstrap is safe to rerun. It installs the unpinned top-level Pi package sources,
@@ -69,8 +70,8 @@ PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions
 After updating, use `/reload` inside Pi to load the new resources without restarting the
 machine.
 
-Python dependencies are installed or refreshed when the bootstrap is rerun. They are not
-part of Pi's `pi update --extensions` lifecycle.
+Python dependencies are installed or refreshed with `uv` when the bootstrap is rerun. They
+are not part of Pi's `pi update --extensions` lifecycle.
 
 ## One-time runtime setup
 

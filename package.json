@@ -7,9 +7,6 @@
     "pi-package"
   ],
   "pi": {
-    "extensions": [
-      "./extensions"
-    ],
     "skills": [
       "./skills/signal-sweep",
       "./skills/sec-edgar-skill",

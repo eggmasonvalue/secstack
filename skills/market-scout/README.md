@@ -8,10 +8,10 @@ Part of the [SecStack skills](../README.md) collection.
 
 ## Installation (do this first)
 
-Install Python deps and browser runtime before using the scripts:
+Install this skill's dependencies and the browser runtime before using the scripts:
 
 ```bash
-pip install -r requirements.txt
+uv sync
 # The SecStack bootstrap installs agent-browser into the isolated Pi profile.
 # Run this once from an active SecStack profile:
 agent-browser install

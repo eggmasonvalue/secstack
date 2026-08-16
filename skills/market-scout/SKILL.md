@@ -20,10 +20,10 @@ whatever framework is driving.
 
 ## Setup (install first)
 
-Install both dependencies before running any script:
+Install this skill's dependencies from this directory before running any script:
 
 ```bash
-pip install -r requirements.txt    # yfinance + pandas (Python ≥ 3.10)
+uv sync
 # In the packaged SecStack profile, agent-browser is installed by the bootstrap.
 agent-browser install
 ```

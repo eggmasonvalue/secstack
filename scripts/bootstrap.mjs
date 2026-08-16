@@ -104,6 +104,13 @@ function commandWorks(command, args) {
   }
 }
 
+function findUv() {
+  if (commandWorks("uv", ["--version"])) return "uv";
+  throw new Error(
+    "uv was not found. Install uv and ensure it is on PATH, then rerun bootstrap.",
+  );
+}
+
 function findPython() {
   for (const command of ["python", "python3"]) {
     if (commandWorks(command, ["--version"])) return command;
@@ -165,22 +172,42 @@ function mergeSettings() {
 }
 
 function ensurePythonEnvironment() {
+  const uv = findUv();
   const python = findPython();
   if (!existsSync(venvPython())) {
     console.log(`\nCreating SecStack Python environment at ${venvDir}`);
-    run(python, ["-m", "venv", venvDir]);
+    run(uv, ["venv", "--python", python, venvDir]);
   }
 
-  const requirements = [
-    installedSecStackPath("skills", "signal-sweep", "requirements.txt"),
-    installedSecStackPath("skills", "sec-edgar-skill", "requirements.txt"),
-    installedSecStackPath("skills", "market-scout", "requirements.txt"),
+  const projects = [
+    installedSecStackPath("skills", "signal-sweep"),
+    installedSecStackPath("skills", "sec-edgar-skill"),
+    installedSecStackPath("skills", "market-scout"),
   ];
-  for (const requirement of requirements) {
-    if (!existsSync(requirement)) {
-      throw new Error(`Installed SecStack package is missing ${requirement}`);
+  for (const project of projects) {
+    const pyproject = join(project, "pyproject.toml");
+    const lockfile = join(project, "uv.lock");
+    for (const file of [pyproject, lockfile]) {
+      if (!existsSync(file)) {
+        throw new Error(`Installed SecStack package is missing ${file}`);
+      }
     }
-    run(venvPython(), ["-m", "pip", "install", "-r", requirement]);
+    // Each skill owns its dependency graph. Keep prior skills' packages in the
+    // shared profile environment while syncing the next one.
+    run(
+      uv,
+      [
+        "sync",
+        "--project",
+        project,
+        "--python",
+        python,
+        "--no-dev",
+        "--inexact",
+        "--locked",
+      ],
+      { UV_PROJECT_ENVIRONMENT: venvDir },
+    );
   }
 }
 

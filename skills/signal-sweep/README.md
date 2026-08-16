@@ -34,10 +34,10 @@ See [SKILL.md](SKILL.md) for invocation details and flags.
 
 ## Setup
 
-1. **Install dependencies** (Python ≥ 3.10):
+1. **Install this skill's dependencies** from this directory:
 
    ```bash
-   pip install -r requirements.txt    # edgartools, yfinance, pandas, requests
+   uv sync
    ```
 
 2. **Set `EDGAR_IDENTITY`** — required for insider, theme, and conference scans (see

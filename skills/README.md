@@ -83,7 +83,6 @@ cloc \
   skills/bottom-up-analyst/scripts/dcf.py \
   skills/bottom-up-analyst/scripts/epv.py \
   skills/market-scout/SKILL.md \
-  skills/market-scout/requirements.txt \
   skills/market-scout/scripts/fetch_market_data.py \
   skills/market-scout/scripts/fetch_transcripts.py \
   skills/pitch-like-lou/SKILL.md \

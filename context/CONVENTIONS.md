@@ -9,7 +9,7 @@ Terse imperative code rules. No rationale here — rationale lives in
 - Format Python: `uv run ruff format .`
 - Check formatting: `uv run ruff format --check .`
 - Lint Markdown: `npx markdownlint-cli2 "**/*.md"`
-- Run a skill's deps: `pip install -r <skill>/requirements.txt`
+- Sync project dependencies: `uv sync`
 
 ## Python
 

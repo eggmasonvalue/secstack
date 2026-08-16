@@ -31,7 +31,7 @@ this layer unopinionated lets any framework compose on top of it.
 
 ## Setup
 
-1. **Install dependencies** (Python ≥ 3.10): `pip install -r requirements.txt`
+1. **Install this skill's dependencies** from this directory: `uv sync`
 2. **Set `EDGAR_IDENTITY`** — see [profile setup](../../README.md#one-time-runtime-setup).
 3. **Verify:** `python scripts/test_setup.py --live`
 
