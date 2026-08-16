@@ -31,12 +31,20 @@ const systemPromptPath = join(agentDir, "SYSTEM.md");
 const bashrcPath = join(homedir(), ".bashrc");
 const secstackSource = "git:github.com/eggmasonvalue/secstack";
 const piSetupSource = "git:github.com/eggmasonvalue/pi-setup";
+const systemPromptViewerSource =
+  "git:github.com/eggmasonvalue/pi-system-prompt-viewer";
 const agentBrowserSource = "npm:agent-browser";
 
-const managedSources = [secstackSource, piSetupSource, agentBrowserSource];
+const managedSources = [
+  secstackSource,
+  piSetupSource,
+  systemPromptViewerSource,
+  agentBrowserSource,
+];
 
 const desiredPackages = [
   secstackSource,
+  systemPromptViewerSource,
   {
     source: piSetupSource,
     extensions: [
