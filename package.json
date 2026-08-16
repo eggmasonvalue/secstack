@@ -7,6 +7,9 @@
     "pi-package"
   ],
   "pi": {
+    "extensions": [
+      "./extensions/restore-tool-envelope.ts"
+    ],
     "skills": [
       "./skills/signal-sweep",
       "./skills/sec-edgar-skill",

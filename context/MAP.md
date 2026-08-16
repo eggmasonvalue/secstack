@@ -8,8 +8,9 @@ A Git Pi package containing five self-contained agent skills. The skills live un
 `skills/` so the root of the repository can focus on package/profile setup.
 
 ```text
-package.json          Pi package manifest for the five skills
+package.json          Pi package manifest for the tool-envelope extension and five skills
 SYSTEM.md             Research-agent identity installed into the isolated profile
+extensions/           Restores Pi's live tool prompt envelope after SYSTEM.md replacement
 scripts/bootstrap.mjs Isolated-profile bootstrap
 skills/               Skill collection and skill-level documentation
   signal-sweep/       Discovery — scan the universe, surface tickers
@@ -36,7 +37,8 @@ The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 Pi installs and updates each source independently. The bootstrap manages only those package
 entries, the profile's Pi-managed shell path, the profile-local Python environment, and a
 relative `SYSTEM.md` symlink into the installed SecStack package. The system-prompt-viewer
-package owns the prompt overlay and restores Pi's live tool snippets and guidelines after
+package is the sole owner of the `/system-prompt` overlay. SecStack's separate
+`restore-tool-envelope` extension restores Pi's live tool snippets and guidelines after
 `SYSTEM.md` replaces Pi's coding-agent identity. Coding-task guidance files are not linked,
 and the filtered `pi-setup` package contributes no skills, including `repo-nav` and
 `bootstrap-docs`. Research runs in the primary Pi context;
