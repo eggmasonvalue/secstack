@@ -327,9 +327,7 @@ async function main() {
 
   console.log("\nSecStack Pi bootstrap complete.");
   console.log("Update everything Pi-managed with:");
-  console.log(
-    '  PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions',
-  );
+  console.log("  secstack-pi update --extensions");
   console.log(
     "One-time browser setup (if not already done): agent-browser install",
   );

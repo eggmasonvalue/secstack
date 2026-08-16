@@ -61,7 +61,14 @@ PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi
 
 ## Update
 
-Update every Pi-managed package in the SecStack profile with:
+Update every Pi-managed package in the SecStack profile with the launcher:
+
+```bash
+secstack-pi update --extensions
+```
+
+If the launcher is not installed or loaded in the current shell, use the profile
+prefix directly:
 
 ```bash
 PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions
