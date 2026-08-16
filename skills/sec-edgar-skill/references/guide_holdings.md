@@ -13,7 +13,7 @@
 ```python
 manager = Company("Magnetar Capital LLC")
 f13 = manager.get_filings(form="13F-HR").latest().obj()
-df = f13.holdings                          # the holdings DataFrame
+df = f13.holdings  # the holdings DataFrame
 ```
 
 > Operating companies (AAPL, etc.) do **not** file 13F — querying their CIK for `13F-HR`
@@ -31,14 +31,12 @@ include the `"SC "`-prefixed names — EDGAR often indexes these schedules that 
 omitting them returns empty results:
 
 ```python
-blocks = company.get_filings(
-    form=["13D", "13G", "SC 13D", "SC 13G", "SC 13D/A", "SC 13G/A"]
-)
-sched = blocks.latest().obj()        # Schedule13D / Schedule13G structured object
-sched.reporting_persons              # who holds — each with voting / dispositive power
-sched.issuer_info                    # the subject company (name, CIK, CUSIP)
-sched.total_percent                  # aggregate % of class
-sched.items.item4_purpose_of_transaction   # 13D Item 4 narrative, when present
+blocks = company.get_filings(form=["13D", "13G", "SC 13D", "SC 13G", "SC 13D/A", "SC 13G/A"])
+sched = blocks.latest().obj()  # Schedule13D / Schedule13G structured object
+sched.reporting_persons  # who holds — each with voting / dispositive power
+sched.issuer_info  # the subject company (name, CIK, CUSIP)
+sched.total_percent  # aggregate % of class
+sched.items.item4_purpose_of_transaction  # 13D Item 4 narrative, when present
 ```
 
 These schedules parse into a **structured object**, not an item-addressable one — there is

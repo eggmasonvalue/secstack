@@ -24,7 +24,8 @@ Install both dependencies before running any script:
 
 ```bash
 pip install -r requirements.txt    # yfinance + pandas (Python ≥ 3.10)
-npm install -g agent-browser && agent-browser install
+# In the packaged SecStack profile, agent-browser is installed by the bootstrap.
+agent-browser install
 ```
 
 - `agent-browser` is required for earnings-call transcripts (`fetch_transcripts.py`).
@@ -65,10 +66,11 @@ the scripts don't cover, **discover at runtime** rather than guessing field name
 
 ```python
 import yfinance as yf
+
 t = yf.Ticker("AAPL")
 
-print([a for a in dir(t) if not a.startswith("_")])   # all attributes/methods
-list(t.info.keys())                                     # every field in the snapshot
+print([a for a in dir(t) if not a.startswith("_")])  # all attributes/methods
+list(t.info.keys())  # every field in the snapshot
 
 # Sector/industry screening (theme -> shortlist):
 ind = yf.Industry(t.info["industryKey"])

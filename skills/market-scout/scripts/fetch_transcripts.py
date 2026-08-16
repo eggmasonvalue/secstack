@@ -99,7 +99,7 @@ def _run_agent_browser(args: list[str], timeout: int = 45) -> str:
     except FileNotFoundError:
         c.log(
             "ERROR: agent-browser is not installed or not on PATH.\n"
-            "Install it:  npm install -g agent-browser && agent-browser install"
+            "Run `agent-browser install` from the active SecStack Pi profile after bootstrap."
         )
         sys.exit(2)
     except subprocess.TimeoutExpired:

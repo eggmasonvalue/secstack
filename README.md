@@ -1,149 +1,141 @@
-# US Market Research Skills
+# SecStack
 
-A composable stack of [agent skills](https://agentskills.io/home) for rigorous bottom-up equity
-research on US-listed companies — from idea discovery through primary data (SEC filings +
-market data), through an analytical framework, to a finished pitch. Each skill stands on its
-own; together they form a pipeline.
+SecStack is an isolated [Pi](https://github.com/badlogic/pi-mono) profile for rigorous
+bottom-up research on US-listed companies. It bundles five composable skills, selected
+Pi extensions and themes, and Pi-managed `agent-browser`.
 
-## The skills
-
-| Layer | Skill | Job |
-|---|---|---|
-| **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data across the $50M–$10B universe to surface new investment ideas: insider cluster/rip/dip buys, activist 13D filings, market screens, keyword/theme search, conference discovery. |
-| **Data** | [`sec-edgar-skill`](sec-edgar-skill/) | Retrieve & extract SEC EDGAR filings (10-K/10-Q/8-K, 20-F/6-K, XBRL financials, ownership, holdings) and 13F institutional holder data (via 13f.info), token-efficiently. Unopinionated. |
-| **Data** | [`market-scout`](market-scout/) | Pull price, returns, peers, sector screens, and earnings call transcripts via Yahoo Finance. Unopinionated. |
-| **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one ticker into an earned, auditable investment memo — drives the data skills, classifies the archetype, values it, tries to kill it. |
-| **Voice** | [`pitch-like-lou`](pitch-like-lou/) | Render a Norbert Lou–style Value Investors Club pitch from a finished thesis. |
-
-## Salient Features
-
-### Composability
+The normal Pi profile is not modified. SecStack uses:
 
 ```text
-  signal-sweep  (surfaces tickers)
-       │
-       ▼
-  bottom-up-analyst  (deep dive on one ticker)
-       ├── sec-edgar-skill  (SEC filings)
-       ├── market-scout     (price, peers, transcripts)
-       ▼
-  pitch-like-lou  (finished pitch)
-```
-
-- **Discovery feeds analysis.** `signal-sweep` scans the universe and produces shortlists of
-  tickers with reasons. `bottom-up-analyst` takes one of those tickers and does the deep dive.
-  They are independent — you can skip discovery and hand the analyst a ticker directly.
-- **The two data skills are independent and swappable.** `sec-edgar-skill` (filings) and
-  `market-scout` (market data) know nothing of each other; either can be replaced — e.g. point
-  the analyst at a paid data provider instead of `market-scout` and nothing else changes.
-- **The analyst is the brain and the conductor.** `bottom-up-analyst` decides what to pull,
-  reasons over it, values the business, and writes the memo. It drives the data skills; they
-  never decide what matters.
-- **The voice renders from a finished thesis.** `pitch-like-lou` turns the analyst's memo into a
-  pitch; it is not an idea generator.
-
-**Production order:** signal-sweep → analyst → memo → (optionally) Lou pitches from it.
-
-### Progressive disclosure at the center of design - lets your model's intelligence shine through
-
-#### Current snapshot
-
-From the repository root, reproduce these reports with:
-
-```bash
-# Agent-loaded entry points
-cloc --by-file --include-lang=Markdown bottom-up-analyst/SKILL.md pitch-like-lou/SKILL.md sec-edgar-skill/SKILL.md signal-sweep/SKILL.md market-scout/SKILL.md
-
-# Referenced skill surface only
-cloc \
-  bottom-up-analyst/SKILL.md \
-  bottom-up-analyst/references/memo_template.md \
-  bottom-up-analyst/references/guide_normalization.md \
-  bottom-up-analyst/references/guide_competitive.md \
-  bottom-up-analyst/references/guide_valuation.md \
-  bottom-up-analyst/references/guide_ownership_signals.md \
-  bottom-up-analyst/references/archetypes/*.md \
-  bottom-up-analyst/scripts/dcf.py bottom-up-analyst/scripts/epv.py \
-  market-scout/SKILL.md market-scout/requirements.txt market-scout/scripts/fetch_market_data.py market-scout/scripts/fetch_transcripts.py \
-  pitch-like-lou/SKILL.md pitch-like-lou/references/corpus/*.md \
-  sec-edgar-skill/SKILL.md \
-  sec-edgar-skill/references/guide_core.md sec-edgar-skill/references/guide_filings.md sec-edgar-skill/references/guide_financials.md sec-edgar-skill/references/guide_ownership.md sec-edgar-skill/references/guide_holdings.md \
-  sec-edgar-skill/scripts/orient.py sec-edgar-skill/scripts/fetch_filing.py sec-edgar-skill/scripts/fetch_filings.py sec-edgar-skill/scripts/parse_financials.py sec-edgar-skill/scripts/list_headings.py sec-edgar-skill/scripts/fetch_insider_trades.py sec-edgar-skill/scripts/fetch_13f_holders.py sec-edgar-skill/scripts/test_setup.py \
-  signal-sweep/SKILL.md signal-sweep/screens.json signal-sweep/references/guide_screens.md \
-  signal-sweep/scripts/scan_insiders.py signal-sweep/scripts/scan_market.py signal-sweep/scripts/search_themes.py signal-sweep/scripts/scan_conferences.py
-```
-
-The second command lists the referenced skill paths explicitly, so repository-level docs and
-unreferenced proposals are not counted.
-
-```text
-------------------------------------------------------------------------------------------
-File                                        blank        comment           code
-------------------------------------------------------------------------------------------
-./bottom-up-analyst/SKILL.md                   51              0            228
-./pitch-like-lou/SKILL.md                      39              0            164
-./sec-edgar-skill/SKILL.md                     36              0            135
-./signal-sweep/SKILL.md                        27              0             81
-./market-scout/SKILL.md                        19              0             60
-------------------------------------------------------------------------------------------
-SUM:                                          172              0            668
-------------------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-Markdown                        29           1608              0           3025
-Python                          16            711            534           2890
-JSON                             1              0              0             99
-Text                             1              1              0              5
--------------------------------------------------------------------------------
-SUM:                            47           2320            534           6019
--------------------------------------------------------------------------------
+~/.pi/secstack-agent
 ```
 
 ## Install
 
-Install the whole stack, or any single skill on its own - point your agent at
-this repository, or at a single skill subfolder. Each skill is a self-contained
-folder with its own `SKILL.md`.
+Prerequisites:
 
-## Setup
+- Git
+- Node.js
+- Pi
+- Bash (Git Bash on Windows)
+- Python 3.11 or newer
 
-### SEC identity (required)
-
-The SEC's [fair-access policy](https://www.sec.gov/os/webmaster-faq#developers) requires a
-contact name and email in the User-Agent header. Requests without one are blocked (HTTP 403).
-Set it once — `sec-edgar-skill` and `signal-sweep` both read it automatically:
+From Bash, bootstrap the profile with one command:
 
 ```bash
-export EDGAR_IDENTITY="Jane Analyst jane@example.com"     # bash/zsh
-$env:EDGAR_IDENTITY = "Jane Analyst jane@example.com"     # PowerShell
+tmp=$(mktemp -d) && git clone --depth 1 https://github.com/eggmasonvalue/secstack "$tmp" && node "$tmp/scripts/bootstrap.mjs"; status=$?; rm -rf "$tmp"; exit $status
 ```
 
-Use your real name and email. The SEC uses this only to contact you if your traffic causes
-problems — it is not authentication.
+The bootstrap is safe to rerun. It installs the unpinned top-level Pi package sources,
+merges only SecStack-managed package entries and shell-path configuration into the
+SecStack profile's `settings.json` and creates a profile-local Python environment. It links the
+profile's `SYSTEM.md` to the installed SecStack package, so `pi update --extensions` updates the
+research-agent identity and prompt envelope. It does not install coding-task guidance or link
+global `AGENTS.md` or `APPEND_SYSTEM.md` files into the profile.
 
-### Per-skill dependencies
+It does not overwrite the profile's `auth.json`, `models.json`, provider settings,
+model selections, UI preferences, sessions, or unrelated settings.
 
-- **`signal-sweep`** — `pip install -r signal-sweep/requirements.txt`
-- **`sec-edgar-skill`** — `pip install -r sec-edgar-skill/requirements.txt`
-- **`market-scout`** — install both before use: `pip install -r market-scout/requirements.txt`
-  and `npm install -g agent-browser && agent-browser install`. No identity needed.
-- **`bottom-up-analyst`** — valuation scripts are standard-library only; no install needed.
-- **`pitch-like-lou`** — documentation and a reference corpus; nothing to install.
+## Launch
 
-## Contributing
+The bootstrap offers to add a `secstack-pi` Bash function to `~/.bashrc`. After opening a
+new Bash shell (or running `source ~/.bashrc`), use:
 
-This repo is agent-maintained. Start at [`AGENTS.md`](AGENTS.md), then see
-[`context/MAP.md`](context/MAP.md) (where things live),
-[`context/DECISIONS.md`](context/DECISIONS.md) (why), and
-[`context/CONVENTIONS.md`](context/CONVENTIONS.md) (code rules). Lint with
-`uv run ruff check .` and `npx markdownlint-cli2 "**/*.md"`. Work on a branch and
-open a PR — never commit to `main` directly.
+```bash
+secstack-pi
+```
 
-## A note on scope
+The launcher activates the SecStack virtual environment, exposes the Pi-managed npm
+binaries, and starts Pi with the isolated profile. It accepts normal Pi arguments:
 
-These skills produce **research, not advice**. They are tools for doing diligence rigorously and
-honestly; nothing they output is a recommendation to buy or sell a security. The whole design —
-filings-first grounding, verified-vs-assumed tagging, the pre-mortem — exists to keep an LLM's
-fluent prose tethered to auditable evidence so a human can reach their own judgment.
+```bash
+secstack-pi --mode json -p "Summarize the current research workflow."
+```
+
+Without the launcher, start the profile directly:
+
+```bash
+PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi
+```
+
+## Update
+
+Update every Pi-managed package in the SecStack profile with:
+
+```bash
+PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi update --extensions
+```
+
+After updating, use `/reload` inside Pi to load the new resources without restarting the
+machine.
+
+Python dependencies are installed or refreshed when the bootstrap is rerun. They are not
+part of Pi's `pi update --extensions` lifecycle.
+
+## One-time runtime setup
+
+The bootstrap installs `agent-browser` as a Pi-managed npm package. Its browser/runtime
+installation is a separate one-time step. Start the SecStack profile, then run:
+
+```bash
+agent-browser install
+agent-browser --version
+```
+
+SEC-facing skills require an identity string for the SEC fair-access policy. Set it in the
+shell before using those skills; do not commit it:
+
+```bash
+export EDGAR_IDENTITY="Jane Analyst jane@example.com"
+```
+
+The insider scan can optionally post to Discord. Set the webhook in the environment when
+using that feature:
+
+```bash
+export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+```
+
+## Included packages
+
+The SecStack profile manages these as separate top-level Pi packages:
+
+- `git:github.com/eggmasonvalue/secstack` — this repository's five skills
+- `git:github.com/eggmasonvalue/pi-setup` — selected extensions and themes only
+- `git:github.com/eggmasonvalue/pi-system-prompt-viewer` — `/system-prompt` overlay
+- `npm:agent-browser`
+
+The selected `pi-setup` resources are `btw`, `notify`, `session-context`, `tavily-web`,
+`vibe-spinner`, and the `midnight-pastel`, `pastel-dark`, and `pastel-light` themes. Its
+coding-oriented skills, including `repo-nav` and `bootstrap-docs`, are excluded.
+
+Each independently managed source remains a top-level profile package so
+`pi update --extensions` can update it independently. Third-party resources are not copied
+into this repository or bundled as nested dependencies. Research runs in the primary Pi
+context; the profile does not install or invoke sub-agents.
+
+## Skills
+
+The five skills are documented in [`skills/README.md`](skills/README.md). The production
+flow is:
+
+```text
+signal-sweep → bottom-up-analyst → sec-edgar-skill / market-scout → pitch-like-lou
+```
+
+## Development
+
+The repository layout and data flow are documented in [`context/MAP.md`](context/MAP.md).
+Project conventions are in [`context/CONVENTIONS.md`](context/CONVENTIONS.md). Run the
+following checks before opening a pull request:
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+npx markdownlint-cli2 "**/*.md"
+```
+
+## Scope
+
+These skills produce research, not investment advice. They are tools for doing diligence
+rigorously and honestly; nothing they output is a recommendation to buy or sell a security.

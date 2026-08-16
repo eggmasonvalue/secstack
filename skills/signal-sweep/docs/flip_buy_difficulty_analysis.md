@@ -22,7 +22,7 @@ In insider-activity analysis:
 
 ## 2. Current Architecture vs. Flip-Buy Requirements
 
-### Current Flow in [scan_insiders.py](file:///D:/Misc2/06_backups/us-market-research-skills/signal-sweep/scripts/scan_insiders.py)
+### Current Flow in [scan_insiders.py](../scripts/scan_insiders.py)
 
 1. Fetches the daily bulk Form 4 index for the lookback window (e.g., last 5 trading days).
 2. Filters to the market-cap universe ($50M–$10B) via `_common.in_universe`.
@@ -108,6 +108,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 
+
 def load_ticker_history(ticker: str, cache_dir: Path) -> list[dict]:
     """Load cached insider transactions for a ticker."""
     cache_path = cache_dir / "insiders" / f"{ticker}_txns.json"
@@ -118,34 +119,36 @@ def load_ticker_history(ticker: str, cache_dir: Path) -> list[dict]:
             return []
     return []
 
+
 def save_ticker_history(ticker: str, txns: list[dict], cache_dir: Path) -> None:
     """Save ticker history to disk."""
     cache_path = cache_dir / "insiders" / f"{ticker}_txns.json"
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(json.dumps(txns, indent=2), encoding="utf-8")
 
+
 def update_ticker_history(ticker: str, cache_dir: Path) -> list[dict]:
     """Incremental fetch of all Form 4 transactions (P and S) over 1 year."""
     from edgar import Company
-    
+
     txns = load_ticker_history(ticker, cache_dir)
     last_date = max([t["date"] for t in txns]) if txns else None
-    
+
     # Define start date (1 year lookback)
     start_dt = datetime.now() - timedelta(days=365)
     start_str = start_dt.strftime("%Y-%m-%d")
-    
+
     # If we have cached transactions, start from the latest cached date to prevent re-fetching
     if last_date and last_date > start_str:
         fetch_start = last_date
     else:
         fetch_start = start_str
-        
+
     date_range = f"{fetch_start}:{datetime.now().strftime('%Y-%m-%d')}"
-    
+
     company = Company(ticker)
     filings = company.get_filings(form="4", date=date_range)
-    
+
     new_txns = []
     if filings:
         for filing in filings:
@@ -156,18 +159,21 @@ def update_ticker_history(ticker: str, cache_dir: Path) -> list[dict]:
                     for _, row in df.iterrows():
                         code = row.get("Code", "")
                         if code in ("P", "S"):
-                            new_txns.append({
-                                "date": filing.filing_date,
-                                "insider": row.get("Insider") or obj.insider_name,
-                                "role": row.get("Position") or getattr(obj, "position", "Unknown"),
-                                "code": code,
-                                "shares": row.get("Shares", 0),
-                                "price": row.get("Price", 0),
-                                "remaining": row.get("Remaining Shares")
-                            })
+                            new_txns.append(
+                                {
+                                    "date": filing.filing_date,
+                                    "insider": row.get("Insider") or obj.insider_name,
+                                    "role": row.get("Position")
+                                    or getattr(obj, "position", "Unknown"),
+                                    "code": code,
+                                    "shares": row.get("Shares", 0),
+                                    "price": row.get("Price", 0),
+                                    "remaining": row.get("Remaining Shares"),
+                                }
+                            )
             except Exception:
                 continue
-                
+
     # Merge and deduplicate
     seen = set()
     merged = []
@@ -177,27 +183,31 @@ def update_ticker_history(ticker: str, cache_dir: Path) -> list[dict]:
         if key not in seen:
             seen.add(key)
             merged.append(t)
-            
+
     merged.sort(key=lambda x: x["date"])
     save_ticker_history(ticker, merged, cache_dir)
     return merged
 
-def check_flip_buy(ticker: str, purchase_insider: str, purchase_date: str, txns: list[dict], min_sells: int = 2) -> bool:
+
+def check_flip_buy(
+    ticker: str, purchase_insider: str, purchase_date: str, txns: list[dict], min_sells: int = 2
+) -> bool:
     """Check if the purchase was preceded by a series of sells by this insider."""
+
     # Normalize name for comparison
     def norm(name):
         return "".join(name.upper().split())
-        
+
     insider_norm = norm(purchase_insider)
-    
+
     # Filter and sort prior transactions
     prior_txns = []
     for t in txns:
         if t["date"] < purchase_date and norm(t["insider"]) == insider_norm:
             prior_txns.append(t)
-            
-    prior_txns.sort(key=lambda x: x["date"], reverse=True) # newest first
-    
+
+    prior_txns.sort(key=lambda x: x["date"], reverse=True)  # newest first
+
     sells_count = 0
     for t in prior_txns:
         if t["code"] == "S":
@@ -205,7 +215,7 @@ def check_flip_buy(ticker: str, purchase_insider: str, purchase_date: str, txns:
         elif t["code"] == "P":
             # An intermediate purchase breaks the "flip" sequence
             break
-            
+
     return sells_count >= min_sells
 ```
 
