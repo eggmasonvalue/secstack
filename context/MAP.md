@@ -37,7 +37,7 @@ The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 Pi installs and updates each source independently. The bootstrap manages only those package
 entries, the profile's Pi-managed shell path, the profile-local Python environment, and a
 relative `SYSTEM.md` symlink into the installed SecStack package. The system-prompt-viewer
-package is the sole owner of the `/system-prompt` overlay. SecStack's separate
+package is the sole owner of the `/system-context` overlay. SecStack's separate
 `restore-tool-envelope` extension restores Pi's live tool snippets and guidelines after
 `SYSTEM.md` replaces Pi's coding-agent identity. Coding-task guidance files are not linked,
 and the filtered `pi-setup` package contributes no skills, including `repo-nav` and

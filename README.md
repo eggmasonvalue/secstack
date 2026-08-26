@@ -110,7 +110,7 @@ The SecStack profile manages these as separate top-level Pi packages:
 
 - `git:github.com/eggmasonvalue/secstack` — this repository's five skills
 - `git:github.com/eggmasonvalue/pi-setup` — selected extensions and themes only
-- `git:github.com/eggmasonvalue/pi-system-prompt-viewer` — `/system-prompt` overlay
+- `git:github.com/eggmasonvalue/pi-system-prompt-viewer` — `/system-context` overlay
 - `npm:agent-browser`
 
 The selected `pi-setup` resources are `btw`, `notify`, `session-context`, `tavily-web`,
