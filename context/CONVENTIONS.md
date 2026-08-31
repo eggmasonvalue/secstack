@@ -10,6 +10,8 @@ Terse imperative code rules. No rationale here — rationale lives in
 - Check formatting: `uv run ruff format --check .`
 - Lint Markdown: `npx markdownlint-cli2 "**/*.md"`
 - Sync project dependencies: `uv sync`
+- Do not add automated test suites, fixtures, or eval workspaces; validate with lint and focused
+  smoke commands.
 
 ## Python
 

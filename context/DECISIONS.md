@@ -17,6 +17,21 @@ Status: active | superseded by <date/title>
 
 ---
 
+## 2026-08-31 — Distill routine 13F queries while preserving SEC-level provenance
+
+Context: SEC 13F filings are authoritative but awkward for reverse stock-holder lookup and
+routine manager history, while 13f.info already resolves managers, CUSIPs, filing portfolios,
+and position histories. Exposing provider URLs or low-level CUSIP flags would invite agents to
+leave the tool surface and repeat work.
+Decision: Use 13f.info behind the SEC skill's routine stock-, manager-, and manager-position
+queries. Keep the agent-facing interface job-based, abstract the intermediary from generated
+reports, and expose the underlying SEC period, CIK, and accession. Use raw EDGAR for fields the
+distilled route omits, provider failure, discrepancies, or requested verification.
+Tradeoff: Routine queries depend on an unofficial distilled backend and its HTML/JSON shape, but
+agents get a smaller, more capable interface while retaining a direct path to the regulatory
+record.
+Status: active
+
 ## 2026-08-12 — Replace Pi's coding identity without duplicating tool or skill guidance
 
 Context: A profile-level `SYSTEM.md` replaces Pi's default prompt, which removes the

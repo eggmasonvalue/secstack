@@ -1,171 +1,149 @@
 ---
 name: sec-edgar-skill
 description: >-
-  Retrieve and extract SEC EDGAR filings and ownership data for US-listed companies. Use this
-  whenever a task touches a company's filings, financials, ownership, governance, or
-  institutional holders — even if EDGAR is not named explicitly. Covers 10-K/10-Q/8-K,
-  20-F/6-K foreign filings, XBRL financial statements, insider transactions, 13F institutional
-  holdings (via 13f.info), 13D/13G blockholdings, and DEF 14A proxy/compensation. Always start
-  by running scripts/orient.py, then pull only the sections you need. Unopinionated data layer:
-  it fetches and extracts token-efficiently; it does not decide what is significant.
+  Retrieve, verify, and inspect SEC filings and filing-derived financial, ownership,
+  compensation, and governance data. Use when current or auditable evidence must be pulled
+  from EDGAR: 10-K/10-Q/8-K, 20-F/40-F/6-K, XBRL statements, Form 4 insider transactions,
+  13F institutional holdings, 13D/13G blockholders, or proxy disclosures. The generic filing
+  tools also accept other SEC forms. Do not trigger merely because an analysis mentions
+  financials; use it when source material needs to be obtained or checked.
 ---
 
 # SEC EDGAR Research Skill
 
-A toolkit for retrieving and extracting SEC EDGAR filings for US-listed companies —
-efficiently, within a token budget, using `edgartools`.
+Retrieve filing-derived evidence without loading entire filings into context.
 
-## What this skill is — and is not
+## Role in the research stack
 
-This is the **tools layer** of a research stack. It knows *how* to find, download, and
-extract SEC filing data, plus the library mechanics to do it reliably. It is
-deliberately **unopinionated**: it does not judge what is a good number, a red flag, or
-worth looking at. That judgment belongs to whatever **analytical-framework skill** is
-driving (e.g. a value-investing framework); presentation belongs to a downstream
-consumer skill. Keep this layer neutral so any framework can compose on top of it.
+Prefer an SEC filing over model memory or a secondary summary for facts the filing discloses.
+When an analytical skill is driving the task, provide the requested evidence and provenance
+without substituting an investment conclusion. Use company investor relations, another
+regulator, or reputable web sources when the information is not yet on EDGAR or is outside
+EDGAR's scope.
 
-Provide capability and facts; let the caller reason. The only hard requirements here are
-mechanical (set an SEC identity, or requests are blocked) — never analytical.
+## Runtime and paths
 
-## Setup
+Resolve bundled paths relative to this `SKILL.md`. Invoke scripts by their resolved absolute
+path while keeping the shell working directory at the research workspace; this keeps the
+default `./sec-cache` beside the work rather than inside the installed skill. Alternatively,
+pass `--cache-dir`.
 
-Run `python scripts/test_setup.py --live` to verify dependencies and SEC identity.
-If identity is missing, the error message tells the user exactly how to set
-`$EDGAR_IDENTITY` (see the [profile setup](../../README.md#one-time-runtime-setup) for the full
-explanation). Every script reads it automatically; you can also pass `--identity`
-per-call.
+SEC requests require a real contact identity:
 
-The scripts handle environment hazards on import (UTF-8 stdout on Windows, truststore
-for corporate proxies). When writing **inline Python** that calls `edgartools` directly
-(not via a bundled script), replicate that preamble — see `references/guide_core.md`
-§ "Inline Python preamble."
+```bash
+export EDGAR_IDENTITY="Jane Analyst jane@example.com"
+```
 
-## How to work efficiently: pull only what you need
+Every SEC-facing script also accepts `--identity`. The 13f.info convenience script and local
+`list_headings.py` do not need an SEC identity. Diagnose the environment with:
 
-Filings are huge — a 10-K can exceed 100k words. Loading one whole wastes the context
-window and buries the signal. The method is to keep documents **on disk** and pull only
-the exact lines you need into context. Four phases:
+```bash
+python "<skill-dir>/scripts/test_setup.py" --live
+```
 
-1. **Orient first — always run `scripts/orient.py`.** `python scripts/orient.py --ticker <T>`
-   prints the company's `.to_context()` summary, surveys the **mix of forms it has actually
-   filed** (with date ranges), and lists the most recent filings — the cheapest way to see what
-   a company files *now* and how that has changed, so you fetch the right forms instead of
-   assuming a form set. This is the **non-negotiable first step — run it before any web
-   search, even for breaking news.** When the user says "just reported" or "a few hours ago,"
-   orient.py will show the 8-K filed today immediately; then fetch it with
-   `fetch_filing.py --form 8-K --date <today> --attachment list` to get the press-release
-   exhibit (Exhibit 99.1). The filing is always faster and more authoritative than a web
-   search for what the company itself disclosed. (For finer control, `.to_context()`
-   on a `Company`, filing collection, or `XBRL` object gives the same preview inline — see
-   `guide_core.md`.)
-2. **Download to the cache as Markdown.** Use the scripts to write filings to disk as
-   clean Markdown — `edgartools` converts SEC HTML, stripping layout bloat to roughly a
-   tenth of the size, and the result is greppable.
-3. **Get just the section you need.** Item-addressable forms (10-K/10-Q/8-K/20-F) let you
-   list a filing's SEC item codes and pull one section by code — no scanning. For a full
-   report, `scripts/list_headings.py` maps its `#` headers to line numbers; tabular
-   free-form filings (e.g. DEF 14A) instead carry their own table of contents up top —
-   read it, then grep. `guide_filings.md` has the mechanics.
-4. **Search, then read precisely.** Use your native grep/ripgrep over the cached files
-   to find the lines that matter, then read just those ranges. Let grep and disk do the
-   heavy lifting; spend context only on the paragraphs you actually need.
+## Choose the shortest reliable route
 
-## The cache
+1. **Orient when discovery is needed.** Run `orient.py` when the relevant form or accession is
+   unknown. It prints company identity, the recent filing mix, and recent accessions without
+   downloading filing contents. Skip orientation when the user supplied an accession or
+   cached file, or when the task is solely a 13f.info convenience query.
+2. **Select exactly.** Use company/form/period selectors for ordinary retrieval. Use
+   `--accession` when the user supplied one or a candidate-listing command identified one.
+   `--on-or-before` is deliberately explicit: it may select an earlier filing.
+3. **Keep large documents on disk.** Download Markdown or CSV into the cache. Search cached
+   Markdown with native grep/ripgrep, then read only relevant line ranges.
+4. **Prefer structured routes where they are sound.** Pull item-addressable sections and XBRL
+   statements directly. For free-form filings, inspect their contents and attachments.
+5. **Treat failure as failure.** Do not turn a network or parser error into a factual “no data”
+   conclusion. Use the reported candidates, accession route, relevant guide, or edgartools
+   `.docs` to recover.
 
-Downloads go to `<cache>/<TICKER>/<FORM>_<FILING-DATE>_<ACCESSION>[__<section-or-exhibit>].md`
-(statements as `…__<statement>.csv`). The root resolves as `--cache-dir` >
-`$SEC_CACHE_DIR` > `./sec-cache` — workspace-relative so your grep tool finds it by
-default, and persistent across runs so you don't re-hit the SEC. Filenames are
-deterministic and keyed by the globally-unique accession number, so **before
-downloading, check whether the file already exists** (list or glob `<cache>/<TICKER>/`)
-and reuse it. Every script prints the absolute path(s) it wrote to stdout.
+For very recent disclosures, check EDGAR promptly but do not assume a filing must already
+exist. A company release can precede its SEC filing.
 
-> If your grep tool uses ripgrep and the cache is gitignored, ripgrep skips it by
-> default. Either point the search at `<cache>/<TICKER>/` explicitly, or pass
-> `--no-ignore`. Resolve the path from a script's stdout or `$SEC_CACHE_DIR` — never
-> hard-code an absolute cache path.
+## Cache behavior
 
-## Reference guides (read the relevant one before extracting)
+The root resolves as `--cache-dir` > `$SEC_CACHE_DIR` > `./sec-cache`. Filing artifacts use:
 
-Each guide is loaded only when its domain is in play, so you carry just the rules you
-need. Read the matching guide first — it holds the item codes, taxonomies, and library
-quirks that make extraction correct.
+```text
+<TICKER>/<FORM>_<FILING-DATE>_<ACCESSION>[__<section-or-attachment>].md
+<TICKER>/<FORM>_<FILING-DATE>_<ACCESSION>__<statement>.csv
+```
+
+Accession-keyed filing artifacts are immutable enough to reuse by default; pass `--force` to
+regenerate them. Rolling insider and 13F summaries refresh because late filings or amendments
+can change their source set. If ripgrep skips a gitignored cache, point it directly at the
+company directory or use `--no-ignore`.
+
+## Reference guides
+
+Read only the guide needed for the question:
 
 | Guide | Use it for |
 | :-- | :-- |
-| `references/guide_core.md` | The mechanics behind `scripts/orient.py`: resolving a company, listing/filtering filings, surveying the filing mix, `.to_context()` previews, and `.docs` self-help. Read it to drive orientation inline or go beyond the script. |
-| `references/guide_filings.md` | Filing text: pulling a section by SEC item code (10-K/10-Q/8-K/20-F) vs. navigating free-form filings (DEF 14A/6-K) by their own contents, plus attachments and exhibits (incl. 6-K Exhibit 99.1). |
-| `references/guide_financials.md` | XBRL financial statements and individual facts (US-GAAP and IFRS), and the period-aggregation pitfalls. |
-| `references/guide_ownership.md` | Insider transactions (Forms 3/4/5), beneficial ownership, and executive compensation (DEF 14A; Form 20-F Item 6 for foreign issuers). For the common case — “what are insiders buying/selling?” — use `scripts/fetch_insider_trades.py` directly; no guide needed. |
-| `references/guide_holdings.md` | **Deep route only:** raw 13F via edgartools (voting authority, amendments, specific holdings) and 5%+ blockholders (13D/13G). For the common case — “who owns this stock?” — use `scripts/fetch_13f_holders.py` directly (see Scripts above); no guide needed. |
+| `references/guide_core.md` | Company resolution, filing discovery, `.to_context()`, exact accessions, and `.docs`. |
+| `references/guide_filings.md` | Full filing text, SEC item codes, free-form navigation, and exhibits. |
+| `references/guide_financials.md` | XBRL statements/facts, period semantics, and noisy financial 6-Ks. |
+| `references/guide_ownership.md` | Forms 3/4/5, insider transactions, and Section 16 limitations. |
+| `references/guide_proxy.md` | Beneficial ownership, board/governance, compensation, related parties, auditors, dilution, proposals, and voting. |
+| `references/guide_holdings.md` | 13F institutional holdings and 13D/13G blockholder schedules. |
 
-## Scripts
+## Script routes
 
-Run them with the project's Python. Each prints the absolute cache path(s) it wrote to
-stdout and logs progress to stderr. **`--help` is the authoritative flag reference** —
-the list below shows one canonical invocation each:
+`--help` is the authoritative flag reference. Artifact-producing commands emit absolute paths
+to stdout and progress to stderr; orientation, diagnostics, and list modes print reports.
 
 ```bash
-# Orient first: company summary + filing-mix survey + recent filings
-python scripts/orient.py --ticker AAPL
+# Discover forms and recent accessions
+python "<skill-dir>/scripts/orient.py" --ticker AAPL
 
-# One filing (full), a single section, or an attachment — into the cache
-python scripts/fetch_filing.py --ticker AAPL --form 10-K --year 2023
-python scripts/fetch_filing.py --ticker AAPL --form 10-K --year 2023 --section "Item 1A"  # or: --section list
-python scripts/fetch_filing.py --ticker WIX  --form 6-K  --attachment "ex-99.1"   # or: list | all | <index>
+# Filing by ordinary selectors or exact accession
+python "<skill-dir>/scripts/fetch_filing.py" --ticker AAPL --form 10-K --year 2025
+python "<skill-dir>/scripts/fetch_filing.py" --accession 0000320193-25-000079
 
-# Target a filing by date (e.g. an 8-K filed today) instead of just --year:
-python scripts/fetch_filing.py --ticker AAPL --form 8-K --date 2026-06-15
+# One item or the filing's actual item list
+python "<skill-dir>/scripts/fetch_filing.py" --ticker AAPL --form 10-K --year 2025 --section "Item 1A"
+python "<skill-dir>/scripts/fetch_filing.py" --accession 0000320193-25-000079 --section list
 
-# Many filings across a year range (add --attachments to capture e.g. 6-K exhibits)
-python scripts/fetch_filings.py --ticker AAPL --form 10-Q --start-year 2022 --end-year 2024
+# An exhibit, or the nearest matching filing on/before a date
+python "<skill-dir>/scripts/fetch_filing.py" --ticker WIX --form 6-K --attachment "ex-99.1"
+python "<skill-dir>/scripts/fetch_filing.py" --ticker AAPL --form 8-K --on-or-before 2026-06-15
 
-# XBRL statements (income | balance | cashflow | all) -> CSV (annual or quarterly)
-python scripts/parse_financials.py --ticker AAPL --year 2023 --statement all
-python scripts/parse_financials.py --ticker AAPL --year 2024 --quarter 1 --statement all
+# Bulk archive: intentionally includes originals and amendments
+python "<skill-dir>/scripts/fetch_filings.py" --ticker AAPL --form 10-Q --start-year 2022 --end-year 2024
 
-# Table of contents for a large cached filing
-python scripts/list_headings.py --file sec-cache/AAPL/10-K_2023-11-03_0000320193-23-000106.md
+# Structured statements; period selection never falls back to a different report
+python "<skill-dir>/scripts/parse_financials.py" --ticker AAPL --year 2025 --statement all
+python "<skill-dir>/scripts/parse_financials.py" --accession 0000320193-25-000079 --statement all
 
-# Insider transactions — what are insiders buying/selling? (Form 4)
-python scripts/fetch_insider_trades.py --ticker AAPL
-python scripts/fetch_insider_trades.py --ticker AAPL --start 2025-01-01 --end 2026-06-17
-python scripts/fetch_insider_trades.py --ticker AAPL --start 2025-06-01 --buys-only
+# Local heading map
+python "<skill-dir>/scripts/list_headings.py" --file sec-cache/AAPL/<filing>.md
 
-# 13F institutional holders — who owns this stock? (via 13f.info, no SEC identity needed)
-python scripts/fetch_13f_holders.py --ticker AAPL --top 15
+# Form 4 transactions
+python "<skill-dir>/scripts/fetch_insider_trades.py" --ticker AAPL
+python "<skill-dir>/scripts/fetch_insider_trades.py" --ticker AAPL --start 2025-06-01 --buys-only
 
-# 13F holder history — how has institutional ownership changed?
-python scripts/fetch_13f_holders.py --ticker AAPL --history
-
-# 13F manager search — what does a specific fund hold?
-python scripts/fetch_13f_holders.py --manager "Berkshire Hathaway"
-
-# 13F cross-reference — one manager's position history in one stock
-python scripts/fetch_13f_holders.py --cik 0000906304 --cusip 205826209
-
-# Environment diagnostics
-python scripts/test_setup.py --live
+# Distilled 13F queries
+python "<skill-dir>/scripts/fetch_13f_holders.py" --ticker AAPL
+python "<skill-dir>/scripts/fetch_13f_holders.py" --ticker AAPL --history
+python "<skill-dir>/scripts/fetch_13f_holders.py" --manager "Berkshire Hathaway"
+python "<skill-dir>/scripts/fetch_13f_holders.py" --manager 0001067983 --ticker AAPL
 ```
 
-## When the API surprises you: self-heal with `.docs`
+The 13F convenience script uses 13f.info to resolve and distill routine holdings queries but
+its reports expose the underlying SEC period, CIK, and accession rather than the intermediary.
+Use raw EDGAR only for fields the distilled route does not provide—such as voting authority or
+investment discretion—or to verify missing or inconsistent data.
 
-`edgartools` documents itself at runtime. If a method or attribute isn't what you
-expected, query it inline instead of guessing — this recovers from most API uncertainty
-without leaving the session:
+## Important filing semantics
 
-```python
-company.docs  # full API guide for the object
-company.docs.search("xbrl")  # search it for a topic
-```
-
-A tool error is almost always a fixable usage detail, not a dead end. When a script or call
-fails, **recover here** — re-run `scripts/orient.py`, query `.docs`, or read the relevant
-guide — rather than abandoning EDGAR for web search. The filings are the authoritative,
-auditable source; don't let a transient error push the work onto unverifiable web results.
-
-**Amendment vs. original filing.** `fetch_filing.py` always skips amended forms
-(10-K/A, 10-Q/A, etc.) and picks the most recent *original* filing. Amendments typically
-contain only the amended items (e.g. Part III), not the full filing, so silently picking
-one would lose most of the content. If you specifically need an amendment's items, fetch
-it by accession number using inline Python as shown in `guide_financials.md`.
+- `fetch_filing.py` selects original forms for ordinary company/form requests because an
+  amendment may contain only changed items. Exact `--accession` retrieval can fetch either.
+- `fetch_filings.py` intentionally preserves both originals and amendments in a bulk archive.
+- A 6-K is not a standardized quarterly report. `parse_financials.py` prefers a matching 10-Q;
+  otherwise it classifies financial 6-K candidates. If several contain statements, it lists
+  their accessions instead of guessing.
+- Form 4 reports distinguish transaction date from filing date and expose partial parsing.
+- A successful generated report is complete for its advertised fields. Do not browse the
+  intermediary provider after a successful 13F query; use the underlying SEC accession when
+  deeper verification is required.

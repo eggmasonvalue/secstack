@@ -1,15 +1,8 @@
-"""Orient on a company before extracting — the mandatory first step.
+"""Survey a company's identity, filing mix, and recent accessions.
 
-Resolves the company, prints its ``.to_context()`` summary, surveys the mix of
-forms it has actually filed over a recent window (per-form counts with date
-ranges), and lists the most recent filings. Output is compact Markdown to stdout;
-run with ``--help`` for all flags.
-
-Run this first for any filings work. It is the cheapest way to see what a company
-actually files *now* and how that has changed over time, so you fetch the right
-forms instead of assuming a form set from memory. The output is neutral — it shows
-the filing history and leaves what is significant to you (or the framework driving
-you) to decide.
+Use this when the relevant form or filing is not yet known. It resolves the
+company, prints its compact ``.to_context()`` summary, tabulates forms over a
+recent window, and lists recent filings. It does not download filing contents.
 """
 
 import argparse
@@ -33,6 +26,10 @@ def main():
     )
     c.add_identity_arg(p)
     args = p.parse_args()
+    if args.years <= 0:
+        p.error("--years must be positive")
+    if args.recent < 0:
+        p.error("--recent cannot be negative")
 
     c.resolve_identity(args.identity)
     company = c.resolve_company(args.ticker)

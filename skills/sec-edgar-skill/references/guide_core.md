@@ -1,10 +1,9 @@
 # Core — company lookup, filing discovery, and self-help
 
-Start here. This guide covers resolving a company, listing and filtering its filings,
-and the two built-in efficiency tools — `.to_context()` previews and the `.docs`
-self-help system. `scripts/orient.py` wraps the orientation steps below into one command;
-this guide is the mechanics behind it, for when you drive them inline. The other guides
-build on these basics.
+Use this guide when the relevant form or accession is not already known, or when a
+bundled script does not expose a needed filing filter. `scripts/orient.py` wraps company
+identity, filing-mix, and recent-accession discovery into one command. Skip orientation for
+an exact accession or an already-cached local file.
 
 ## Resolve a company
 
@@ -29,7 +28,7 @@ tickers.
 
 ```python
 filings = company.get_filings()  # everything
-filings = company.get_filings(form="10-Q", year=2024)  # by form + year
+filings = company.get_filings(form="10-Q", year=2024, amendments=False)
 filings = company.get_filings(quarter=4, year=2024)  # by quarter
 filings = company.get_filings(date="2023-01-01:2023-12-31")  # by date range
 ```
@@ -37,16 +36,29 @@ filings = company.get_filings(date="2023-01-01:2023-12-31")  # by date range
 Collections support indexing, slicing, and `.latest()`:
 
 ```python
-latest_10k = company.get_filings(form="10-K").latest()
+latest_10k = company.get_filings(form="10-K", amendments=False).latest()
 recent = filings[0:10]
 ```
+
+## Resolve an exact accession
+
+When orientation or another command reports an accession, use it directly rather than
+reconstructing the filing from date and form:
+
+```python
+from edgar import find
+
+filing = find("0000320193-25-000079")
+```
+
+The bundled filing and financial scripts expose the same route as `--accession`. Do not
+combine an accession with company/period selectors; the accession is already globally unique.
 
 ## Survey a company's filing mix
 
 `scripts/orient.py` does this for you (with per-form date ranges and the most recent
 filings); reach for it first. To do it inline — or to tabulate a custom window — pull the
-collection to a DataFrame. This is a neutral mechanic; which forms are relevant to your
-question is for you (or the framework driving you) to decide.
+collection to a DataFrame. Which forms are relevant depends on the requested evidence.
 
 ```python
 df = company.get_filings(date="2024-01-01:2025-12-31").to_pandas()

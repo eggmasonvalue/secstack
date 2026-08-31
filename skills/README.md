@@ -92,6 +92,7 @@ cloc \
   skills/sec-edgar-skill/references/guide_filings.md \
   skills/sec-edgar-skill/references/guide_financials.md \
   skills/sec-edgar-skill/references/guide_ownership.md \
+  skills/sec-edgar-skill/references/guide_proxy.md \
   skills/sec-edgar-skill/references/guide_holdings.md \
   skills/sec-edgar-skill/scripts/orient.py \
   skills/sec-edgar-skill/scripts/fetch_filing.py \
