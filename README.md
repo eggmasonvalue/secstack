@@ -39,18 +39,18 @@ model selections, UI preferences, sessions, or unrelated settings.
 
 ## Launch
 
-The bootstrap offers to add a `secstack-pi` Bash function to `~/.bashrc`. After opening a
+The bootstrap offers to add a `secpi` Bash function to `~/.bashrc`. After opening a
 new Bash shell (or running `source ~/.bashrc`), use:
 
 ```bash
-secstack-pi
+secpi
 ```
 
 The launcher activates the SecStack virtual environment, exposes the Pi-managed npm
 binaries, and starts Pi with the isolated profile. It accepts normal Pi arguments:
 
 ```bash
-secstack-pi --mode json -p "Summarize the current research workflow."
+secpi --mode json -p "Summarize the current research workflow."
 ```
 
 Without the launcher, start the profile directly:
@@ -64,7 +64,7 @@ PI_CODING_AGENT_DIR="$HOME/.pi/secstack-agent" pi
 Update every Pi-managed package in the SecStack profile with the launcher:
 
 ```bash
-secstack-pi update --extensions
+secpi update --extensions
 ```
 
 If the launcher is not installed or loaded in the current shell, use the profile
@@ -108,7 +108,8 @@ export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
 
 The SecStack profile manages these as separate top-level Pi packages:
 
-- `git:github.com/eggmasonvalue/secstack` — this repository's five skills
+- `git:github.com/eggmasonvalue/secstack` — this repository's five skills, research-agent
+  prompt envelope, and responsive SecStack startup header
 - `git:github.com/eggmasonvalue/pi-setup` — selected extensions and themes only
 - `git:github.com/eggmasonvalue/pi-system-prompt-viewer` — `/system-context` overlay
 - `npm:agent-browser`

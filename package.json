@@ -8,7 +8,8 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions/restore-tool-envelope.ts"
+      "./extensions/restore-tool-envelope.ts",
+      "./extensions/startup-header.ts"
     ],
     "skills": [
       "./skills/signal-sweep",

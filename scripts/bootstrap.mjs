@@ -66,8 +66,8 @@ const desiredPackages = [
 ];
 
 const managedPathMarker = ".pi/secstack-agent";
-const launcherStart = "# >>> secstack-pi launcher >>>";
-const launcherEnd = "# <<< secstack-pi launcher <<<";
+const launcherStart = "# >>> secpi launcher >>>";
+const launcherEnd = "# <<< secpi launcher <<<";
 
 function sourceOf(entry) {
   return typeof entry === "string" ? entry : entry?.source;
@@ -250,7 +250,7 @@ function linkSystemPrompt() {
 
 function launcherBlock() {
   return `${launcherStart}
-secstack-pi() {
+secpi() {
   local agent_dir="$HOME/.pi/secstack-agent"
   local venv="$agent_dir/.venv"
 
@@ -281,7 +281,7 @@ function installLauncher() {
   const temp = `${bashrcPath}.${process.pid}.tmp`;
   writeFileSync(temp, content, "utf8");
   renameSync(temp, bashrcPath);
-  console.log(`Added the secstack-pi launcher to ${bashrcPath}`);
+  console.log(`Added the secpi launcher to ${bashrcPath}`);
   console.log("Open a new Bash shell, or run: source ~/.bashrc");
 }
 
@@ -300,14 +300,14 @@ async function offerLauncher() {
   const rl = createInterface({ input, output });
   try {
     const answer = (
-      await rl.question("Create the secstack-pi Bash launcher? [Y/n] ")
+      await rl.question("Create the secpi Bash launcher? [Y/n] ")
     )
       .trim()
       .toLowerCase();
     if (answer === "" || answer === "y" || answer === "yes") {
       installLauncher();
     } else {
-      console.log("Skipped the secstack-pi launcher.");
+      console.log("Skipped the secpi launcher.");
     }
   } finally {
     rl.close();
@@ -327,7 +327,7 @@ async function main() {
 
   console.log("\nSecStack Pi bootstrap complete.");
   console.log("Update everything Pi-managed with:");
-  console.log("  secstack-pi update --extensions");
+  console.log("  secpi update --extensions");
   console.log(
     "One-time browser setup (if not already done): agent-browser install",
   );
