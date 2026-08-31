@@ -11,9 +11,9 @@ It also centralises the two contracts that must stay identical across every
 script: the SEC identity requirement, and the on-disk cache layout. Keeping
 them here is why a filing cached by one script is found by the others.
 
-Output convention: human-readable progress goes to stderr via ``log``; the
-machine-readable result (always an absolute path) goes to stdout via ``emit``,
-so a calling agent can capture the path without parsing log noise.
+Output convention: human-readable progress goes to stderr via ``log``. Commands
+that create an artifact send one absolute path per line to stdout via ``emit``;
+inspection commands may instead print their report to stdout.
 """
 
 from __future__ import annotations
@@ -104,6 +104,25 @@ def add_cache_arg(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_force_arg(parser: argparse.ArgumentParser) -> None:
+    """Add the common override for immutable, accession-keyed artifacts."""
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Regenerate an existing accession-keyed artifact.",
+    )
+
+
+def emit_cached(path: str | os.PathLike, *, force: bool = False) -> bool:
+    """Emit a non-empty cached artifact unless regeneration was requested."""
+    cached = Path(path)
+    if not force and cached.is_file() and cached.stat().st_size > 0:
+        log(f"Using cached artifact: {cached.resolve()}")
+        emit(cached)
+        return True
+    return False
+
+
 def safe_component(part: object) -> str:
     """Make a single path component filesystem-safe (e.g. 10-K/A -> 10-K-A)."""
     cleaned = "".join(ch if (ch.isalnum() or ch in "-._") else "-" for ch in str(part))
@@ -154,6 +173,30 @@ def resolve_company(ticker_or_cik: str):
     except Exception as exc:  # surface one clean line to the calling agent
         log(f"ERROR: could not resolve company '{ticker_or_cik}': {exc}")
         sys.exit(1)
+
+
+def resolve_filing(accession: str):
+    """Resolve one filing by accession number, exiting cleanly on failure."""
+    from edgar import find
+
+    try:
+        filing = find(accession)
+    except Exception as exc:
+        log(f"ERROR: could not resolve accession '{accession}': {exc}")
+        sys.exit(1)
+    if filing is None or not hasattr(filing, "accession_no"):
+        log(f"ERROR: accession '{accession}' did not resolve to an SEC filing.")
+        sys.exit(1)
+    return filing
+
+
+def company_for_filing(filing):
+    """Resolve the filing's registrant so cache paths retain a ticker when possible."""
+    cik = getattr(filing, "cik", None)
+    if cik is None:
+        log("ERROR: the resolved filing does not identify a registrant CIK.")
+        sys.exit(1)
+    return resolve_company(str(cik))
 
 
 def write_text(path: str | os.PathLike, content: str) -> Path:

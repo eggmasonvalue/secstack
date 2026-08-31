@@ -1,65 +1,70 @@
 # SEC EDGAR Research Skill
 
-A tools skill that teaches an AI coding agent how to retrieve and extract data from
-**SEC EDGAR** filings for US-listed companies (domestic issuers and foreign private
-issuers), efficiently and within a token budget.
+An agent skill for retrieving, verifying, and inspecting SEC filings and filing-derived
+financial, ownership, compensation, and governance data without loading whole filings into
+context.
 
-It is the **data/tools layer** of a research stack: it fetches and extracts; it does not
-decide what matters. Pair it with an analytical-framework skill (which supplies the
-judgment and the output shape) and, optionally, a presentation/consumer skill. Keeping
-this layer unopinionated lets any framework compose on top of it.
+## Included resources
 
-## What's included
+- `SKILL.md` — agent workflow, source hierarchy, cache contract, and resource routing.
+- `references/guide_core.md` — company and filing discovery.
+- `references/guide_filings.md` — sections, free-form filings, and exhibits.
+- `references/guide_financials.md` — XBRL statements, facts, and reporting periods.
+- `references/guide_ownership.md` — Forms 3/4/5 and insider transactions.
+- `references/guide_proxy.md` — beneficial ownership, governance, compensation, and voting.
+- `references/guide_holdings.md` — 13F and 13D/13G holdings.
+- `scripts/` — command-line retrieval and extraction helpers.
 
-- **`SKILL.md`** — the entry point: setup, the token-efficient retrieval method, the
-  cache contract, and routing to the guides and scripts.
-- **`references/`** — modular, lazily-loaded guides, one per data domain:
-  - `guide_core.md` — company lookup, filing discovery, `.to_context()`, `.docs`.
-  - `guide_filings.md` — filing text by SEC item code (10-K/10-Q/8-K/20-F) or heading discovery (DEF 14A/6-K); attachments (6-K Exhibit 99.1).
-  - `guide_financials.md` — XBRL statements and facts (US-GAAP & IFRS).
-  - `guide_ownership.md` — insider transactions (3/4/5) and executive compensation (DEF 14A; 20-F Item 6).
-  - `guide_holdings.md` — 13F institutional holdings and 13D/13G blockholders.
-- **`scripts/`** — thin, self-documenting wrappers around `edgartools` (shared setup
-  lives in `_common.py`):
-  - `orient.py` — company summary + filing-mix survey + recent filings (run first).
-  - `fetch_filing.py`, `fetch_filings.py` — filings (and sections/attachments) to Markdown.
-  - `parse_financials.py` — XBRL statements to CSV.
-  - `list_headings.py` — heading→line map for a cached filing.
-  - `fetch_insider_trades.py` — insider transactions (Form 4 buys/sells).
-  - `fetch_13f_holders.py` — institutional 13F holders (via 13f.info).
-  - `test_setup.py` — environment diagnostics.
+## Install this skill
 
-## Setup
-
-1. **Install this skill's dependencies** from this directory: `uv sync`
-2. **Set `EDGAR_IDENTITY`** — see [profile setup](../../README.md#one-time-runtime-setup).
-3. **Verify:** `python scripts/test_setup.py --live`
-
-## Add the skill to your agent
+From the SecStack repository:
 
 ```bash
-npx skills add eggmasonvalue/sec-edgar-skill
+npx skills add eggmasonvalue/secstack --skill sec-edgar-skill
 ```
 
-## How it works
+SecStack's profile bootstrap installs the Python dependencies automatically. For a standalone
+installation, run from this directory:
 
-Filings are huge, so the skill keeps them on disk and pulls only what's needed into the
-agent's context:
+```bash
+uv sync
+```
 
-1. **Orient** with `scripts/orient.py` (company summary + filing-mix survey) to decide what to fetch.
-2. **Download** filings to a local cache (`./sec-cache/{TICKER}/`) as clean Markdown.
-3. **Map** a large filing to a heading→line table of contents.
-4. **Search** the cache with native grep and read only the matching line ranges.
+Then invoke the scripts with that environment, or configure the harness to use its Python.
 
-The cache location is configurable (`$SEC_CACHE_DIR` or `--cache-dir`) and filenames are
-deterministic (keyed by SEC accession number), so re-runs reuse cached files instead of
-re-downloading.
+## SEC identity
+
+SEC requests require a real contact identity under the SEC fair-access policy:
+
+```bash
+export EDGAR_IDENTITY="Jane Analyst jane@example.com"
+```
+
+Do not commit it. The 13f.info convenience queries and local-file utilities do not require an
+SEC identity. Verify the full environment with:
+
+```bash
+uv run python scripts/test_setup.py --live
+```
+
+## Retrieval model
+
+1. Survey a company's filing mix when the relevant form is unknown.
+2. Select a filing by company/form/period or exact SEC accession.
+3. Save filing text as Markdown and statements as CSV.
+4. Search the local cache and read only relevant ranges.
+5. Use structured item or XBRL extraction where the filing supports it.
+
+Accession-keyed filing artifacts are reused unless `--force` is passed. Rolling ownership
+summaries refresh because their source set can change.
 
 ## Data sources
 
-Filing data comes from the public SEC EDGAR system via the open-source `edgartools`
-library. Respect the source's terms and the SEC fair-access policy — which is why a
-contact identity is required.
+Filing data comes from SEC EDGAR through the open-source `edgartools` library. Routine 13F
+holder, manager, and position-history queries are distilled through 13f.info; generated reports
+surface the underlying SEC reporting period, manager CIK, and accession rather than provider
+navigation links. Raw EDGAR remains the verification and deep-field route.
 
 ---
-Part of the [SecStack skills](../README.md) collection.
+
+Part of the [SecStack skills](https://github.com/eggmasonvalue/secstack) collection.

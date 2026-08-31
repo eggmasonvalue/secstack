@@ -51,7 +51,8 @@ sessions, and unrelated settings remain profile-local and untouched.
   `scan_conferences.py`, `search_themes.py`; universe config in `screens.json`; shared
   bootstrap in `scripts/_common.py`.
 - `skills/sec-edgar-skill/` — `scripts/fetch_*.py`, `parse_financials.py`, `orient.py`,
-  `list_headings.py`; guides in `references/`; shared bootstrap in `scripts/_common.py`.
+  `list_headings.py`; filing, financial, ownership, proxy/governance, and holdings guides in
+  `references/`; shared bootstrap in `scripts/_common.py`.
 - `skills/market-scout/` — `scripts/fetch_market_data.py`, `fetch_transcripts.py`, and shared
   `scripts/_common.py`.
 - `skills/bottom-up-analyst/` — valuation `scripts/dcf.py`, `epv.py`; archetypes and guides in
@@ -71,8 +72,10 @@ flowchart TD
 - `bottom-up-analyst` is the brain and conductor: it decides what to pull, reasons over it,
   and writes the memo. The data skills never decide what matters.
 - The two filing/market data skills know nothing of each other and are swappable.
-- `signal-sweep` and `sec-edgar-skill` both read `EDGAR_IDENTITY` and share on-disk cache
-  contracts defined in their `_common.py` modules.
+- `signal-sweep` and SEC-facing `sec-edgar-skill` commands read `EDGAR_IDENTITY` and use
+  on-disk cache contracts defined in their `_common.py` modules. The SEC skill's routine 13F
+  convenience queries use 13f.info and expose underlying SEC periods and identifiers; raw
+  EDGAR remains the deep-field and verification route.
 
 ## Production order
 

@@ -1,39 +1,25 @@
-"""Fetch institutional 13F holder data from 13f.info for a stock or manager.
+"""Fetch distilled SEC Form 13F data for a stock, manager, or manager-stock pair.
 
-13f.info is a free, structured interface to SEC 13F filings that provides
-pre-parsed, queryable data far more efficiently than parsing raw 13F XML from
-EDGAR. It offers three key views:
-
-  **Stock-centric** (who owns this stock?):
-    --ticker AAPL             → all institutional holders for the latest quarter
-    --ticker AAPL --history   → quarterly holder/share-count summary over time
-
-  **Manager-centric** (what does this fund hold?):
-    --manager "Berkshire Hathaway"  → search for a manager, show their holdings
-    --cik 0001067983               → look up a manager by CIK directly
-
-  **Cross-reference** (how has a specific manager's position changed?):
-    --cik 0000906304 --cusip 205826209  → one manager's history with one stock
-
-All output is written to the cache and the absolute path is emitted to stdout:
-  - Stock-centric: ``<cache>/<TICKER>/13f-holders_<YEAR>-Q<Q>.md``
-    (or ``13f-history_<TICKER>.md`` for --history)
-  - Manager-centric: ``<cache>/managers/13f-manager_<CIK>.md``
-  - Cross-reference: ``<cache>/<TICKER>/13f-xref_<CIK>.md``
-    (or ``<cache>/managers/13f-xref_<CIK>_<CUSIP>.md`` without --ticker)
-
-Data source: https://13f.info (public, no API key needed).
+The normal interface accepts tickers and manager names (or exact manager CIKs),
+resolving lower-level CUSIPs internally. Reports expose the underlying SEC period,
+CIK, and accession rather than the retrieval provider. No SEC identity is required.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+from html import unescape
 from urllib.error import HTTPError, URLError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 import _common as c
+import pandas as pd
 
 _BASE = "https://13f.info"
 _UA = (
@@ -42,519 +28,529 @@ _UA = (
 )
 
 
-# ---------------------------------------------------------------------------
-# HTTP / JSON helpers
-# ---------------------------------------------------------------------------
+class FetchFailure(RuntimeError):
+    """Raised when the distilled 13F backend cannot complete a request."""
 
 
-def _get_json(url: str) -> dict | list | None:
-    """Fetch a JSON endpoint, return parsed data or None on failure."""
-    req = Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
+@dataclass
+class ManagerFiling:
+    """One filing row and its linked distilled portfolio page."""
+
+    url: str
+    period: str
+    holdings: str
+    form_type: str
+    filed: str
+    filing_id: str
+
+
+def _get_json(url: str) -> dict | list:
+    request = Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
     try:
-        with urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8", errors="replace"))
-    except (HTTPError, URLError, json.JSONDecodeError) as exc:
-        c.log(f"WARNING: fetch failed for {url}: {exc}")
-        return None
+        with urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8", errors="replace"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise FetchFailure(f"13F data request failed: {exc}") from exc
 
 
 def _get_html(url: str) -> str:
-    """Fetch an HTML page and return the body as a string."""
-    req = Request(url, headers={"User-Agent": _UA, "Accept": "text/html"})
+    request = Request(url, headers={"User-Agent": _UA, "Accept": "text/html"})
     try:
-        with urlopen(req, timeout=30) as resp:
-            return resp.read().decode("utf-8", errors="replace")
-    except (HTTPError, URLError) as exc:
-        c.log(f"WARNING: fetch failed for {url}: {exc}")
-        return ""
+        with urlopen(request, timeout=30) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except (HTTPError, URLError, TimeoutError) as exc:
+        raise FetchFailure(f"13F page request failed: {exc}") from exc
 
 
-# ---------------------------------------------------------------------------
-# API endpoints (discovered from 13f.info's client-side code)
-# ---------------------------------------------------------------------------
-# Working JSON endpoints:
-#   /data/autocomplete?q=...              → search managers + CUSIPs
-#   /data/cusip/{cusip}/{year}/{quarter}  → all holders for a CUSIP in a quarter
-#   /data/manager/{cik}/cusip/{cusip}     → one manager's history with one CUSIP
-#
-# HTML-only (no JSON API):
-#   /cusip/{cusip}                        → stock overview (quarterly summary table)
-#   /manager/{cik}-slug                   → manager overview (filing history table)
-#   /13f/{filing-slug}                    → single filing holdings table
+def _autocomplete(query: str) -> dict:
+    data = _get_json(f"{_BASE}/data/autocomplete?q={quote(query)}")
+    return data if isinstance(data, dict) else {}
 
 
-def _autocomplete(query: str) -> dict | None:
-    """Search for managers and CUSIPs by name/ticker."""
-    from urllib.parse import quote
-
-    return _get_json(f"{_BASE}/data/autocomplete?q={quote(query)}")
+def _holders_for_quarter(cusip: str, year: int, quarter: int) -> dict:
+    data = _get_json(f"{_BASE}/data/cusip/{cusip}/{year}/{quarter}")
+    return data if isinstance(data, dict) else {}
 
 
-def _holders_for_quarter(cusip: str, year: int, quarter: int) -> dict | None:
-    """Get all institutional holders for a CUSIP in a specific quarter."""
-    return _get_json(f"{_BASE}/data/cusip/{cusip}/{year}/{quarter}")
-
-
-def _manager_cusip_history(cik: str, cusip: str) -> dict | None:
-    """Get a specific manager's position history for a specific CUSIP."""
-    return _get_json(f"{_BASE}/data/manager/{cik}/cusip/{cusip}")
-
-
-# ---------------------------------------------------------------------------
-# Resolve ticker → CUSIP via autocomplete
-# ---------------------------------------------------------------------------
+def _manager_cusip_history(cik: str, cusip: str) -> dict:
+    data = _get_json(f"{_BASE}/data/manager/{cik}/cusip/{cusip}")
+    return data if isinstance(data, dict) else {}
 
 
 def _resolve_cusip(ticker: str) -> tuple[str, str, str] | None:
-    """Resolve a ticker to (cusip, symbol, issuer_name) via autocomplete.
-
-    Returns the first equity CUSIP match, or None.
-    """
     data = _autocomplete(ticker)
-    if not data or not data.get("cusips"):
-        return None
-    for entry in data["cusips"]:
+    for entry in data.get("cusips", []):
         name = entry.get("name", "")
         extra = entry.get("extra", "")
-        # Format: "AAPL - Apple Inc." / "037833100 - COM"
         parts = name.split(" - ", 1)
-        sym = parts[0].strip() if parts else ""
+        symbol = parts[0].strip() if parts else ""
         issuer = parts[1].strip() if len(parts) > 1 else name
         cusip = extra.split(" - ")[0].strip() if " - " in extra else extra.strip()
-        if cusip and sym.upper() == ticker.upper():
-            return (cusip, sym, issuer)
-    # Fallback: return the first CUSIP result
-    entry = data["cusips"][0]
-    name = entry.get("name", "")
-    extra = entry.get("extra", "")
-    parts = name.split(" - ", 1)
-    sym = parts[0].strip() if parts else ""
-    issuer = parts[1].strip() if len(parts) > 1 else name
-    cusip = extra.split(" - ")[0].strip() if " - " in extra else extra.strip()
-    return (cusip, sym, issuer)
+        if cusip and symbol.upper() == ticker.upper():
+            return cusip, symbol, issuer
+    return None
 
 
-def _resolve_manager(query: str) -> tuple[str, str] | None:
-    """Resolve a manager name to (cik, name) via autocomplete.
+def _manager_name_from_html(html: str, fallback: str) -> str:
+    match = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return fallback
+    return re.sub(r"<[^>]+>", "", unescape(match.group(1))).strip() or fallback
 
-    Returns the first manager match, or None.
-    """
+
+def _resolve_manager(query: str) -> tuple[str, str, str, str] | None:
+    digits = "".join(character for character in query if character.isdigit())
+    if len(digits) == 10 and query.strip().replace("-", "").isdigit():
+        url = f"/manager/{digits}"
+        html = _get_html(f"{_BASE}{url}")
+        return digits, _manager_name_from_html(html, digits), url, html
+
     data = _autocomplete(query)
-    if not data or not data.get("managers"):
+    managers = data.get("managers", [])
+    if not managers:
         return None
-    entry = data["managers"][0]
-    name = entry.get("name", "")
-    url = entry.get("url", "")
-    # URL format: /manager/0001067983-berkshire-hathaway-inc
+
+    normalized = query.casefold().strip()
+    exact = [
+        entry for entry in managers if str(entry.get("name", "")).casefold().strip() == normalized
+    ]
+    candidates = [
+        entry for entry in managers if normalized in str(entry.get("name", "")).casefold()
+    ] or managers
+    if len(exact) == 1:
+        entry = exact[0]
+    elif len(candidates) == 1:
+        entry = candidates[0]
+    else:
+        choices = []
+        for candidate in candidates[:5]:
+            candidate_url = str(candidate.get("url", ""))
+            candidate_cik = candidate_url.split("/")[-1].split("-")[0]
+            choices.append(f"{candidate.get('name', '')} ({candidate_cik})")
+        raise FetchFailure(
+            f"manager name '{query}' is ambiguous; rerun --manager with one of these CIKs: "
+            + "; ".join(choices)
+        )
+    name = str(entry.get("name", "")).strip()
+    url = str(entry.get("url", "")).strip()
     cik = url.split("/")[-1].split("-")[0] if url else ""
-    return (cik, name)
+    if not cik or not url:
+        return None
+    html = _get_html(f"{_BASE}{url}")
+    return cik, name or _manager_name_from_html(html, query), url, html
 
 
-# ---------------------------------------------------------------------------
-# Formatting helpers
-# ---------------------------------------------------------------------------
+def _fmt_shares(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "n/a"
+        number = float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        return str(value)
+    if abs(number) >= 1_000_000:
+        return f"{number / 1_000_000:,.2f}M"
+    if abs(number) >= 1_000:
+        return f"{number / 1_000:,.1f}K"
+    return f"{number:,.0f}"
 
 
-def _fmt_shares(s: int | float | None) -> str:
-    if s is None:
+def _fmt_percent(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "n/a"
+        return f"{float(value):,.1f}%"
+    except (TypeError, ValueError):
         return "n/a"
-    if s >= 1_000_000:
-        return f"{s / 1_000_000:,.2f}M"
-    if s >= 1_000:
-        return f"{s / 1_000:,.1f}K"
-    return f"{s:,}"
 
 
-def _fmt_pct(p: float | None) -> str:
-    if p is None:
-        return "n/a"
-    return f"{p:.1f}%"
+def _cell(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value).replace("|", "\\|").replace("\n", " ").strip()
 
 
-# ---------------------------------------------------------------------------
-# Output: Stock-centric (who owns this stock?)
-# ---------------------------------------------------------------------------
+def _accession_digits(value: object) -> str:
+    match = re.search(r"(?:/13f/)?(\d{18})", str(value or ""))
+    return match.group(1) if match else ""
+
+
+def _format_accession(value: object) -> str:
+    digits = _accession_digits(value)
+    if len(digits) == 18:
+        return f"{digits[:10]}-{digits[10:12]}-{digits[12:]}"
+    return str(value or "")
+
+
+def _iso_date(value: str) -> str:
+    try:
+        return datetime.strptime(value, "%m/%d/%Y").date().isoformat()
+    except ValueError:
+        return value
+
+
+def _quarter_end(year: int, quarter: int) -> str:
+    return {
+        1: f"{year}-03-31",
+        2: f"{year}-06-30",
+        3: f"{year}-09-30",
+        4: f"{year}-12-31",
+    }[quarter]
+
+
+def _latest_quarter() -> tuple[int, int]:
+    today = date.today()
+    quarters = []
+    for year in (today.year, today.year - 1):
+        quarters.extend(
+            [
+                (date(year, 3, 31), year, 1),
+                (date(year, 6, 30), year, 2),
+                (date(year, 9, 30), year, 3),
+                (date(year, 12, 31), year, 4),
+            ]
+        )
+    for end_date, year, quarter in sorted(quarters, reverse=True):
+        if today - end_date >= timedelta(days=50):
+            return year, quarter
+    return today.year - 1, 4
 
 
 def _build_stock_holders(
     ticker: str, cusip: str, issuer: str, year: int, quarter: int, top_n: int
 ) -> str | None:
-    """Build Markdown for the top institutional holders in a given quarter.
-
-    Returns the Markdown string, or None if no data is available.
-    """
     data = _holders_for_quarter(cusip, year, quarter)
-    if not data or not data.get("data"):
-        c.log(f"No holder data found for {ticker} ({cusip}) Q{quarter} {year}.")
+    holders = data.get("data", [])
+    if not holders:
         return None
 
-    holders = data["data"]
-    lines = []
-
-    # Determine period end date from the first entry
-    period_end = ""
-    if holders and isinstance(holders[0][1], list):
-        period_end = holders[0][1][0]  # e.g. "2026-03-31"
-
-    lines.append(f"# 13F Institutional Holders: {ticker} ({issuer})")
-    lines.append("")
-    lines.append(f"- **CUSIP:** {cusip}")
-    lines.append(f"- **Period:** Q{quarter} {year}")
-    if period_end:
-        lines.append(f"- **Holdings as of:** {period_end}")
-    lines.append(f"- **Total holders reporting:** {len(holders)}")
-    lines.append(f"- **Source:** {_BASE}/cusip/{cusip}/{year}/{quarter}")
-    lines.append("")
-
-    # Each holder entry: [[manager_name, cik, cusip], [date, filing_slug], value, shares, principal]
-    lines.append(f"## Top {min(top_n, len(holders))} Holders by Shares")
-    lines.append("")
-    lines.append("| # | Manager | Shares | CIK |")
-    lines.append("|---|---------|--------|-----|")
-
-    # Sort by shares descending
-    ranked = sorted(holders, key=lambda h: h[3] or 0, reverse=True)
-
-    for i, h in enumerate(ranked[:top_n]):
-        manager_info = h[0]
-        shares = h[3]
-
+    period_end = _quarter_end(year, quarter)
+    if isinstance(holders[0][1], list) and holders[0][1]:
+        period_end = holders[0][1][0]
+    ranked = sorted(holders, key=lambda holder: holder[3] or 0, reverse=True)
+    lines = [
+        f"# 13F Institutional Holders: {ticker} ({issuer})",
+        "",
+        f"- **CUSIP:** {cusip}",
+        f"- **Reporting period:** Q{quarter} {year}",
+        f"- **Holdings as of:** {period_end}",
+        f"- **Reporting managers found:** {len(holders)}",
+        "- **Underlying records:** SEC Form 13F filings",
+        "",
+        f"## Top {min(top_n, len(holders))} Reporting Managers by Shares",
+        "",
+        "| # | Manager | Shares | CIK | SEC Accession |",
+        "|---:|---|---:|---|---|",
+    ]
+    for index, holder in enumerate(ranked[:top_n], 1):
+        manager_info = holder[0]
+        filing_info = holder[1]
         name = manager_info[0] if isinstance(manager_info, list) else str(manager_info)
         cik = manager_info[1] if isinstance(manager_info, list) and len(manager_info) > 1 else ""
-
-        lines.append(f"| {i + 1} | {name} | {_fmt_shares(shares)} | {cik} |")
-
+        filing_slug = (
+            filing_info[1] if isinstance(filing_info, list) and len(filing_info) > 1 else ""
+        )
+        lines.append(
+            f"| {index} | {_cell(name)} | {_fmt_shares(holder[3])} | {cik} "
+            f"| {_format_accession(filing_slug)} |"
+        )
     if len(holders) > top_n:
-        lines.append("")
-        lines.append(f"*Showing top {top_n} of {len(holders)} holders. Use --top to adjust.*")
-
+        lines.extend(["", f"*Showing {top_n} of {len(holders)} reporting managers.*"])
     return "\n".join(lines)
 
 
 def _build_stock_history(ticker: str, cusip: str, issuer: str) -> str | None:
-    """Build Markdown for the quarterly holder/share-count history.
-
-    Returns the Markdown string, or None if no data is available.
-    This requires scraping the HTML page since there's no JSON endpoint
-    for the CUSIP overview.
-    """
-    import re
-
     html = _get_html(f"{_BASE}/cusip/{cusip}")
-    if not html:
-        c.log(f"No history data found for {ticker} ({cusip}).")
-        return None
-
-    lines = []
-    lines.append(f"# 13F Holder History: {ticker} ({issuer})")
-    lines.append("")
-    lines.append(f"- **CUSIP:** {cusip}")
-    lines.append(f"- **Source:** {_BASE}/cusip/{cusip}")
-    lines.append("")
-
-    # Parse the HTML table rows — each row has 5 <td> cells:
-    # period (with link), filings, shares, value, options value
-    row_pattern = re.compile(
+    pattern = re.compile(
         r"<tr[^>]*>\s*"
-        r"<td[^>]*>\s*<a[^>]*>(\d{4}\s+Q\d)</a>\s*</td>\s*"  # period
-        r"<td[^>]*>\s*(\d+)\s*</td>\s*"  # filings
-        r"<td[^>]*>\s*([^<]+?)\s*</td>\s*"  # shares
-        r"<td[^>]*>\s*([^<]+?)\s*</td>",  # value
+        r"<td[^>]*>\s*<a[^>]*>(\d{4}\s+Q\d)</a>\s*</td>\s*"
+        r"<td[^>]*>\s*([\d,]+)\s*</td>\s*"
+        r"<td[^>]*>\s*([^<]+?)\s*</td>",
         re.DOTALL,
     )
-
-    lines.append("| Period | Holders | Shares (excl. options) |")
-    lines.append("|--------|---------|----------------------|")
-
-    for m in row_pattern.finditer(html):
-        period = m.group(1).strip()
-        filings = m.group(2).strip()
-        shares = m.group(3).strip()
-        lines.append(f"| {period} | {filings} | {shares} |")
-
+    rows = [tuple(value.strip() for value in match.groups()) for match in pattern.finditer(html)]
+    if not rows:
+        return None
+    lines = [
+        f"# 13F Holder History: {ticker} ({issuer})",
+        "",
+        f"- **CUSIP:** {cusip}",
+        "- **Underlying records:** SEC Form 13F filings",
+        "",
+        "| Period | Reporting Managers | Shares (excluding options) |",
+        "|---|---:|---:|",
+    ]
+    lines.extend(f"| {period} | {filings} | {shares} |" for period, filings, shares in rows)
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Output: Manager-centric (what does this fund hold?)
-# ---------------------------------------------------------------------------
-
-
-def _build_manager_holdings(cik: str, manager_name: str) -> str | None:
-    """Build Markdown for a manager's filing history (scraped from HTML).
-
-    Returns the Markdown string, or None if no data is available.
-    """
-    import re
-
-    # Try to find the manager's page URL via autocomplete
-    data = _autocomplete(manager_name)
-    manager_url = None
-    if data and data.get("managers"):
-        for m in data["managers"]:
-            url = m.get("url", "")
-            if cik in url:
-                manager_url = url
-                break
-        if not manager_url:
-            manager_url = data["managers"][0].get("url", "")
-
-    if not manager_url:
-        manager_url = f"/manager/{cik}"
-
-    html = _get_html(f"{_BASE}{manager_url}")
-    if not html:
-        c.log(f"No data found for manager {manager_name} ({cik}).")
-        return None
-
-    lines = []
-    lines.append(f"# 13F Filings: {manager_name}")
-    lines.append("")
-    lines.append(f"- **CIK:** {cik}")
-    lines.append(f"- **Source:** {_BASE}{manager_url}")
-    lines.append("")
-
-    # Parse the filing history table — 7 columns:
-    # Quarter (link), Holdings, Value, Top Holdings (title attr), Form Type, Date Filed, Filing ID
-    row_pattern = re.compile(
+def _parse_manager_filings(html: str) -> list[ManagerFiling]:
+    pattern = re.compile(
         r'<a[^>]*href="(/13f/[^"]+)"[^>]*>\s*(Q\d\s+\d{4})\s*</a>'
-        r".*?<td[^>]*>\s*(\d+)\s*</td>"  # holdings
-        r".*?<td[^>]*>\s*([\d,]+)\s*</td>"  # value
-        r'.*?<td[^>]*title="([^"]*)"[^>]*>.*?</td>'  # top holdings (title attr)
-        r'.*?<td[^>]*title="([^"]*)"[^>]*>.*?</td>'  # form type (title attr)
-        r".*?<td[^>]*>\s*([\d/]+)\s*</td>",  # date filed
+        r".*?<td[^>]*>\s*(\d+)\s*</td>"
+        r".*?<td[^>]*>\s*([\d,]+)\s*</td>"
+        r'.*?<td[^>]*title="([^"]*)"[^>]*>.*?</td>'
+        r'.*?<td[^>]*title="([^"]*)"[^>]*>.*?</td>'
+        r".*?<td[^>]*>\s*([\d/]+)\s*</td>",
         re.DOTALL,
     )
+    filings = []
+    for match in pattern.finditer(html):
+        url, period, holdings, _value, _top, form_type, filed = match.groups()
+        filings.append(
+            ManagerFiling(
+                url=url,
+                period=period,
+                holdings=holdings,
+                form_type=form_type,
+                filed=filed,
+                filing_id=url,
+            )
+        )
+    return filings
 
-    lines.append("| Quarter | Holdings | Top Holdings | Type | Filed |")
-    lines.append("|---------|----------|--------------|------|-------|")
 
-    count = 0
-    for m in row_pattern.finditer(html):
-        quarter = m.group(2).strip()
-        holdings = m.group(3).strip()
-        top = m.group(5).strip()
-        form_type = m.group(6).strip()
-        filed = m.group(7).strip()
-        lines.append(f"| {quarter} | {holdings} | {top} | {form_type} | {filed} |")
-        count += 1
-        if count >= 20:
-            break
+def _select_manager_filing(
+    filings: list[ManagerFiling], year: int | None, quarter: int | None
+) -> ManagerFiling | None:
+    eligible = [
+        filing for filing in filings if filing.form_type.upper() in {"13F-HR", "RESTATEMENT"}
+    ]
+    if year is not None and quarter is not None:
+        target = f"Q{quarter} {year}"
+        eligible = [filing for filing in eligible if filing.period == target]
+    return eligible[0] if eligible else None
 
-    if count == 0:
-        c.log("WARNING: could not parse manager filing history from HTML.")
+
+def _build_manager_holdings(cik: str, manager_name: str, filing: ManagerFiling) -> str | None:
+    filing_digits = _accession_digits(filing.url)
+    if not filing_digits:
+        return None
+    data = _get_json(f"{_BASE}/data/13f/{filing_digits}")
+    rows = data.get("data", []) if isinstance(data, dict) else []
+    if not rows:
         return None
 
+    lines = [
+        f"# 13F Portfolio: {manager_name}",
+        "",
+        f"- **Manager CIK:** {cik}",
+        f"- **Reporting period:** {filing.period}",
+        f"- **Filed:** {_iso_date(filing.filed)}",
+        f"- **SEC accession:** {_format_accession(filing.filing_id)}",
+        "- **Underlying record:** SEC Form 13F",
+        "",
+        f"## Disclosed Holdings ({len(rows)})",
+        "",
+        "| Symbol | Issuer | Class | CUSIP | Shares/Principal | Option Type |",
+        "|---|---|---|---|---:|---|",
+    ]
+    # Row shape: symbol, issuer, class, CUSIP, value, portfolio %, shares,
+    # principal, option type. Dollar value and portfolio percentage are omitted.
+    for row in sorted(rows, key=lambda item: str(item[0] or "")):
+        symbol, issuer, security_class, cusip = row[:4]
+        shares = row[6] if len(row) > 6 else None
+        principal = row[7] if len(row) > 7 else None
+        option_type = row[8] if len(row) > 8 else None
+        amount = shares if shares is not None else principal
+        lines.append(
+            f"| {_cell(symbol)} | {_cell(issuer)} | {_cell(security_class)} | {_cell(cusip)} "
+            f"| {_fmt_shares(amount)} | {_cell(option_type)} |"
+        )
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Output: Cross-reference (manager × stock history)
-# ---------------------------------------------------------------------------
+def _build_manager_history(cik: str, manager_name: str, filings: list[ManagerFiling]) -> str | None:
+    complete = [
+        filing for filing in filings if filing.form_type.upper() in {"13F-HR", "RESTATEMENT"}
+    ]
+    if not complete:
+        return None
+
+    lines = [
+        f"# 13F Portfolio History: {manager_name}",
+        "",
+        f"- **Manager CIK:** {cik}",
+        "- **Underlying records:** SEC Form 13F filings",
+    ]
+    if len(complete) >= 2:
+        current, previous = complete[:2]
+        current_id = _accession_digits(current.filing_id)
+        previous_id = _accession_digits(previous.filing_id)
+        comparison = _get_json(f"{_BASE}/data/13f/{current_id}/compare/{previous_id}")
+        rows = comparison.get("data", []) if isinstance(comparison, dict) else []
+        if rows:
+            lines.extend(
+                [
+                    "",
+                    f"## Share Changes: {previous.period} to {current.period}",
+                    "",
+                    "| Symbol | Issuer | Class | CUSIP | Option | Previous | Current | Change | Change % |",
+                    "|---|---|---|---|---|---:|---:|---:|---:|",
+                ]
+            )
+            for row in sorted(rows, key=lambda item: str(item[0] or "")):
+                symbol, issuer, security_class, cusip, option_type = row[:5]
+                previous_shares, current_shares, change, change_pct = row[5:9]
+                lines.append(
+                    f"| {_cell(symbol)} | {_cell(issuer)} | {_cell(security_class)} "
+                    f"| {_cell(cusip)} | {_cell(option_type)} | {_fmt_shares(previous_shares)} "
+                    f"| {_fmt_shares(current_shares)} | {_fmt_shares(change)} "
+                    f"| {_fmt_percent(change_pct)} |"
+                )
+
+    lines.extend(
+        [
+            "",
+            "## Filing History",
+            "",
+            "| Period | Holdings | Filing Type | Filed | SEC Accession |",
+            "|---|---:|---|---|---|",
+        ]
+    )
+    for filing in filings[:20]:
+        lines.append(
+            f"| {filing.period} | {filing.holdings} | {filing.form_type} | {_iso_date(filing.filed)} "
+            f"| {_format_accession(filing.filing_id)} |"
+        )
+    return "\n".join(lines)
 
 
 def _build_manager_stock_history(
     cik: str, cusip: str, manager_name: str, ticker: str
 ) -> str | None:
-    """Build Markdown for a specific manager's position history for a stock.
-
-    Returns the Markdown string, or None if no data is available.
-    """
-    data = _manager_cusip_history(cik, cusip)
-    if not data or not data.get("data"):
-        c.log(f"No position history found for {manager_name} in {ticker}.")
+    entries = _manager_cusip_history(cik, cusip).get("data", [])
+    if not entries:
         return None
-
-    entries = data["data"]
-
-    lines = []
-    lines.append(f"# Position History: {manager_name} → {ticker}")
-    lines.append("")
-    lines.append(f"- **Manager CIK:** {cik}")
-    lines.append(f"- **CUSIP:** {cusip}")
-    lines.append(f"- **Source:** {_BASE}/manager/{cik}/cusip/{cusip}")
-    lines.append("")
-
-    # Each entry: [[date, filing_slug], value, pct, shares, principal, date_filed, [year, quarter]]
-    lines.append("| Period | Shares | % of Portfolio | Filed |")
-    lines.append("|--------|--------|---------------|-------|")
-
-    for e in entries:
-        pct = e[2]
-        shares = e[3]
-        date_filed = e[5]
-        period_info = e[6]  # [year, quarter]
-
-        period = f"Q{period_info[1]} {period_info[0]}"
-        lines.append(f"| {period} | {_fmt_shares(shares)} | {_fmt_pct(pct)} | {date_filed} |")
-
+    lines = [
+        f"# Position History: {manager_name} → {ticker}",
+        "",
+        f"- **Manager CIK:** {cik}",
+        f"- **CUSIP:** {cusip}",
+        "- **Underlying records:** SEC Form 13F filings",
+        "",
+        "| Period | Shares | Filed | SEC Accession |",
+        "|---|---:|---|---|",
+    ]
+    for entry in entries:
+        period_info = entry[6]
+        filing_info = entry[0]
+        filing_slug = (
+            filing_info[1] if isinstance(filing_info, list) and len(filing_info) > 1 else ""
+        )
+        lines.append(
+            f"| Q{period_info[1]} {period_info[0]} | {_fmt_shares(entry[3])} | {entry[5]} "
+            f"| {_format_accession(filing_slug)} |"
+        )
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Determine latest quarter
-# ---------------------------------------------------------------------------
+def _write_or_fail(path, markdown: str | None, description: str) -> None:
+    if not markdown:
+        c.log(f"ERROR: no {description} data could be extracted.")
+        sys.exit(1)
+    c.emit(c.write_text(path, markdown))
 
 
-def _latest_quarter() -> tuple[int, int]:
-    """Return the most recent likely 13F quarter with data available.
-
-    13F filings are due 45 days after quarter end, and most large filers
-    submit within 45-60 days. We use a 50-day buffer from the *end* of
-    the quarter to be safe. Calendar quarters end Mar 31, Jun 30, Sep 30,
-    Dec 31.
-    """
-    from datetime import date, timedelta
-
-    today = date.today()
-    # Quarter end dates for the current and previous year
-    quarters = []
-    for y in [today.year, today.year - 1]:
-        quarters.extend(
-            [
-                (date(y, 3, 31), y, 1),
-                (date(y, 6, 30), y, 2),
-                (date(y, 9, 30), y, 3),
-                (date(y, 12, 31), y, 4),
-            ]
-        )
-    # Sort descending and find the most recent quarter that ended 50+ days ago
-    quarters.sort(key=lambda x: x[0], reverse=True)
-    for end_date, year, q in quarters:
-        if today - end_date >= timedelta(days=50):
-            return (year, q)
-    # Fallback
-    return (today.year - 1, 4)
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
-
-def main():
-    p = argparse.ArgumentParser(description="Fetch 13F institutional holder data from 13f.info.")
-    # Stock-centric
-    p.add_argument("--ticker", help="Stock ticker to look up holders for.")
-    p.add_argument(
-        "--history",
-        action="store_true",
-        help="Show quarterly holder/share-count history (with --ticker).",
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--ticker", help="Stock ticker for holder or manager-position queries.")
+    parser.add_argument("--manager", help="Manager name or exact 10-digit CIK.")
+    parser.add_argument(
+        "--history", action="store_true", help="Show history for a stock or manager."
     )
-    p.add_argument(
-        "--year", type=int, default=None, help="Specific year for holder lookup (default: latest)."
-    )
-    p.add_argument(
-        "--quarter",
-        type=int,
-        default=None,
-        choices=[1, 2, 3, 4],
-        help="Specific quarter (1-4) for holder lookup.",
-    )
-    p.add_argument(
-        "--top", type=int, default=25, help="Number of top holders to show (default: 25)."
-    )
+    parser.add_argument("--year", type=int, help="Specific 13F reporting year.")
+    parser.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="Specific quarter.")
+    parser.add_argument("--top", type=int, help="Top stock holders to show (default: 25).")
+    c.add_cache_arg(parser)
+    args = parser.parse_args()
 
-    # Manager-centric
-    p.add_argument("--manager", help="Manager name to search for.")
-    p.add_argument("--cik", help="Manager CIK (10-digit, e.g. 0001067983).")
+    if not args.ticker and not args.manager:
+        parser.error("provide --ticker, --manager, or both")
+    if (args.year is None) != (args.quarter is None):
+        parser.error("--year and --quarter must be supplied together")
+    if args.top is not None and args.top <= 0:
+        parser.error("--top must be positive")
+    if args.manager and args.top is not None:
+        parser.error("--top applies only to stock-holder queries")
+    if args.manager and args.ticker and args.history:
+        parser.error("a manager-plus-ticker query already returns position history")
 
-    # Cross-reference
-    p.add_argument("--cusip", help="CUSIP for cross-reference with --cik.")
-
-    c.add_cache_arg(p)
-    args = p.parse_args()
     cache = c.cache_root(args.cache_dir)
-
-    # Validate: at least one of --ticker, --manager, or --cik is required
-    if not args.ticker and not args.manager and not args.cik:
-        p.error("At least one of --ticker, --manager, or --cik is required.")
-
-    # Mode 1: Cross-reference (--cik + --cusip)
-    if args.cik and args.cusip:
-        manager_name = args.manager or args.cik
-        ticker_label = args.ticker or args.cusip
-        md = _build_manager_stock_history(args.cik, args.cusip, manager_name, ticker_label)
-        if md:
-            out_dir = cache / "managers"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            slug = c.safe_component(args.cik)
-            cusip_slug = c.safe_component(args.cusip)
-            path = c.write_text(out_dir / f"13f-xref_{slug}_{cusip_slug}.md", md)
-            c.emit(path)
-        return
-
-    # Mode 2: Stock-centric (--ticker)
-    if args.ticker:
-        c.log(f"Resolving CUSIP for {args.ticker}...")
-        resolved = _resolve_cusip(args.ticker)
-        if not resolved:
-            c.log(f"ERROR: could not resolve CUSIP for {args.ticker}.")
+    try:
+        manager_data = _resolve_manager(args.manager) if args.manager else None
+        if args.manager and not manager_data:
+            c.log(f"ERROR: could not resolve manager '{args.manager}'.")
             sys.exit(1)
-        cusip, sym, issuer = resolved
-        c.log(f"  {sym} → {issuer} (CUSIP: {cusip})")
 
-        if args.history:
-            md = _build_stock_history(args.ticker, cusip, issuer)
-            if md:
-                out_dir = c.company_dir(cache, None, ticker_hint=args.ticker)
-                path = c.write_text(out_dir / f"13f-history_{args.ticker.upper()}.md", md)
-                c.emit(path)
-            return
-
-        # If --cik is also provided, show cross-reference
-        if args.cik:
-            manager_name = args.manager or args.cik
-            md = _build_manager_stock_history(args.cik, cusip, manager_name, args.ticker)
-            if md:
-                out_dir = c.company_dir(cache, None, ticker_hint=args.ticker)
-                slug = c.safe_component(args.cik)
-                path = c.write_text(out_dir / f"13f-xref_{slug}.md", md)
-                c.emit(path)
-            return
-
-        year = args.year
-        quarter = args.quarter
-        if not year or not quarter:
-            y, q = _latest_quarter()
-            year = year or y
-            quarter = quarter or q
-
-        c.log(f"Fetching Q{quarter} {year} holders for {sym}...")
-        md = _build_stock_holders(args.ticker, cusip, issuer, year, quarter, args.top)
-        if md:
+        if args.manager and args.ticker:
+            cik, manager_name, _, _ = manager_data
+            resolved = _resolve_cusip(args.ticker)
+            if not resolved:
+                c.log(f"ERROR: could not resolve an exact CUSIP for ticker '{args.ticker}'.")
+                sys.exit(1)
+            cusip, _, _ = resolved
+            markdown = _build_manager_stock_history(cik, cusip, manager_name, args.ticker.upper())
             out_dir = c.company_dir(cache, None, ticker_hint=args.ticker)
-            path = c.write_text(out_dir / f"13f-holders_{year}-Q{quarter}.md", md)
-            c.emit(path)
-        return
+            _write_or_fail(
+                out_dir / f"13f-position-history_{c.safe_component(cik)}.md",
+                markdown,
+                "manager-position history",
+            )
+            return
 
-    # Mode 3: Manager-centric (--manager or --cik without --cusip)
-    if args.manager:
-        c.log(f"Searching for manager: {args.manager}")
-        resolved = _resolve_manager(args.manager)
-        if not resolved:
-            c.log(f"ERROR: could not find manager '{args.manager}'.")
+        if args.ticker:
+            resolved = _resolve_cusip(args.ticker)
+            if not resolved:
+                c.log(f"ERROR: could not resolve an exact CUSIP for ticker '{args.ticker}'.")
+                sys.exit(1)
+            cusip, _symbol, issuer = resolved
+            out_dir = c.company_dir(cache, None, ticker_hint=args.ticker)
+            if args.history:
+                _write_or_fail(
+                    out_dir / f"13f-history_{args.ticker.upper()}.md",
+                    _build_stock_history(args.ticker.upper(), cusip, issuer),
+                    "stock-holder history",
+                )
+                return
+            year, quarter = (
+                (args.year, args.quarter) if args.year is not None else _latest_quarter()
+            )
+            _write_or_fail(
+                out_dir / f"13f-holders_{year}-Q{quarter}.md",
+                _build_stock_holders(
+                    args.ticker.upper(), cusip, issuer, year, quarter, args.top or 25
+                ),
+                f"Q{quarter} {year} holder",
+            )
+            return
+
+        cik, manager_name, _, manager_html = manager_data
+        filings = _parse_manager_filings(manager_html)
+        out_dir = cache / "managers"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if args.history:
+            _write_or_fail(
+                out_dir / f"13f-manager-history_{c.safe_component(cik)}.md",
+                _build_manager_history(cik, manager_name, filings),
+                "manager filing-history",
+            )
+            return
+        selected = _select_manager_filing(filings, args.year, args.quarter)
+        if not selected:
+            period = f"Q{args.quarter} {args.year}" if args.year else "latest period"
+            c.log(f"ERROR: no complete manager portfolio found for {period}.")
             sys.exit(1)
-        cik, name = resolved
-        c.log(f"  Found: {name} (CIK: {cik})")
-        md = _build_manager_holdings(cik, name)
-        if md:
-            out_dir = cache / "managers"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            slug = c.safe_component(cik)
-            path = c.write_text(out_dir / f"13f-manager_{slug}.md", md)
-            c.emit(path)
-        return
-
-    if args.cik:
-        md = _build_manager_holdings(args.cik, args.cik)
-        if md:
-            out_dir = cache / "managers"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            slug = c.safe_component(args.cik)
-            path = c.write_text(out_dir / f"13f-manager_{slug}.md", md)
-            c.emit(path)
-        return
+        _write_or_fail(
+            out_dir / f"13f-manager_{c.safe_component(cik)}_{selected.period.replace(' ', '-')}.md",
+            _build_manager_holdings(cik, manager_name, selected),
+            "manager holding",
+        )
+    except FetchFailure as exc:
+        c.log(f"ERROR: {exc}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

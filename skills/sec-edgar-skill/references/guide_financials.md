@@ -1,65 +1,103 @@
-# Financials — XBRL statements and facts
+# Financials — XBRL statements, facts, and periods
 
-How to pull structured financial statements (Income, Balance Sheet, Cash Flow) and
-individual XBRL facts, for both US-GAAP and IFRS filers. `scripts/parse_financials.py`
-wraps statement extraction to CSV.
+Use XBRL for structured income statements, balance sheets, cash-flow statements, and
+individual facts. `scripts/parse_financials.py` writes statements to accession-keyed CSVs.
+It never substitutes a different filing when the requested filing period has no match.
 
-## Get filings for parsing
+## Select the filing
+
+For ordinary annual or domestic quarterly reports:
 
 ```python
-filings = company.get_filings(form=["10-K", "20-F", "40-F"], year=2024, amendments=False)
+filings = company.get_filings(
+    form=["10-K", "20-F", "40-F"],
+    year=2025,
+    amendments=False,
+)
 filing = filings.latest()
 ```
 
-> **Pass `year` to `get_filings`, not `.filter()`.** `EntityFilings.filter(year=...)`
-> raises `TypeError` — `filter` doesn't accept `year`.
->
-> **Use `amendments=False`.** Amendments (`10-K/A`, etc.) often carry only minor text
-> changes and lack complete XBRL statement trees; exclude them to get the primary
-> statements.
+Pass `year` to `get_filings`, not `EntityFilings.filter()`, which does not accept it. Exclude
+amendments for ordinary statement extraction because an amendment may lack the complete XBRL
+statement tree.
 
-Annual reports (10-K / 20-F / 40-F) and quarterly reports (10-Q / 6-K) carry the
-complete statement trees and can be parsed to CSV using `parse_financials.py`.
+When the exact record is known, prefer its accession:
 
-## Parse statements from a filing
+```python
+from edgar import find
+
+filing = find("0000320193-25-000079")
+```
+
+The script equivalents are:
+
+```bash
+python scripts/parse_financials.py --ticker AAPL --year 2025 --statement all
+python scripts/parse_financials.py --accession 0000320193-25-000079 --statement all
+```
+
+A missing period is an error. Read the nearby candidates in stderr and rerun deliberately;
+do not silently use the latest report.
+
+## Financial 6-Ks require candidate selection
+
+A 6-K is a foreign private issuer's general current report, not a standardized quarterly
+report. It can contain financing, governance, operational, or other disclosures. Some 6-Ks
+carry tagged annual, half-year, nine-month, revised, or voluntary interim financial statements.
+
+For a requested filing window, `parse_financials.py`:
+
+1. prefers a matching original 10-Q when one exists;
+2. otherwise surveys 6-K and 6-K/A filings in the window;
+3. looks for XBRL metadata, statement objects, and financial attachment descriptions;
+4. extracts when exactly one filing has parseable statements;
+5. lists candidate accessions instead of guessing when several match;
+6. identifies likely textual financial 6-Ks when no statements can be parsed.
+
+Use the reported accession for a second, exact call. For a textual candidate, fetch that
+accession with `fetch_filing.py --attachment list` and pull the relevant exhibit.
+
+XBRL proves that tagged information exists; it does not by itself prove that the filing is a
+calendar-quarter report. Verify statement period ends and durations before labeling the data.
+
+## Parse statements
 
 ```python
 xbrl = filing.xbrl()
-print(xbrl.to_context())  # lists available statements
+print(xbrl.to_context())
 
 income = xbrl.statements.income_statement()
 balance = xbrl.statements.balance_sheet()
-cash = xbrl.statements.cashflow_statement()  # note: "cashflow", no underscore
+cash = xbrl.statements.cashflow_statement()
 df = income.to_dataframe()
 ```
 
-> Statement accessors live on `xbrl.statements`, not on the `XBRL` object itself, and the
-> cash-flow method is `cashflow_statement()` (no underscore in "cashflow").
+Statement accessors live on `xbrl.statements`; the cash-flow accessor is
+`cashflow_statement()` without an underscore inside “cashflow.”
 
-## Multi-period history from the company
+## Multi-period company financials
 
 ```python
-fin = company.get_financials()
-print(fin.to_context())
-df = fin.income_statement().to_dataframe()  # methods are directly on this object
+financials = company.get_financials()
+print(financials.to_context())
+df = financials.income_statement().to_dataframe()
 ```
 
-On the object returned by `get_financials()`, the statement methods are direct — not
-under `.statements`.
+On the object returned by `get_financials()`, statement methods are direct rather than under
+`.statements`.
 
-> **Don't blindly `.mean()` / `.sum()` across periods.** A multi-period pull mixes
-> current-period values with prior-period comparatives. For balance-sheet (instant)
-> facts, filter `period_instant == report_date`; for income/cash-flow (duration) facts,
-> filter `period_end == report_date` and sanity-check the duration (~90 days quarterly,
-> ~360 days annual). Otherwise you average current figures with comparatives and corrupt
-> the series.
+Do not blindly average or sum rows across periods. A pull can mix current values with prior
+comparatives. For balance-sheet instant facts, filter to the intended `period_instant`; for
+income and cash-flow duration facts, verify `period_end` and duration. Quarterly, half-year,
+nine-month, and annual durations are not interchangeable.
 
 ## Individual facts — US-GAAP and IFRS
 
 ```python
-rev_us = xbrl.get_fact("us-gaap:Revenues")
-rev_ifrs = xbrl.get_fact("ifrs-full:Revenue")  # foreign issuers often file IFRS
+revenue_us = xbrl.get_fact("us-gaap:Revenues")
+revenue_ifrs = xbrl.get_fact("ifrs-full:Revenue")
 ```
 
-If US-GAAP tags come back empty for a foreign private issuer, try the IFRS equivalent —
-20-F filers frequently report under IFRS rather than US-GAAP.
+Foreign private issuers frequently report under IFRS. If a US-GAAP concept is absent, inspect
+the filing taxonomy and use the corresponding IFRS or issuer-extension concept rather than
+assuming the fact is missing.

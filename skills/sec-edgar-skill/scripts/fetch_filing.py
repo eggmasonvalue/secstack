@@ -1,12 +1,16 @@
-"""Fetch a single SEC filing (or one section / attachment) as Markdown.
+"""Fetch one SEC filing, section, or attachment as Markdown.
 
-Writes into the cache (``<cache>/<TICKER>/<FORM>_<DATE>_<ACCESSION>[__<suffix>].md``)
-and prints the absolute path(s) to stdout. The script owns the filename so the
-result is deterministic and re-discoverable; run with ``--help`` for all flags.
+Select either by accession, or by company plus form and optional period. Artifacts
+are written to ``<cache>/<TICKER>/<FORM>_<DATE>_<ACCESSION>[__<suffix>].md``;
+run with ``--help`` for the complete selector contract.
 """
+
+from __future__ import annotations
 
 import argparse
 import sys
+from datetime import date
+from pathlib import Path
 
 import _common as c
 
@@ -16,49 +20,36 @@ def _attachment_filename(stem: str, document: str, fallback: str) -> str:
     return f"{stem}__{name if name.endswith('.md') else name + '.md'}"
 
 
-def main():
-    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--ticker", required=True, help="Ticker, CIK, or company name.")
-    p.add_argument(
-        "--form", required=True, help="Form type, e.g. 10-K, 10-Q, 8-K, 20-F, 40-F, 6-K, DEF 14A."
-    )
-    p.add_argument("--year", type=int, help="Calendar year of the filing.")
-    p.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar quarter.")
-    p.add_argument(
-        "--date",
-        help="Target a specific filing date (YYYY-MM-DD). "
-        "Picks the filing whose filing_date matches exactly, or the "
-        "most recent filing on or before that date.",
-    )
-    p.add_argument(
-        "--section",
-        help='Extract one item by its SEC code, e.g. "Item 1A" '
-        '(10-K/8-K/20-F) or "Part II, Item 1A" (10-Q). Pass "list" '
-        "to print the item codes this filing actually contains.",
-    )
-    p.add_argument(
-        "--attachment",
-        help='Attachment selector: "list" (print available), "all", an '
-        "integer index, or a substring of the document/description "
-        '(e.g. "ex-99.1").',
-    )
-    c.add_identity_arg(p)
-    c.add_cache_arg(p)
-    args = p.parse_args()
+def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.accession:
+        conflicting = [
+            flag
+            for flag, value in (
+                ("--ticker", args.ticker),
+                ("--form", args.form),
+                ("--year", args.year),
+                ("--quarter", args.quarter),
+                ("--on-or-before", args.on_or_before),
+            )
+            if value is not None
+        ]
+        if conflicting:
+            parser.error(f"--accession cannot be combined with {', '.join(conflicting)}")
+    elif not args.ticker or not args.form:
+        parser.error("provide --accession, or provide both --ticker and --form")
 
-    c.resolve_identity(args.identity)
+    if args.attachment and args.section:
+        parser.error("--attachment and --section select different document types; choose one")
+
+
+def _select_by_company(args: argparse.Namespace):
     company = c.resolve_company(args.ticker)
-
-    # amendments=False: the edgartools API natively excludes amended forms
-    # (10-K/A, 10-Q/A, etc.) when this is set. Amendments typically contain
-    # only the amended items (e.g. Part III), not the full filing, so picking
-    # one silently instead of the original loses most of the content. This
-    # matches guide_financials.md's amendments=False recommendation.
-    kwargs = {"form": args.form, "amendments": False}
-    if args.year:
+    kwargs: dict[str, object] = {"form": args.form, "amendments": False}
+    if args.year is not None:
         kwargs["year"] = args.year
-    if args.quarter:
+    if args.quarter is not None:
         kwargs["quarter"] = args.quarter
+
     try:
         filings = list(company.get_filings(**kwargs))
     except Exception as exc:
@@ -71,32 +62,79 @@ def main():
         )
         sys.exit(1)
 
-    filings.sort(key=lambda f: f.filing_date, reverse=True)
-
-    # --date: pick the filing whose date matches exactly, or the most recent
-    # filing on or before the given date.  Useful for targeting a specific
-    # 8-K filed today without knowing its accession number.
-    if args.date:
-        from datetime import date as _date
-
+    filings.sort(key=lambda filing: filing.filing_date, reverse=True)
+    if args.on_or_before:
         try:
-            _date.fromisoformat(args.date)
+            date.fromisoformat(args.on_or_before)
         except ValueError:
-            c.log(f"ERROR: --date must be YYYY-MM-DD, got '{args.date}'.")
+            c.log(f"ERROR: --on-or-before must be YYYY-MM-DD, got '{args.on_or_before}'.")
             sys.exit(1)
-        candidates = [f for f in filings if str(getattr(f, "filing_date", "")) <= args.date]
-        if not candidates:
-            c.log(f"ERROR: no {args.form} filings for {args.ticker} on or before {args.date}.")
+        filings = [
+            filing
+            for filing in filings
+            if str(getattr(filing, "filing_date", "")) <= args.on_or_before
+        ]
+        if not filings:
+            c.log(
+                f"ERROR: no {args.form} filings for {args.ticker} on or before {args.on_or_before}."
+            )
             sys.exit(1)
-        # candidates is already sorted newest-first; pick the closest one.
-        filing = candidates[0]
-        c.log(f"--date {args.date}: selected filing dated {filing.filing_date}.")
+        c.log(
+            f"--on-or-before {args.on_or_before}: selected filing dated {filings[0].filing_date}."
+        )
+    return company, filings[0]
+
+
+def _cache_hit(path: Path, *, force: bool) -> bool:
+    if not force and path.is_file() and path.stat().st_size > 0:
+        c.log(f"Using cached artifact: {path.resolve()}")
+        return True
+    return False
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--accession",
+        help="Exact SEC accession. Cannot be combined with company/period selectors.",
+    )
+    parser.add_argument("--ticker", help="Ticker, CIK, or company name.")
+    parser.add_argument("--form", help="Form type, e.g. 10-K, 10-Q, 8-K, 20-F, 40-F, 6-K, DEF 14A.")
+    parser.add_argument("--year", type=int, help="Calendar year of the filing.")
+    parser.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar quarter.")
+    parser.add_argument(
+        "--on-or-before",
+        help="Select the most recent matching filing on or before YYYY-MM-DD.",
+    )
+    parser.add_argument(
+        "--section",
+        help='Extract an SEC item code, or pass "list" to print available item codes.',
+    )
+    parser.add_argument(
+        "--attachment",
+        help='Attachment selector: "list", "all", zero-based index, or document/description text.',
+    )
+    c.add_identity_arg(parser)
+    c.add_cache_arg(parser)
+    c.add_force_arg(parser)
+    args = parser.parse_args()
+    _validate_args(parser, args)
+
+    c.resolve_identity(args.identity)
+    if args.accession:
+        filing = c.resolve_filing(args.accession)
+        company = c.company_for_filing(filing)
     else:
-        filing = filings[0]
+        company, filing = _select_by_company(args)
 
-    c.log(f"Resolved {filing.form} filed {filing.filing_date} (accession {filing.accession_no}).")
+    accession = getattr(filing, "accession_no", "") or getattr(filing, "accession_number", "")
+    c.log(f"Resolved {filing.form} filed {filing.filing_date} (accession {accession}).")
 
-    out_dir = c.company_dir(c.cache_root(args.cache_dir), company, ticker_hint=args.ticker)
+    out_dir = c.company_dir(
+        c.cache_root(args.cache_dir),
+        company,
+        ticker_hint=args.ticker if not args.accession else None,
+    )
     stem = c.filing_stem(filing)
 
     if args.attachment:
@@ -108,24 +146,31 @@ def main():
         selector = args.attachment.lower()
         if selector == "list":
             c.log(f"{len(attachments)} attachment(s): index\tdocument\tdescription")
-            for i, att in enumerate(attachments):
+            for index, attachment in enumerate(attachments):
                 print(
-                    f"{i}\t{getattr(att, 'document', '') or ''}"
-                    f"\t{getattr(att, 'description', '') or ''}"
+                    f"{index}\t{getattr(attachment, 'document', '') or ''}"
+                    f"\t{getattr(attachment, 'description', '') or ''}"
                 )
             return
 
         if selector == "all":
-            saved = []
-            for i, att in enumerate(attachments):
+            saved: list[Path] = []
+            for index, attachment in enumerate(attachments):
+                filename = _attachment_filename(
+                    stem, getattr(attachment, "document", ""), f"attachment_{index}"
+                )
+                path = out_dir / filename
+                if _cache_hit(path, force=args.force):
+                    saved.append(path)
+                    continue
                 try:
-                    fname = _attachment_filename(
-                        stem, getattr(att, "document", ""), f"attachment_{i}"
-                    )
-                    saved.append(c.write_text(out_dir / fname, att.markdown()))
-                    c.log(f"  saved {fname}")
+                    content = attachment.markdown()
+                    if not content:
+                        raise ValueError("attachment produced no text")
+                    saved.append(c.write_text(path, content))
+                    c.log(f"  saved {filename}")
                 except Exception as exc:
-                    c.log(f"  WARNING: attachment {i} failed: {exc}")
+                    c.log(f"  WARNING: attachment {index} failed: {exc}")
             if not saved:
                 c.log("ERROR: no attachments could be converted.")
                 sys.exit(1)
@@ -135,42 +180,43 @@ def main():
 
         selected = None
         if args.attachment.isdigit():
-            idx = int(args.attachment)
-            if not 0 <= idx < len(attachments):
-                c.log(f"ERROR: attachment index {idx} out of range (0-{len(attachments) - 1}).")
+            index = int(args.attachment)
+            if not 0 <= index < len(attachments):
+                c.log(f"ERROR: attachment index {index} out of range (0-{len(attachments) - 1}).")
                 sys.exit(1)
-            selected = attachments[idx]
+            selected = attachments[index]
         else:
-            needle = selector
-            for att in attachments:
-                doc = (getattr(att, "document", "") or "").lower()
-                desc = (getattr(att, "description", "") or "").lower()
-                if needle in doc or needle in desc:
-                    selected = att
+            for attachment in attachments:
+                document = (getattr(attachment, "document", "") or "").lower()
+                description = (getattr(attachment, "description", "") or "").lower()
+                if selector in document or selector in description:
+                    selected = attachment
                     break
         if selected is None:
             c.log(f"ERROR: no attachment matched '{args.attachment}'.")
             sys.exit(1)
 
+        filename = _attachment_filename(stem, getattr(selected, "document", ""), "attachment")
+        path = out_dir / filename
+        if c.emit_cached(path, force=args.force):
+            return
         content = selected.markdown()
         if not content:
             c.log("ERROR: selected attachment produced no text.")
             sys.exit(1)
-        fname = _attachment_filename(stem, getattr(selected, "document", ""), "attachment")
-        c.emit(c.write_text(out_dir / fname, content))
+        c.emit(c.write_text(path, content))
         return
 
     if args.section:
-        # Sections are addressed through the parsed data object, not markdown():
-        # Filing.markdown() takes no section argument, so passing one there is
-        # silently ignored and returns the whole filing. obj()[code] slices it.
+        if args.section.strip().lower() != "list":
+            suffix = c.safe_component(args.section).lower()
+            path = out_dir / f"{stem}__{suffix}.md"
+            if c.emit_cached(path, force=args.force):
+                return
         try:
             obj = filing.obj()
         except Exception as exc:
-            c.log(
-                f"ERROR: could not parse {filing.form} into a structured object "
-                f"to address by item: {exc}"
-            )
+            c.log(f"ERROR: could not parse {filing.form} into an item-addressable object: {exc}")
             sys.exit(1)
         items = list(getattr(obj, "items", None) or [])
         addressable = bool(items) and hasattr(obj, "__getitem__")
@@ -178,40 +224,36 @@ def main():
         if args.section.strip().lower() == "list":
             if not addressable:
                 c.log(
-                    f"{filing.form} is not item-addressable (it exposes no SEC "
-                    f"item codes). Fetch the full filing (omit --section) and map "
-                    f"it with list_headings.py."
+                    f"{filing.form} is not item-addressable. Fetch the full filing and "
+                    "navigate its contents or attachments."
                 )
                 return
             c.log(f"{filing.form} contains {len(items)} item(s):")
-            for it in items:
-                print(it)
+            for item in items:
+                print(item)
             return
 
         if not addressable:
             c.log(
-                f"ERROR: {filing.form} is not item-addressable (no SEC item codes). "
-                f"Fetch the full filing (omit --section) and map it with "
-                f"list_headings.py, or pull an exhibit with --attachment."
+                f"ERROR: {filing.form} is not item-addressable. Fetch the full filing or "
+                "an attachment instead."
             )
             sys.exit(1)
-
         content = obj[args.section]
         if content is None or not str(content).strip():
-            c.log(
-                f"ERROR: item '{args.section}' is not present in this filing. "
-                f"Available items: {', '.join(items)}"
-            )
+            c.log(f"ERROR: item '{args.section}' is absent. Available items: {', '.join(items)}")
             sys.exit(1)
-        suffix = c.safe_component(args.section).lower()
-        c.emit(c.write_text(out_dir / f"{stem}__{suffix}.md", str(content)))
+        c.emit(c.write_text(path, str(content)))
         return
 
+    path = out_dir / f"{stem}.md"
+    if c.emit_cached(path, force=args.force):
+        return
     content = filing.markdown()
     if not content:
-        c.log("ERROR: filing produced no markdown (it may be exhibit-only; try --attachment list).")
+        c.log("ERROR: filing produced no Markdown; it may be exhibit-only. Try --attachment list.")
         sys.exit(1)
-    c.emit(c.write_text(out_dir / f"{stem}.md", content))
+    c.emit(c.write_text(path, content))
 
 
 if __name__ == "__main__":

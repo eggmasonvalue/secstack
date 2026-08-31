@@ -20,7 +20,7 @@ Periodic and current reports parse into a typed object whose sections are keyed 
 item code. You don't discover the structure — you ask for the item directly.
 
 ```python
-filing = company.get_filings(form="10-K").latest()
+filing = company.get_filings(form="10-K", amendments=False).latest()
 report = filing.obj()  # TenK / TenQ / CurrentReport / TwentyF / ...
 report.items  # -> ['Item 1', 'Item 1A', 'Item 1B', ...] actually present
 risk = report["Item 1A"]  # just that item's text, not the whole 100k-word filing
@@ -94,7 +94,9 @@ text = attachments[1].markdown()  # convert one exhibit to Markdown
 ```
 
 Script: `fetch_filing.py --attachment "ex-99.1"` (or `list` | `all` | an index), or
-`fetch_filings.py --attachments` to capture exhibits across a whole year range.
+`fetch_filings.py --attachments` to capture exhibits across a whole year range. When an
+accession is known, combine `--accession` with the attachment selector so no date/form guess
+is involved.
 
 > **Index attachments via a list.** `filing.attachments` looks items up by their 1-based
 > SEC *sequence number*, which can skip values — so integer indexing on the raw collection
@@ -108,8 +110,6 @@ Script: `fetch_filing.py --attachment "ex-99.1"` (or `list` | `all` | an index),
 
 ## Then search locally
 
-Once a filing (or section, or exhibit) is in the cache, search it with your native
-grep/ripgrep and read the matching line ranges. Don't run text searches through the library
-— that's slower and round-trips to remote endpoints. *What* you search for, and what you
-make of it, is yours (or your framework's) to decide; this skill just makes the text fast to
-reach.
+Once a filing, section, or exhibit is in the cache, search it with native grep/ripgrep and
+read the matching line ranges. Avoid remote text searches when the local Markdown already
+contains the source text.

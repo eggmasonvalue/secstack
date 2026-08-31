@@ -49,11 +49,11 @@ def main():
 
     identity = args.identity or os.environ.get("EDGAR_IDENTITY")
     if identity and "@" in identity:
-        print(f"  [ok]      SEC identity: {identity}")
+        print("  [ok]      SEC identity: configured")
     else:
         print(
             "  [MISSING] SEC identity — set $EDGAR_IDENTITY or pass --identity "
-            "(required for any fetch; missing it returns HTTP 403)."
+            "(required for SEC requests; 13f.info convenience queries are exempt)."
         )
         ok = False
 
