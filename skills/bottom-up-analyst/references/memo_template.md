@@ -1,151 +1,158 @@
-# The memo — standard due-diligence structure
+# Full due-diligence memo
 
-This is the deliverable. The memo *is* the product of the whole loop, and "pitch-ready"
-is the definition of done: complete and honest enough that a `pitch-like-lou` pitch could
-stand on it without inventing anything.
+Use this skeleton for a requested deep dive. It is not a questionnaire: combine, reorder, or omit
+sections when that improves the argument, and add a section when the company's economics demand
+it. A special situation, cyclical, and compounder should not produce identical memos.
 
-A memo is an argument, not a form. Use this structure as a skeleton, but let the
-**archetype** decide where the weight goes — a compounder earns its keep in the economics
-and moat sections; a special-situation in the structural fact and the payoff; a hypergrowth
-name in the reverse-DCF and unit economics. Weight each section to the archetype; a tight
-six-page memo beats a padded twenty.
+## Evidence notation
 
-## The honesty markup (use it throughout)
+Use the notation consistently on load-bearing factual and model claims:
 
-The single most important habit: let the reader audit your confidence. Adopt a consistent
-convention and use it in every section — for example:
+- **[V]** checked against a cited authoritative primary record;
+- **[E]** calculated or modeled, with inputs and units;
+- **[A]** unresolved assumption, with its decision impact; and
+- **[W]** external, trade, channel, expert, or secondary evidence, named and dated.
 
-- **[V]** verified — you read it in a named filing (give the form + accession or section).
-- **[E]** estimate — you computed or modeled it; state the assumption.
-- **[A]** assumption — you're taking it on faith; flag it for the reader to challenge.
-- **[W]** web — sourced from outside filings; attribute and date it.
+The tag does not replace a citation. Do not label an analytical inference `[V]` merely because
+its inputs are verified; state that it is an inference. Ordinary connective prose does not need
+a tag.
 
-The markup is not bureaucracy. It is what separates a memo from propaganda: a reader can see
-at a glance which load-bearing claims are solid and which are your judgment.
+## Header
 
-## Structure
-
-### 0. Stat header
-
-A compact, text-aligned block that orients the reader in five seconds. Compute, don't
-guess; name any adjustment.
-
-```text
-Ticker / Name            Price: [px]            Archetype: [one of the six]
-Market Cap ($M): [mc]    EPS (cur/fwd): [ ]     Verdict: [Long/Short/Pass/Watch]
-Net Debt ($M): [nd]      P/E: [x]               Conviction: [Low/Med/High]
-TEV ($M): [tev]          P/FCF: [x]             IV range: [low–high]
-Shares (M, dil): [sh]    TEV/EBIT: [x]          Margin of safety: [%]
+```markdown
+# [Company] ([Ticker / share class]) — investment memo
+**As of:** [date, time zone where relevant]
+**Question:** [decision being evaluated]
+**Decision:** [Long / Watch / Pass]
+**Conviction:** [plain-language level and why]
 ```
 
-*Calc discipline:* Net Debt = total debt − cash & marketable securities. TEV = market cap +
-net debt + cost of option dilution (treasury-stock method — bake it in, don't footnote it).
-FCF = operating cash flow − capex, with any normalization named.
+## Decision snapshot
 
-### 1. Thesis & variant perception
+Select the small set of current metrics that orient this specific case. Do not reproduce a
+fixed stat block inherited from another pitch or fill irrelevant cells. Possibilities include:
+price and market value, enterprise value, diluted shares, net debt, normalized FCFF, valuation
+range, cycle position, unit metric, asset value, liquidity runway, or event spread. Label dates,
+periods, currencies, and adjustments.
 
-Three to five sentences, punchline first. The core disconnect, then the **variant
-perception**: what do you believe that the market doesn't, and *why are you the one who's
-right*? If you can't name a variant perception, you have a description, not a thesis.
+Then state in a few sentences:
 
-### 2. Business overview
+- what the market price appears to require;
+- the variant view, if one exists;
+- the decisive evidence;
+- what could make the view wrong; and
+- why the current price does or does not compensate for that uncertainty.
 
-How the company actually makes money — segments, unit of sale, who pays and why, revenue
-model, key economics — in plain language. If you can't explain it in one clean sentence,
-you're not ready to value it.
+If no differentiated view is established, say so. A clear pass is better than an invented
+variant perception.
 
-### 3. Archetype & why it's the right lens
+## Business and economic model
 
-Name the primary (and any secondary) archetype and justify it from the financials and
-business model. This tells the reader which questions the rest of the memo prioritizes.
+Explain in plain language:
 
-### 4. Financial analysis — the normalized economics
+- product or service, customer, payer, and unit of sale;
+- segments and where gross profit and cash flow arise;
+- pricing, volume, retention, cyclicality, and capital needs; and
+- the few operating variables that govern value.
 
-The un-distorted earning power (see `guide_normalization.md`), not raw GAAP. Owner earnings
-/ FCF, returns on capital, margins and their drivers, working-capital behavior. Include the
-**capital-allocation track record as a year-by-year table** — share count, debt,
-reinvestment and the return on it — because the trend is the argument.
+Name the analytical lens or lenses only if they sharpen the decision. Do not force the company
+into an archetype.
 
-**When the thesis depends on a new revenue stream** (pre-revenue JV, partnership product,
-market entry enabled by a regulatory change, post-restructuring margin profile), include a
-**unit-economics bridge** that builds from per-unit inputs (price, cost, volume) to the
-stream’s contribution to FCF. A management TAM estimate plugged into a DCF growth rate is
-not a model — it is a hope with a discount rate. See `guide_normalization.md` § “When the
-thesis depends on a new revenue stream.”
+## Reported-to-normalized economics
 
-### 5. Competitive position & industry
+Reconcile reported results to the cash-flow basis used in valuation. Include the periods and
+metrics that reveal the economics rather than a mandatory table. Show:
 
-Industry structure, the company's place in it, and *relative* competitive advantage —
-moat (or its absence) explained mechanically, not asserted. Ground in filings (incl. peers'
-filings); use web only for what filings can't give, and mark it [W].
+- recurring versus non-recurring items;
+- organic versus acquired growth;
+- maintenance and growth investment;
+- working-capital and deferred-revenue timing;
+- stock compensation and diluted shares;
+- lease treatment; and
+- capital allocation and return on incremental capital where meaningful.
 
-**Quantify, don't catalogue.** Every competitive strength, moat mechanism, and threat must
-be sized — how big, how fast it's moving, and what the dollar impact on *this company*
-would be if it plays out. “High switching costs” is a label; “3-year migration timelines
-and 95%+ renewal rates” is evidence. “Competition is intensifying” is mood; “Competitor X
-grew Y% last year and now holds Z% of the addressable market” is a fact the reader can
-reason from. A competitive force you can’t size is one you haven’t understood — mark it
-[A] and flag the gap. See `guide_competitive.md` § “Quantify impact.”
+Use `guide_normalization.md`. If a new stream or future margin structure carries material value,
+include a driver bridge from volume and price through costs, reinvestment, and FCFF.
 
-### 6. Valuation
+## Competitive and industry underwriting
 
-Triangulated, never a single point (see `guide_valuation.md`). Show each lens, weighted by
-archetype, including a **reverse-DCF of what today's price implies**. Lay out
-**bear / base / bull** scenarios with their key assumptions, converge on an **intrinsic-value
-range**, and state the **margin of safety** at the current price.
+Define the relevant market and profit pool, identify economically comparable peers, and explain
+the company's position through mechanisms and evidence. Connect material advantages and threats
+to an operating assumption, scenario, or monitorable.
 
-This section **must** include a **"Discount Rate Derivation"** subsection showing how the
-rate was reasoned - peer betas, the re-levered beta, the CAPM cost of equity, the WACC, and
-the sanity check against the business type (methodology in `guide_valuation.md` § "Discount
-rate"). A rate without a derivation is unauditable - the reader cannot disagree with it, so
-cannot trust it.
+Quantify where evidence supports it. Where it does not, use a range, break-even calculation,
+leading indicator, or explicit `[A]` gap rather than invented precision. Use
+`guide_competitive.md`.
 
-### 7. Ownership — institutional holders and insider activity
+## Management, ownership, and governance
 
-Who owns this stock, inside and out, and what the picture says about alignment and adverse
-selection. Pull 13F and Form 4 data via `sec-edgar-skill`, then read each pattern against
-`guide_ownership_signals.md`. Include:
+Include this section when control, incentives, dilution, capital allocation, insider activity,
+or holder concentration can affect the outcome. Distinguish:
 
-- **Institutional (13F):** top 10–15 holders (passive index vs. active/concentrated), the
-  ownership trend vs. price (accumulation or distribution), any notable
-  deep-value/activist/specialist holders, and concentration/forced-selling risk.
-- **Insider (Form 4):** a table of open-market buys/sells over the past 6–12 months
-  (distinguish voluntary P/S from routine M/F), the net buy/sell ratio, the key
-  buyers/sellers by name and role, aggregate insider ownership vs. compensation, and the FPI
-  Section-16 gap where it applies.
+- beneficial ownership and voting control from 13F positions;
+- voluntary Form 4 purchases and sales from grants, exercises, tax withholding, and gifts;
+- reported quarter-end 13F changes from inferred trading intent; and
+- compensation design from demonstrated capital-allocation behavior.
 
-Keep it to a table or two plus a paragraph of interpretation; it grounds the catalyst and
-risk sections. If the best-informed people are not aligned with your thesis, that fact
-belongs in the risk section.
+Use `guide_ownership_signals.md`. Keep immaterial holder lists out of the memo.
 
-### 8. Risks & pre-mortem
+## Valuation and expectations
 
-The bear case, in your own words and as strong as you can make it. Run the archetype's
-disqualifiers explicitly. Assume it's a year out and the thesis failed — what broke?
-Re-tag the load-bearing claims as verified vs. assumed; the assumed ones are your risks.
+Use methods that fit the business and reconcile each to common equity. State:
 
-**Every risk must pass the “so what” test.** State the *impact* — what happens to
-revenue, margins, or FCF if this risk materializes, and over what timeframe? A risk
-without a sized impact is a worry, not an analysis. Where possible, assign a probability
-(High/Medium/Low) and cite the evidence behind it. The pre-mortem narrative should
-reference the sized risks from the competitive section, not re-invent them as vague
-fears.
+- valuation date, currency, and current price;
+- reported-to-normalized cash-flow bridge;
+- enterprise-to-equity bridge and diluted shares;
+- explicit operating scenarios and their evidence;
+- discount-rate and terminal assumptions;
+- value per share or payoff under relevant outcomes; and
+- price discount/premium, downside, and required return.
 
-### 9. Catalysts & monitorables
+A reverse DCF is useful only if its positive-FCFF model describes the company. EPV is a no-growth
+case, not a hard floor. Growth sensitivity alone is not a bear/base/bull analysis when margins,
+capital needs, dilution, or financing also change. Use `guide_valuation.md`.
 
-Specific, ideally dated events or metrics that would confirm or break the thesis — a
-buyback, an uplisting, a margin-inflection quarter, a cohort metric, a regulatory date.
-"Re-rating" is not a catalyst; a mechanism or a date is. List what you'll watch to know if
-you're wrong early.
+Summarize the assumptions that dominate the result and show the sensitivity that matters. Do
+not require a ceremonial peer-beta table if another discount-rate method is better supported.
 
-### 10. Verdict & conviction
+## Countercase and pre-mortem
 
-The call — **Long / Short / Pass / Watch** — at the conviction the work supports, with a
-one-line rationale tying back to the variant perception and the margin of safety. If the
-digging was thin in places, say where; an honest hedge is part of the verdict.
+Make the strongest good-faith case against owning the security. Run the relevant archetype
+disqualifiers, then answer:
 
-### 11. Appendix — sources
+- Which fact, inference, or assumption is most likely wrong?
+- What permanent impairment path exists?
+- What financing, dilution, control, or liquidity event could intervene?
+- Which downside estimate is genuinely anchored, and which is not?
+- If the thesis has failed one year from now, what probably happened?
 
-The audit trail. Every filing used (form + accession number + section) and every web source
-(URL + date). This is what makes the memo checkable — and what a downstream pitch leans on
-when a skeptic pushes back.
+Size material effects when the evidence supports it. For discontinuous or poorly disclosed
+risks, describe the mechanism, exposure, leading indicator, and decision impact instead of
+inventing a probability.
+
+## Catalysts, falsifiers, and monitorables
+
+List observable developments that change probability or value. For each, state the expected
+time window, source to check, and what outcome confirms or weakens the thesis. A catalyst needs a
+mechanism; “re-rating” alone is an outcome.
+
+Separate a catalyst from a falsifier. The latter is the evidence that should make the investor
+exit or revisit the work even if price has not cooperated.
+
+## Verdict
+
+Conclude **Long**, **Watch**, or **Pass** at the confidence supported by the research. Tie the
+verdict to valuation, the variant view, and the countercase. State unresolved work and the price
+or evidence that would change the decision.
+
+## Sources and calculation notes
+
+Provide an audit trail for material claims:
+
+- SEC form, filing date, accession, and item or section;
+- issuer, regulator, court, or industry document title and date;
+- external URL, publisher, publication date, and access date where relevant; and
+- calculation inputs, units, periods, and formulas.
+
+Do not dump every document opened. Include the sources on which the argument actually relies and
+preserve conflicting evidence.

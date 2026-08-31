@@ -1,279 +1,183 @@
 ---
 name: bottom-up-analyst
 description: >-
-  Run a rigorous bottom-up fundamental deep dive on a single company and produce a
-  pitch-ready investment memo. Use this skill whenever the user hands you one stock — a
-  ticker or a name — and wants real due diligence: an investment thesis, a long/short
-  case, "is this a buy?", a valuation, a bull/bear teardown, an earnings-quality check, or
-  a full research write-up. Reach for it any time the task is "research this company",
-  "should I own this", "what do you think of X", or "do a deep dive on Y" — even if
-  neither "memo" nor "valuation" is said out loud.
+  Conduct substantive, long-only bottom-up research on one non-financial operating company.
+  Use for an investment thesis, buy/pass/watch decision, valuation, earnings-quality review,
+  bull/bear assessment, or full due-diligence memo when the user wants analysis rather than a
+  quote or filing lookup. The framework suits businesses whose operating, asset, or transaction
+  economics can be underwritten from public evidence, including cash-burning growth companies
+  with observable unit economics. Do not use it as the primary framework for banks, insurers,
+  REITs, funds, or clinical-stage and other predominantly binary-asset companies.
 ---
 
 # Bottom-Up Analyst
 
-This skill is the **analyst** in a three-layer research stack. It turns *one name* into an
-*earned thesis*, written up as a detailed, auditable investment memo that a reader can act
-on. It does the work that sits between raw data and a finished pitch - the work of actually
-deciding what the numbers mean.
+Turn evidence about one company into a long-only investment judgment. Scale the work to the
+question: answer a scoped valuation or earnings-quality request directly; produce the full memo
+only for a deep dive or when the user asks for one.
 
-## Where this sits - the seam with the other two skills
+This is the analysis layer of SecStack. Use `sec-edgar-skill` for filing evidence and
+`market-scout` for market data and transcripts. A finished memo may later feed
+`pitch-like-lou`, but this skill owns the research method and does not depend on that voice.
 
-A bottom-up stack has three jobs, and they are deliberately kept separate:
+## Evidence discipline
 
-- **The hands** - `sec-edgar-skill` (SEC filings and 13F institutional holder data) and
-  `market-scout` (price, returns, the peer set, and earnings call transcripts):
-  unopinionated data/tools layers. They fetch and extract token-efficiently; they *never*
-  decide what matters.
-- **The analyst - this skill.** It is both **the brain and the conductor.** It decides
-  *what* to pull and *why*, reasons over it, values the business, stress-tests the
-  conclusion, and writes the memo. The agent that chooses the evidence and the agent that
-  judges it are the same agent - that is how real analysts work, and why this layer drives
-  the tools rather than waiting to be handed numbers.
-- **The voice** - `pitch-like-lou`: renders a *pitch* from a finished thesis. Short,
-  compelling, "a pitch with conditions." A reader hooked by the pitch drops into **this
-  skill's memo** for the full due diligence behind it.
+Facts, estimates, assumptions, and external evidence must remain distinguishable. Use this
+markup on load-bearing claims and tables, not on headings or connective prose:
 
-So the production order is: **analyst → memo → (optionally) Lou pitches from it.** You
-produce the substance. You do not need to invoke the voice skill yourself; your job is to
-make the memo *pitch-ready* - complete and honest enough that a pitch can stand on it
-without inventing anything.
+- **[V] Verified:** checked against a cited filing, regulator, issuer document, or other
+  authoritative primary record. Identify the form/document, period, section or accession, and
+  date where available.
+- **[E] Estimate:** calculated or modeled. Show the formula, inputs, units, and source dates.
+- **[A] Assumption:** not established by available evidence. State what would validate it and
+  how the conclusion changes if it is wrong.
+- **[W] External evidence:** a web, trade, channel, expert, or secondary source. Name and date
+  it. `[W]` describes provenance, not truth; assess incentives and corroboration.
 
-## The prime directive: conviction must be earned, never manufactured
+Do not tag an inference `[V]` merely because its premises are verified. State the inference and
+cite its premises. An issuer filing verifies what the issuer disclosed, not that management's
+interpretation is neutral. Vendor-produced call transcripts are useful records of a call but
+can contain transcription errors; verify a load-bearing quotation against issuer materials or
+recording when practical.
 
-Every conclusion in the memo must trace to something you actually verified in a document
-or computed yourself. This is not a style note - it is the whole point. A confident memo
-built on an unchecked assumption is worse than no memo, because it *launders a guess into a
-recommendation*.
+Prefer the source authoritative for the claim. SEC filings lead for filed financials, capital
+structure, contracts, ownership, and governance. Issuer IR may lead for a release not yet filed;
+a regulator or court may lead for a rule or case; industry data may lead for market structure.
+Report material conflicts instead of silently choosing one source.
 
-The quality gate that prevents this is **Lou's honesty gate** - separate what you *know*
-from what you *believe*, concede the weak points out loud, tag second-hand claims as
-second-hand, and demand a margin of safety that survives the bad parts (governance,
-dilution, cyclical risk). It is a **necessary condition on every memo regardless of company
-type**. The gate lives in one place - `pitch-like-lou`, "the one inviolable rule" (with the
-MCI QUIPS cautionary tale of a thesis nearly sunk by an unverified third-hand claim). Read
-it there; apply it to every memo here.
+## Workflow
 
-Lou's gate is *necessary but not sufficient.* It does **not** dictate the analysis - this
-skill researches companies Lou never touched (hypergrowth tech, regulatory-tailwind
-inflections, turnarounds). The *method* below supplies the sufficiency; Lou's temperament
-supplies the honesty.
+### 1. Frame the decision
 
-## The loop
+Identify the security, listing, as-of date, investor question, and requested depth. Resolve
+ambiguous tickers or share classes before research. For a full deep dive, define the current
+market expectation you need to test. For a scoped request, investigate only the evidence needed
+to answer it and disclose what was not reviewed.
 
-Work through these phases in order, but let the **archetype** decide where the weight goes -
-a hypergrowth name lives in phases 3 and 6; a cyclical in 4; a special-situation in 5 and 7.
+### 2. Build the evidence set
 
-1. **Orient and scope - filings first, always, before any web search.** Run
-   `sec-edgar-skill`'s `scripts/orient.py` as the **very first tool call** - before web
-   search, before `market-scout`, before anything else. This is non-negotiable even when the
-   user describes breaking news ("just reported," "a few hours ago," "announced today").
-   orient.py takes seconds and immediately shows you what was filed today; a web search for
-   the same information is slower, less authoritative, and often wrong about the company.
+Use `sec-edgar-skill` orientation only when the relevant form or accession is unknown. Skip it
+when an accession, cached artifact, or non-SEC source is already the precise route. Read the
+latest annual filing and subsequent material updates for a full company review; choose narrower
+sources for a narrower question.
 
-   **Breaking-news pattern:** if the user mentions a same-day event, orient.py will show the
-   8-K filed today. Pull it and its press-release exhibit (Exhibit 99.1) via `sec-edgar-skill`,
-   which documents the exact breaking-news fetch sequence. That exhibit is the primary
-   source; read it rather than web-searching for what it contains.
+Timestamp current market data. Check recent EDGAR and issuer IR for new disclosures, but do not
+assume a same-day event has already been filed. Use call transcripts for management statements
+and Q&A leads, with speaker attribution and the transcript caveat above.
 
-   After orient, read the latest **annual report** (10-K, or 20-F for an FPI) - its business
-   section and MD&A - and skim the most recent **interim/current** reports (10-Q/8-K, or 6-K
-   for an FPI) to learn, in the company's own words, *how it makes money.* You cannot value a
-   business you cannot explain in one plain sentence. Pull the market snapshot (price, market
-   cap, **the peer set**, sector) from `market-scout` to frame size and comps - orientation,
-   not evidence.
+Keep large documents on disk and retrieve only relevant sections. Follow each data skill's own
+current guide and `--help`; do not guess flags, cache behavior, or field semantics here.
 
-   **Pull the latest earnings call transcript** via `market-scout`, then read or grep it.
-   The transcript is a **primary source** — management's own words on guidance, strategy,
-   and tone. The Q&A section is especially valuable: analyst questions often target exactly
-   the weak points you need to stress-test in phase 6.
+### 3. Select the analytical lenses
 
-2. **Classify the archetype.** Almost every company is dominated by one shape, and the
-   shape decides which DD emphases, metrics, disqualifiers, and valuation method carry the
-   weight. Pick one primary archetype (a secondary is fine) and **load that playbook** from
-   `references/archetypes/`. See the routing table below. When nothing fits cleanly, the
-   core spine here is the fallback - reason from first principles.
+Choose an archetype only when it sharpens the work. Load the closest playbook from
+`references/archetypes/`; use a primary and secondary lens when the economics genuinely span
+both. Do not force a company into the taxonomy. If no playbook fits, reason from the business
+model and the decision at hand.
 
-3. **Reconstruct the normalized economics.** GAAP rarely shows the real earning power.
-   Drive `sec-edgar-skill` to pull the statements (XBRL → CSV), then *un-distort* them:
-   separate maintenance from growth capex, pull deferred revenue back into the picture, undo
-   one-offs, treat stock-comp and leases honestly, build owner earnings / FCF. Show capital
-   allocation as a **year-by-year table** (share count, debt, reinvestment, returns on it) -
-   a trend persuades where a single number cannot. See `references/guide_normalization.md`.
+| Lens | Use when the thesis turns on |
+| :-- | :-- |
+| `compounder.md` | returns on incremental capital and reinvestment runway |
+| `hypergrowth.md` | immature profits, unit economics, and a path to positive cash flow |
+| `cyclical.md` | normalized cycle earnings, cost position, and balance-sheet survival |
+| `turnaround.md` | a specific mechanism changing margins, demand, or capital structure |
+| `special_situation.md` | a transaction, legal document, security, or forced flow |
+| `deep_value.md` | conservatively realizable assets and a path to realization |
 
-   **When the thesis depends on a new revenue stream** - a pre-revenue JV, a partnership
-   product, a market entry unlocked by regulation, a post-restructuring margin profile -
-   build a **unit-economics bridge** from per-unit inputs (price, cost, volume) to the
-   stream's FCF contribution. A management TAM estimate plugged into a DCF growth rate is
-   not a model; it launders a guess into a valuation. The bridge makes the assumption
-   auditable: a reader who disagrees with your per-unit fee or customer count can re-run
-   the math. See `references/guide_normalization.md` § "When the thesis depends on a new
-   revenue stream."
+### 4. Reconstruct the economics
 
-4. **Read the competitive and industry position.** A number is only as good as the moat
-   under it. Establish industry structure, the company's place in it, and - the hard part -
-   *relative* competitive advantage. **SEC filings are the default and the grounding**: the
-   10-K's competition and risk-factor sections, and crucially the **peers' own filings**
-   (their 8-Ks, 10-Qs, 10-Ks) for management commentary, pricing, and sentiment you can
-   cite. **Peers' earnings call transcripts** are equally valuable primary sources - a
-   competitor's CEO discussing pricing pressure, capacity additions, or market-share wins
-   on their own call is citable competitive intelligence - pull peer transcripts via
-   `market-scout` and grep the cached file for the subject company's name, the product
-   category, or pricing language. Use **web research only for what filings and transcripts genuinely
-   cannot give you** - relative positioning, market-share dynamics, channel/customer
-   checks - and label every web claim as such. See `references/guide_competitive.md`.
+Reconcile reported earnings to the cash-flow measure appropriate to the valuation. Separate
+recurring operations from one-offs, acquisition effects, working-capital timing, stock
+compensation, leases, and maintenance versus growth investment without double-counting any
+adjustment. Use a multi-period view long enough for the business and cycle. Read
+`references/guide_normalization.md`.
 
-   **Quantify impact, don't just list forces.** Every competitive strength, threat, and
-   moat mechanism must be *sized* - how big, how fast it's moving, and the dollar impact
-   on this company. A force you can't size is one you haven't understood. See
-   `guide_competitive.md` § "Quantify impact" for the full framework and examples.
+When a material part of value comes from a new stream or future margin structure, build a
+bottom-up bridge from operational drivers to revenue, margins, reinvestment, and cash flow.
+Treat an unsupported TAM share or margin target as `[A]`, not as a forecast.
 
-5. **Value it - by triangulation, weighted by archetype.** Never a single point estimate.
-   Converge on an intrinsic-value *range* from independent lenses, weighted by what the
-   archetype makes trustworthy: a **reverse-DCF** ("what growth/margin does today's price
-   already imply, and is that achievable?") is first-class - especially for hypergrowth,
-   where it is often the *only* honest lens - alongside a forward DCF, an EPV no-growth
-   floor, and peer multiples. End with an explicit **margin of safety**. Use the bundled
-   `scripts/` and `references/guide_valuation.md`.
+### 5. Underwrite the business and stewards
 
-   **Discount rate: reason it, don't default it.** Derive the discount rate from the
-   business's actual risk profile - never default to 10% or 12%. The memo's valuation
-   section **must** include a "Discount Rate Derivation" subsection. See
-   `references/guide_valuation.md` § "Discount rate" for the full methodology.
+Explain how the company makes money, why customers choose it, where industry profits accrue,
+and what could change. Select peers by business model and economics rather than accepting an
+automated industry list uncritically. Quantify material forces where reliable evidence permits;
+otherwise use a bounded range or identify the unresolved variable. Do not invent precision to
+fill a template. Read `references/guide_competitive.md`.
 
-6. **Try to kill it - pre-mortem.** Assume it's a year later and the thesis failed; write
-   down why. Run the **archetype's disqualifiers** (each playbook lists them) *and* Lou's
-   honesty gate (above). Most candidates should die here or get marked down - that is the
-   system working, not failing. Re-tag every surviving claim as verified vs. assumed.
+Review management incentives, dilution, capital allocation, controlling holders, related-party
+transactions, and governance when they can affect value. Use 13F and Form 4 data as limited,
+lagged evidence rather than a verdict. Read `references/guide_ownership_signals.md`.
 
-   Before finalising the risk assessment, read the **ownership signal**: pull institutional
-   (13F) and insider (Form 4) data via `sec-edgar-skill`, then interpret it against the
-   thesis. This is where adverse selection surfaces - a concentrated holder base that can
-   crater the float, smart money accumulating or quietly exiting, insiders buying with their
-   own capital or selling into your long. Account for every cluster buy and every
-   discretionary senior-officer sale; a signal you skip is a risk you took blind. See
-   `references/guide_ownership_signals.md` for how to read each pattern (13F reports stale
-   quarter-end prices, so use the **share counts** and divide by shares outstanding from the
-   `market-scout` snapshot for ownership %).
+### 6. Value the security
 
-7. **Reach a verdict at the conviction the work supports.** State the call - **Long /
-   Short / Pass / Watch** - with an honest conviction level, the **variant perception**
-   (what you believe that the market doesn't, and why you're right), the catalysts or
-   monitorables that would confirm or break it, and the margin of safety. If the digging was
-   thin, say so and dial conviction down; a hedged verdict is still a verdict.
+Use the lenses that match the cash-flow and asset economics; triangulation does not mean running
+an inapplicable method. Reverse DCF is useful only when a positive base FCFF and the model shape
+make implied growth interpretable. EPV is a no-growth operating case, not a guaranteed floor.
+Special situations and asset plays usually need scenario payoffs or sum-of-parts work outside
+the bundled scripts.
 
-8. **Write the memo.** Render everything into the standard-DD structure in
-   `references/memo_template.md`. The memo *is* the deliverable; pitch-ready is the
-   definition of done.
+State the valuation date, cash-flow basis, enterprise-to-equity bridge, diluted share count,
+discount rate, terminal assumptions, and scenario logic. Vary the assumptions that actually
+drive value, not growth alone by habit. Read `references/guide_valuation.md` before running the
+scripts.
 
-## Archetype routing
+### 7. Try to disprove the thesis
 
-Classify in phase 2, then load exactly one playbook (Lou's three shapes are the
-value-investing subset; the rest extend past where he worked). Read only the one in play -
-each is loaded lazily so you carry just the lens you need.
+Write the strongest contrary explanation, run the relevant playbook's disqualifiers, and test
+load-bearing assumptions. Distinguish permanent impairment from volatility. Describe what
+would falsify the thesis, the expected timing, financing or dilution risk, and any evidence gap
+that limits conviction. A pass or watch decision is a valid result.
 
-| If the company is primarily... | Tell by... | Load |
-| :-- | :-- | :-- |
-| A **quality compounder** - high ROIC, long reinvestment runway | durable returns on capital well above cost, pricing power, low capital intensity | `references/archetypes/compounder.md` |
-| A **hypergrowth** name - fast top-line, profits immature | >25-30% growth, heavy S&M, GAAP losses or thin margins, large TAM claim | `references/archetypes/hypergrowth.md` |
-| A **cyclical** - earnings swing with a cycle | commodity/industrial/financial exposure, margins that breathe with demand | `references/archetypes/cyclical.md` |
-| A **turnaround / inflection** - economics bending on a catalyst | margin or demand inflecting on a regulatory, sectoral, or self-help change | `references/archetypes/turnaround.md` |
-| A **special situation** - a structural or legal fact drives it | spin-off, post-bankruptcy, merger/arb, seniority waterfall, squeeze-out | `references/archetypes/special_situation.md` |
-| A **deep-value / asset play** - price below tangible value | net cash, net-net, hidden assets, liquidation/sum-of-parts angle | `references/archetypes/deep_value.md` |
-| **None fits cleanly** ("anything") | - | Stay on the core spine above; reason from first principles. |
+### 8. Deliver at the requested depth
 
-## Driving the tools - the conductor's job
+Use `references/memo_template.md` for a full deep dive. Adapt its sections and metrics to the
+company and thesis; it is a decision-oriented skeleton, not a form. For a scoped answer, give
+the conclusion, decisive evidence, calculations, countercase, missing work, and sources without
+padding it into a full memo.
 
-You are the one deciding what the hands fetch. Be deliberate and frugal:
+## Valuation scripts
 
-- **Reuse the cache.** `sec-edgar-skill` writes filings to `./sec-cache/{TICKER}/` with
-  deterministic, accession-keyed names. `market-scout` caches transcripts to
-  `./transcript-cache/{TICKER}/transcripts/`. Before fetching, glob the cache; re-use
-  what's there rather than re-hitting the source.
-- **Pull by section, not whole filings.** Use item codes (10-K Item 1/1A/7/8) and
-  heading maps; grep the cached Markdown and read only the lines that matter. A 10-K can
-  exceed 100k words - loading one whole buries the signal.
-- **Transcripts are greppable too.** Once cached, grep a transcript for "guidance",
-  "margin", a competitor's name, or a specific metric - you don't need to read the whole
-  45-minute call to find the passage that matters.
-- **Ownership data is cached like everything else.** `sec-edgar-skill` writes 13F and
-  insider output to the same `sec-cache/{TICKER}/` tree under scope-keyed filenames. Glob
-  the cache before re-fetching — if the window you need is already on disk, grep and read
-  it rather than re-hitting the source.
-- **Spend tokens where the archetype says the value hides.** Don't fetch a proxy's
-  compensation tables for a hypergrowth TAM question, or a deferred-revenue footnote for a
-  liquidation. Let the playbook route you.
-- **For foreign private issuers** there is no 10-K/10-Q/DEF 14A - it's 20-F and 6-K, and the
-  financials are IFRS. `sec-edgar-skill`'s guides cover the mechanics.
-
-If a tool detail is unclear, defer to `sec-edgar-skill`'s and `market-scout`'s own guides
-and `--help`; do not re-document the hands here. Keep the tools unopinionated; keep the
-opinion in this skill.
-
-## Web research - grounding first, web for the gaps
-
-Filings are the spine of the memo because they are auditable and primary. Reach for the web
-only when no filing can answer the question - chiefly *relative* competitive advantage,
-real-time market share, pricing dynamics, and channel or customer checks. When you do:
-**attribute and date every web claim**, prefer primary sources (company IR, regulators,
-trade bodies) over aggregators, and never let a web assertion silently outrank a filing.
-Mark web-sourced claims distinctly in the memo so the reader can weight them.
-
-**Do not fire any web search until orient.py has returned and you have read at least one
-filing section.** This applies even for breaking news: orient.py will surface the 8-K
-filed today, and the 8-K's Exhibit 99.1 is the press release - the primary source that
-any web article is merely summarising. Fetch the exhibit; don't search for the summary.
-
-**When a tool errors, recover - don't escape to the web.** A failed `sec-edgar-skill` call
-is a fixable usage detail, not a signal to pivot to web search. Re-run `orient.py`, read the
-relevant guide, or query `.docs`, then retry. The web is a *supplement for what filings
-cannot cover* - never a fallback for filings you failed to fetch.
-
-## Valuation tooling
-
-Run the bundled scripts rather than hand-rolling a DCF per memo. `--help` is the
-authoritative flag reference; canonical invocations:
+Resolve script paths relative to this `SKILL.md` and invoke them by absolute path while keeping
+the shell working directory at the user's research workspace. Every material assumption is
+explicit; `--help` is the flag reference.
 
 ```bash
-# Forward DCF (bear/base/bull sensitivity via comma-separated growth)
-python scripts/dcf.py --fcf0 1200 --growth 8,12,16 --years 10 --terminal-growth 3 \
-  --discount 10 --shares 500 --net-debt 200
+# Positive-FCFF forward sensitivity
+python "<skill-dir>/scripts/dcf.py" forward --fcff0 1200 --growth 8,12,16 \
+  --years 10 --terminal-growth 3 --wacc 10 --shares 500 --net-claims 200 --price 75
 
-# Three-stage DCF (add --growth2/--years2 when the trajectory bends)
-python scripts/dcf.py --fcf0 5 --growth 25,35,50 --years 3 \
-  --growth2 5,8 --years2 7 --terminal-growth 2.5 --discount 12 \
-  --shares 30 --net-debt 66 --price 2.75
+# Explicit annual FCFF, including an initial loss or inflection
+python "<skill-dir>/scripts/dcf.py" forecast --fcff=-20,10,45,80,110 \
+  --terminal-growth 2.5 --wacc 12 --shares 30 --net-claims 66 --price 8
 
-# Reverse DCF (what growth does today's price imply?)
-python scripts/dcf.py --mode reverse --price 150 --fcf0 1200 --years 10 \
-  --terminal-growth 3 --discount 10 --shares 500 --net-debt 200
+# Growth implied by price
+python "<skill-dir>/scripts/dcf.py" reverse --price 75 --fcff0 1200 --years 10 \
+  --terminal-growth 3 --wacc 10 --shares 500 --net-claims 200
 
-# EPV (no-growth floor)
-python scripts/epv.py --ebit 600 --tax 21 --wacc 9 --shares 500 --net-debt 200
+# No-growth operating earnings case
+python "<skill-dir>/scripts/epv.py" --ebit 600 --tax 21 --wacc 9 \
+  --shares 500 --net-claims 200 --price 10
 ```
 
-`references/guide_valuation.md` explains which lens to weight for which archetype, when to
-use three-stage vs two-stage, and how to set the discount rate and terminal value honestly.
+The DCF is an enterprise model: pass normalized **FCFF**, discount at WACC, then subtract
+`--net-claims` (debt and other senior claims less non-operating assets). Do not pass
+after-interest owner earnings or FCFE and subtract debt again.
 
-## Bundled resources
+## Resources
 
-| Resource | When to read / run |
+| Resource | Read or run when |
 | :-- | :-- |
-| `references/memo_template.md` | The required output structure. Read before writing the memo. |
-| `references/guide_normalization.md` | Phase 3 - un-distorting the financials into owner earnings. |
-| `references/guide_competitive.md` | Phase 4 - SEC-first competitive work; when to go to the web. |
-| `references/guide_valuation.md` | Phase 5 - triangulation, reverse-DCF, discount/terminal discipline. |
-| `references/guide_ownership_signals.md` | Phase 6 - reading the 13F and insider ownership signal. |
-| `references/archetypes/*.md` | Phase 2 - load the one matching the company's shape. |
-| `scripts/dcf.py`, `scripts/epv.py` | Phase 5 - the valuation arithmetic. `--help` for flags. |
+| `references/memo_template.md` | writing a full due-diligence memo |
+| `references/guide_normalization.md` | reconstructing normalized cash economics |
+| `references/guide_competitive.md` | underwriting industry and competitive position |
+| `references/guide_valuation.md` | choosing and implementing valuation lenses |
+| `references/guide_ownership_signals.md` | assessing ownership, insiders, incentives, and governance |
+| `references/archetypes/*.md` | one or two lenses materially sharpen the case |
+| `scripts/dcf.py`, `scripts/epv.py` | reproducible enterprise-valuation arithmetic |
 
-## Definition of done: pitch-ready
+## Completion check
 
-The memo ships when it passes **Lou's honesty gate** end to end - concretely:
-
-1. every claim is verified in a document or computed yourself, and everything unverified is
-   marked as such; and
-2. you have been as honest and specific about what is wrong with the thesis as about what
-   is right.
-
-Both true - the memo is pitch-ready.
+Before answering, ensure the work supports its own confidence: current security and source
+periods are clear; material facts are cited; calculations reconcile; assumptions and inferences
+are visible; the strongest countercase is addressed; valuation uses a consistent cash-flow
+basis; and omitted work is disclosed. Do not manufacture a verdict stronger than the evidence.

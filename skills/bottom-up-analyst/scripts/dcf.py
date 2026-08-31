@@ -1,29 +1,26 @@
-"""Two-or-three-stage DCF — forward (assumptions -> intrinsic value) and reverse (price -> implied growth).
+"""Enterprise DCF for explicit FCFF assumptions.
 
-Part of the bottom-up-analyst skill's valuation tooling. The judgment — which lens to weight,
-how to set the inputs honestly — lives in ``references/guide_valuation.md``; this script just
-does the arithmetic the same way every time so memos are comparable. Output is a compact
-Markdown summary to stdout. Run ``--help`` for all flags.
+The model has three routes:
 
-Conventions: monetary inputs (``--fcf0``, ``--net-debt``) share one unit (e.g. $millions);
-``--shares`` is in the matching count unit (e.g. millions) so per-share output is in dollars.
-Rates (``--growth``, ``--terminal-growth``, ``--discount``) are percentages.
+``forward``
+    Grow a positive base FCFF at one or two explicit rates.
+``forecast``
+    Discount an explicit annual FCFF sequence. This route can represent an
+    initial loss and is preferable when margins or cash flow inflect.
+``reverse``
+    Solve for the first-stage FCFF growth rate implied by the share price.
 
-Two-stage model (default): FCF grows at ``--growth`` for ``--years``, then a Gordon terminal
-value captures perpetual growth at ``--terminal-growth``.
-
-Three-stage model (add ``--growth2`` and ``--years2``): FCF grows at ``--growth`` for
-``--years`` (stage 1), then at ``--growth2`` for ``--years2`` (stage 2), then a Gordon
-terminal value. Use it whenever the FCF trajectory has a structural bend — the near-term
-rate differs materially from the long-run rate. Examples: turnaround cost-out then
-normalized growth, hypergrowth investment phase then harvest, cyclical recovery then
-trend, regulatory deployment wave then steady-state.
-
-Enterprise value -> less net debt -> equity value -> per share.
+All cash flows are free cash flow to the firm (FCFF), so they are discounted at
+WACC to obtain enterprise value. Net claims are then subtracted to obtain equity
+value. Net claims equal debt and other senior claims less excess cash and other
+non-operating assets; use a negative number when additions exceed claims.
+Monetary inputs must use one common unit; shares must use the matching count
+unit. Rates are percentages.
 """
 
 import argparse
 import sys
+from collections.abc import Sequence
 
 if sys.platform.startswith("win"):
     try:
@@ -32,280 +29,411 @@ if sys.platform.startswith("win"):
         pass
 
 
-def two_stage_value(fcf0, g1, years, g_term, disc):
-    """Return (enterprise_value, pv_stage1, pv_terminal) for a two-stage DCF."""
-    if disc <= g_term:
-        raise ValueError(
-            f"discount rate ({disc:.1%}) must exceed terminal growth ({g_term:.1%}); "
-            "the Gordon terminal value is undefined otherwise."
-        )
+def _percent_list(value: str) -> list[float]:
+    try:
+        values = [float(item.strip()) for item in value.split(",") if item.strip()]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected comma-separated percentages") from exc
+    if not values:
+        raise argparse.ArgumentTypeError("provide at least one percentage")
+    return values
+
+
+def _number_list(value: str) -> list[float]:
+    try:
+        values = [float(item.strip()) for item in value.split(",") if item.strip()]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected comma-separated numbers") from exc
+    if not values:
+        raise argparse.ArgumentTypeError("provide at least one cash flow")
+    return values
+
+
+def _validate_common(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.wacc <= 0:
+        parser.error("--wacc must be positive")
+    if args.terminal_growth <= -100:
+        parser.error("--terminal-growth must exceed -100%")
+    if args.wacc <= args.terminal_growth:
+        parser.error("--wacc must exceed --terminal-growth")
+    if args.shares <= 0:
+        parser.error("--shares must be positive")
+    if args.price is not None and args.price <= 0:
+        parser.error("--price must be positive")
+
+
+def _validate_growth(parser: argparse.ArgumentParser, values: Sequence[float], flag: str) -> None:
+    if any(value <= -100 for value in values):
+        parser.error(f"{flag} values must exceed -100%")
+
+
+def _terminal_value(fcff: float, terminal_growth: float, wacc: float) -> float:
+    next_year_fcff = fcff * (1 + terminal_growth)
+    return next_year_fcff / (wacc - terminal_growth)
+
+
+def growth_dcf(
+    fcff0: float,
+    growth1: float,
+    years1: int,
+    terminal_growth: float,
+    wacc: float,
+    growth2: float | None = None,
+    years2: int | None = None,
+) -> tuple[float, float, float, float]:
+    """Return enterprise value and PVs of stages 1, 2, and terminal value."""
+    fcff = fcff0
+    elapsed = 0
     pv_stage1 = 0.0
-    fcf = fcf0
-    for t in range(1, years + 1):
-        fcf = fcf * (1 + g1)
-        pv_stage1 += fcf / (1 + disc) ** t
-    fcf_terminal = fcf * (1 + g_term)
-    tv = fcf_terminal / (disc - g_term)
-    pv_terminal = tv / (1 + disc) ** years
-    return pv_stage1 + pv_terminal, pv_stage1, pv_terminal
+    for _ in range(years1):
+        elapsed += 1
+        fcff *= 1 + growth1
+        pv_stage1 += fcff / (1 + wacc) ** elapsed
 
-
-def three_stage_value(fcf0, g1, years1, g2, years2, g_term, disc):
-    """Return (enterprise_value, pv_stage1, pv_stage2, pv_terminal) for a three-stage DCF.
-
-    Stage 1: FCF grows at g1 for years1 (acceleration / inflection).
-    Stage 2: FCF grows at g2 for years2 (normalized growth).
-    Terminal: Gordon perpetuity at g_term after both stages.
-    """
-    if disc <= g_term:
-        raise ValueError(
-            f"discount rate ({disc:.1%}) must exceed terminal growth ({g_term:.1%}); "
-            "the Gordon terminal value is undefined otherwise."
-        )
-    pv_stage1 = 0.0
-    fcf = fcf0
-    total_years = 0
-    for _t in range(1, years1 + 1):
-        fcf = fcf * (1 + g1)
-        total_years += 1
-        pv_stage1 += fcf / (1 + disc) ** total_years
     pv_stage2 = 0.0
-    for _t in range(1, years2 + 1):
-        fcf = fcf * (1 + g2)
-        total_years += 1
-        pv_stage2 += fcf / (1 + disc) ** total_years
-    fcf_terminal = fcf * (1 + g_term)
-    tv = fcf_terminal / (disc - g_term)
-    pv_terminal = tv / (1 + disc) ** total_years
+    if growth2 is not None and years2 is not None:
+        for _ in range(years2):
+            elapsed += 1
+            fcff *= 1 + growth2
+            pv_stage2 += fcff / (1 + wacc) ** elapsed
+
+    pv_terminal = _terminal_value(fcff, terminal_growth, wacc) / (1 + wacc) ** elapsed
     return pv_stage1 + pv_stage2 + pv_terminal, pv_stage1, pv_stage2, pv_terminal
 
 
-def per_share(fcf0, g1, years, g_term, disc, net_debt, shares, g2=None, years2=None):
-    if g2 is not None and years2 is not None:
-        ev, _, _, _ = three_stage_value(fcf0, g1, years, g2, years2, g_term, disc)
-    else:
-        ev, _, _ = two_stage_value(fcf0, g1, years, g_term, disc)
-    equity = ev - net_debt
-    return equity / shares, ev, equity
+def forecast_dcf(
+    forecast: Sequence[float], terminal_growth: float, wacc: float
+) -> tuple[float, float, float]:
+    """Return enterprise value, PV of forecast FCFF, and PV of terminal value."""
+    pv_forecast = sum(fcff / (1 + wacc) ** year for year, fcff in enumerate(forecast, 1))
+    pv_terminal = _terminal_value(forecast[-1], terminal_growth, wacc) / (
+        (1 + wacc) ** len(forecast)
+    )
+    return pv_forecast + pv_terminal, pv_forecast, pv_terminal
 
 
-def solve_implied_growth(price, fcf0, years, g_term, disc, net_debt, shares):
-    """Bisect for the stage-1 growth rate (decimal) that makes IV/share == price."""
-    target = price
-    lo, hi = -0.95, 5.0
+def _equity_value(enterprise_value: float, net_claims: float, shares: float) -> tuple[float, float]:
+    equity_value = enterprise_value - net_claims
+    return equity_value, equity_value / shares
 
-    def f(g):
-        v, _, _ = per_share(fcf0, g, years, g_term, disc, net_debt, shares)
-        return v - target
 
-    flo, fhi = f(lo), f(hi)
-    if flo > 0:
+def _solve_implied_growth(
+    price: float,
+    fcff0: float,
+    years1: int,
+    terminal_growth: float,
+    wacc: float,
+    net_claims: float,
+    shares: float,
+    growth2: float | None,
+    years2: int | None,
+) -> tuple[float | None, str]:
+    def difference(growth1: float) -> float:
+        enterprise_value, _, _, _ = growth_dcf(
+            fcff0,
+            growth1,
+            years1,
+            terminal_growth,
+            wacc,
+            growth2,
+            years2,
+        )
+        _, value_per_share = _equity_value(enterprise_value, net_claims, shares)
+        return value_per_share - price
+
+    low, high = -0.99, 5.0
+    low_difference = difference(low)
+    high_difference = difference(high)
+    if low_difference > 0:
         return None, "below"
-    if fhi < 0:
+    if high_difference < 0:
         return None, "above"
+
     for _ in range(200):
-        mid = (lo + hi) / 2
-        fm = f(mid)
-        if abs(fm) < 1e-9:
-            return mid, "ok"
-        if (fm > 0) == (flo > 0):
-            lo, flo = mid, fm
+        midpoint = (low + high) / 2
+        midpoint_difference = difference(midpoint)
+        if abs(midpoint_difference) < 1e-9:
+            return midpoint, "ok"
+        if midpoint_difference > 0:
+            high = midpoint
         else:
-            hi = mid
-    return (lo + hi) / 2, "ok"
+            low = midpoint
+    return (low + high) / 2, "ok"
 
 
-def main():
-    p = argparse.ArgumentParser(
-        description=__doc__.splitlines()[0],
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    p.add_argument(
-        "--mode",
-        choices=["forward", "reverse"],
-        default="forward",
-        help="forward: assumptions -> IV/share. reverse: price -> implied growth.",
-    )
-    p.add_argument(
-        "--fcf0",
-        type=float,
-        required=True,
-        help="Base (normalized) free cash flow, in $M. Use owner earnings.",
-    )
-    p.add_argument(
-        "--growth",
-        type=str,
-        default="10",
-        help="Stage-1 growth %% (forward only). Comma-separated for sensitivity.",
-    )
-    p.add_argument("--years", type=int, default=10, help="Stage-1 length in years (default 10).")
-    p.add_argument(
-        "--growth2",
-        type=str,
-        default=None,
-        help="Stage-2 growth %% (three-stage model). Comma-separated for sensitivity. "
-        "When set, --years/--growth is stage 1 and --years2/--growth2 is "
-        "stage 2, before the terminal value. Use whenever the near-term and "
-        "long-run FCF growth rates differ materially.",
-    )
-    p.add_argument(
-        "--years2",
-        type=int,
-        default=None,
-        help="Stage-2 length in years (three-stage model). Required with --growth2.",
-    )
-    p.add_argument(
+def _add_common_arguments(parser: argparse.ArgumentParser, *, price_required: bool) -> None:
+    parser.add_argument(
         "--terminal-growth",
         type=float,
-        default=2.5,
-        help="Perpetual growth %% after stage 1 (default 2.5; keep <= long-run GDP).",
+        required=True,
+        help="Perpetual FCFF growth after the explicit forecast, in percent.",
     )
-    p.add_argument(
-        "--discount", type=float, default=10.0, help="Discount rate / WACC %% (default 10)."
+    parser.add_argument(
+        "--wacc",
+        type=float,
+        required=True,
+        help="Weighted average cost of capital, in percent.",
     )
-    p.add_argument(
+    parser.add_argument(
         "--shares",
         type=float,
         required=True,
-        help="Diluted shares outstanding, same unit as --fcf0 (e.g. millions).",
+        help="Diluted shares; use the count unit matching the monetary inputs.",
     )
-    p.add_argument(
-        "--net-debt",
+    parser.add_argument(
+        "--net-claims",
         type=float,
-        default=0.0,
-        help="Net debt in $M (total debt - cash & securities). Negative = net cash.",
+        required=True,
+        help=(
+            "Debt and other senior claims minus excess cash and non-operating assets; "
+            "negative means net additions to enterprise value."
+        ),
     )
-    p.add_argument(
-        "--price",
+    price_help = (
+        "Current price per share; required to solve implied growth."
+        if price_required
+        else "Current price per share; optional comparison with modeled value."
+    )
+    parser.add_argument("--price", type=float, required=price_required, help=price_help)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    forward = subparsers.add_parser(
+        "forward", help="Value one- or two-stage growth in positive FCFF."
+    )
+    forward.add_argument("--fcff0", type=float, required=True, help="Normalized base FCFF.")
+    forward.add_argument(
+        "--growth",
+        type=_percent_list,
+        required=True,
+        help="Stage-1 FCFF growth percentages; comma-separate sensitivity cases.",
+    )
+    forward.add_argument("--years", type=int, required=True, help="Stage-1 years.")
+    forward.add_argument(
+        "--growth2",
+        type=_percent_list,
+        help="Optional stage-2 growth percentages; comma-separate sensitivity cases.",
+    )
+    forward.add_argument("--years2", type=int, help="Stage-2 years; required with --growth2.")
+    _add_common_arguments(forward, price_required=False)
+
+    forecast = subparsers.add_parser(
+        "forecast", help="Value an explicit annual FCFF forecast, including initial losses."
+    )
+    forecast.add_argument(
+        "--fcff",
+        type=_number_list,
+        required=True,
+        help="FCFF for years 1..N, comma-separated. Use --fcff=-10,20 for a negative first year.",
+    )
+    _add_common_arguments(forecast, price_required=False)
+
+    reverse = subparsers.add_parser(
+        "reverse", help="Solve for the stage-1 FCFF growth implied by price."
+    )
+    reverse.add_argument(
+        "--fcff0", type=float, required=True, help="Positive normalized base FCFF."
+    )
+    reverse.add_argument("--years", type=int, required=True, help="Stage-1 years.")
+    reverse.add_argument(
+        "--growth2",
         type=float,
-        default=None,
-        help="Current price/share. Required for --mode reverse; optional in forward "
-        "to print upside/downside.",
+        help="Optional fixed stage-2 growth percentage after the implied stage 1.",
     )
-    args = p.parse_args()
+    reverse.add_argument("--years2", type=int, help="Stage-2 years; required with --growth2.")
+    _add_common_arguments(reverse, price_required=True)
+    return parser
 
-    g_term = args.terminal_growth / 100.0
-    disc = args.discount / 100.0
-    is_three_stage = args.growth2 is not None
-    if is_three_stage and args.years2 is None:
-        p.error("--years2 is required when --growth2 is set")
 
-    model_label = "three-stage" if is_three_stage else "two-stage"
-    print(f"# DCF ({args.mode}) -- {model_label}\n")
-    stage_info = f"Stage 1: {args.years}yr"
-    if is_three_stage:
-        stage_info += f"   Stage 2: {args.years2}yr"
-    print(
-        f"- Base FCF: {args.fcf0:,.0f}   {stage_info}   "
-        f"Terminal growth: {args.terminal_growth:.1f}%   Discount: {args.discount:.1f}%"
-    )
-    print(
-        f"- Shares: {args.shares:,.1f}   Net debt: {args.net_debt:,.0f}"
-        + (f"   Price: {args.price:,.2f}" if args.price is not None else "")
-    )
-    print()
-
-    if args.mode == "reverse":
-        if args.price is None:
-            p.error("--price is required for --mode reverse")
-        g, status = solve_implied_growth(
-            args.price, args.fcf0, args.years, g_term, disc, args.net_debt, args.shares
-        )
-        if status == "above":
-            print(
-                "**The current price implies growth above 500%/yr for the whole stage** -- "
-                "i.e. the price cannot be justified by this model on these cash flows."
-            )
-        elif status == "below":
-            print(
-                "**The current price implies a steep perpetual *decline*** -- the market is "
-                "pricing the cash flows away."
-            )
-        else:
-            print(f"## Implied stage-1 growth: **{g * 100:.1f}% / yr** for {args.years} years\n")
-            print(
-                "That is the growth the current price already bakes in. The thesis question: "
-                "is that bar too high, about right, or too low versus what this business has "
-                "done and can do?"
-            )
-        return
-
-    # forward
-    growths = [float(x) for x in args.growth.split(",") if x.strip() != ""]
-    growths2 = (
-        [float(x) for x in args.growth2.split(",") if x.strip() != ""] if is_three_stage else [None]
-    )
-
-    if is_three_stage:
-        print("## Intrinsic value per share (stage-1 growth x stage-2 growth)")
-        print()
-        header = "| S1 \\\\ S2 |"
-        for g2 in growths2:
-            header += f" {g2:.0f}% |"
-        print(header)
-        sep = "| :-- |" + " --: |" * len(growths2)
-        print(sep)
-        ivs = []
-        for g1 in growths:
-            row = f"| {g1:.0f}% |"
-            for g2 in growths2:
-                try:
-                    iv, ev, eq = per_share(
-                        args.fcf0,
-                        g1 / 100.0,
-                        args.years,
-                        g_term,
-                        disc,
-                        args.net_debt,
-                        args.shares,
-                        g2=g2 / 100.0,
-                        years2=args.years2,
-                    )
-                except ValueError as exc:
-                    p.error(str(exc))
-                ivs.append(iv)
-                if args.price is not None:
-                    upside = (iv / args.price - 1) * 100
-                    row += f" {iv:,.2f} ({upside:+.0f}%) |"
-                else:
-                    row += f" {iv:,.2f} |"
-            print(row)
-    else:
-        print("## Intrinsic value per share")
-        print()
-        header = "| Stage-1 growth | IV / share | Enterprise value | Equity value |"
-        if args.price is not None:
-            header += " Upside vs price |"
-        print(header)
-        sep = "| :-- | --: | --: | --: |" + (" --: |" if args.price is not None else "")
-        print(sep)
-        ivs = []
-        for g in growths:
-            try:
-                iv, ev, eq = per_share(
-                    args.fcf0, g / 100.0, args.years, g_term, disc, args.net_debt, args.shares
-                )
-            except ValueError as exc:
-                p.error(str(exc))
-            ivs.append(iv)
-            row = f"| {g:.1f}% | {iv:,.2f} | {ev:,.0f} | {eq:,.0f} |"
-            if args.price is not None:
-                row += f" {(iv / args.price - 1) * 100:+.1f}% |"
-            print(row)
-
-    print()
-    if len(ivs) > 1:
-        print(
-            f"**Intrinsic-value range: {min(ivs):,.2f} -- {max(ivs):,.2f} / share** "
-            "(bear--bull across the growth cases above)."
-        )
+def _print_header(args: argparse.Namespace, route: str, horizon: int) -> None:
+    print(f"# Enterprise DCF — {route}\n")
+    print(f"- Explicit horizon: {horizon} years")
+    print(f"- Terminal growth: {args.terminal_growth:.2f}%")
+    print(f"- WACC: {args.wacc:.2f}%")
+    print(f"- Diluted shares: {args.shares:,.2f}")
+    print(f"- Net claims: {args.net_claims:,.2f}")
     if args.price is not None:
-        _lo, hi = min(ivs), max(ivs)
-        mos = (1 - args.price / hi) * 100 if hi > 0 else float("nan")
+        print(f"- Price: {args.price:,.2f}")
+    print()
+
+
+def _price_comparison(price: float | None, values: Sequence[float]) -> None:
+    if price is None:
+        return
+    low, high = min(values), max(values)
+    if high <= 0:
+        print("\nPrice comparison is not meaningful because modeled equity value is non-positive.")
+        return
+    if low <= 0:
+        high_discount = (1 - price / high) * 100
         print(
-            f"\nAt {args.price:,.2f}: margin of safety to the high case is {mos:.0f}%. "
-            "Require the thesis to survive the *low* end before you trust it."
+            "\nThe low modeled equity value is non-positive. "
+            f"Price discount/(premium) to the high value: {high_discount:+.1f}%."
         )
+        return
+    low_discount = (1 - price / low) * 100
+    if abs(high - low) < 1e-12:
+        print(f"\nPrice discount/(premium) to modeled value: {low_discount:+.1f}%")
+        return
+    high_discount = (1 - price / high) * 100
+    print(
+        f"\nPrice discount/(premium) to modeled value: {low_discount:+.1f}% at the "
+        f"low value and {high_discount:+.1f}% at the high value."
+    )
+
+
+def _run_forward(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.fcff0 <= 0:
+        parser.error("--fcff0 must be positive; use the forecast route for initial losses")
+    if args.years <= 0:
+        parser.error("--years must be positive")
+    if (args.growth2 is None) != (args.years2 is None):
+        parser.error("--growth2 and --years2 must be supplied together")
+    if args.years2 is not None and args.years2 <= 0:
+        parser.error("--years2 must be positive")
+    _validate_growth(parser, args.growth, "--growth")
+    if args.growth2 is not None:
+        _validate_growth(parser, args.growth2, "--growth2")
+
+    horizon = args.years + (args.years2 or 0)
+    _print_header(args, "forward growth sensitivity", horizon)
+    terminal_growth = args.terminal_growth / 100
+    wacc = args.wacc / 100
+    values: list[float] = []
+    terminal_shares: list[float] = []
+
+    if args.growth2 is None:
+        print(
+            "| Stage-1 growth | Enterprise value | Equity value | Value/share | Terminal % of EV |"
+        )
+        print("| :-- | --: | --: | --: | --: |")
+        for growth in args.growth:
+            enterprise_value, _, _, pv_terminal = growth_dcf(
+                args.fcff0, growth / 100, args.years, terminal_growth, wacc
+            )
+            equity_value, value_per_share = _equity_value(
+                enterprise_value, args.net_claims, args.shares
+            )
+            values.append(value_per_share)
+            terminal_share = pv_terminal / enterprise_value * 100
+            terminal_shares.append(terminal_share)
+            print(
+                f"| {growth:.2f}% | {enterprise_value:,.2f} | {equity_value:,.2f} | "
+                f"{value_per_share:,.2f} | {terminal_share:.1f}% |"
+            )
+    else:
+        print("| Stage 1 \\ Stage 2 | " + " | ".join(f"{g:.2f}%" for g in args.growth2) + " |")
+        print("| :-- | " + " | ".join("--:" for _ in args.growth2) + " |")
+        for growth1 in args.growth:
+            row = [f"{growth1:.2f}%"]
+            for growth2 in args.growth2:
+                enterprise_value, _, _, pv_terminal = growth_dcf(
+                    args.fcff0,
+                    growth1 / 100,
+                    args.years,
+                    terminal_growth,
+                    wacc,
+                    growth2 / 100,
+                    args.years2,
+                )
+                _, value_per_share = _equity_value(enterprise_value, args.net_claims, args.shares)
+                values.append(value_per_share)
+                terminal_shares.append(pv_terminal / enterprise_value * 100)
+                row.append(f"{value_per_share:,.2f}")
+            print("| " + " | ".join(row) + " |")
+        print("\nValues in the matrix are equity value per diluted share.")
+
+    print(f"\nModeled value/share range: **{min(values):,.2f} to {max(values):,.2f}**")
+    if len(terminal_shares) > 1:
+        print(
+            f"Terminal value share of enterprise value: {min(terminal_shares):.1f}% "
+            f"to {max(terminal_shares):.1f}%"
+        )
+    _price_comparison(args.price, values)
+
+
+def _run_forecast(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.fcff[-1] <= 0:
+        parser.error("the final explicit FCFF must be positive for a Gordon terminal value")
+    _print_header(args, "explicit forecast", len(args.fcff))
+    terminal_growth = args.terminal_growth / 100
+    wacc = args.wacc / 100
+    enterprise_value, pv_forecast, pv_terminal = forecast_dcf(args.fcff, terminal_growth, wacc)
+    equity_value, value_per_share = _equity_value(enterprise_value, args.net_claims, args.shares)
+
+    print("| Year | FCFF | Present value |")
+    print("| --: | --: | --: |")
+    for year, fcff in enumerate(args.fcff, 1):
+        print(f"| {year} | {fcff:,.2f} | {fcff / (1 + wacc) ** year:,.2f} |")
+    print(f"\n- PV of explicit FCFF: {pv_forecast:,.2f}")
+    terminal_share = f"{pv_terminal / enterprise_value:.1%}" if enterprise_value > 0 else "n/m"
+    print(f"- PV of terminal value: {pv_terminal:,.2f} ({terminal_share} of EV)")
+    print(f"- Enterprise value: {enterprise_value:,.2f}")
+    print(f"- Equity value: {equity_value:,.2f}")
+    print(f"- Value per diluted share: **{value_per_share:,.2f}**")
+    _price_comparison(args.price, [value_per_share])
+
+
+def _run_reverse(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.fcff0 <= 0:
+        parser.error("--fcff0 must be positive for reverse growth DCF")
+    if args.years <= 0:
+        parser.error("--years must be positive")
+    if (args.growth2 is None) != (args.years2 is None):
+        parser.error("--growth2 and --years2 must be supplied together")
+    if args.years2 is not None and args.years2 <= 0:
+        parser.error("--years2 must be positive")
+    if args.growth2 is not None:
+        _validate_growth(parser, [args.growth2], "--growth2")
+
+    horizon = args.years + (args.years2 or 0)
+    _print_header(args, "reverse growth", horizon)
+    implied_enterprise_value = args.price * args.shares + args.net_claims
+    if implied_enterprise_value <= 0:
+        print(
+            "Price implies non-positive operating enterprise value after the stated "
+            "net claims; no positive-FCFF growth rate can reconcile this model."
+        )
+        return
+    growth, status = _solve_implied_growth(
+        args.price,
+        args.fcff0,
+        args.years,
+        args.terminal_growth / 100,
+        args.wacc / 100,
+        args.net_claims,
+        args.shares,
+        args.growth2 / 100 if args.growth2 is not None else None,
+        args.years2,
+    )
+    if status == "below":
+        print("The implied stage-1 growth is below -99% per year, outside the search range.")
+    elif status == "above":
+        print("The implied stage-1 growth exceeds 500% per year, outside the search range.")
+    else:
+        print(f"Implied stage-1 FCFF growth: **{growth * 100:.2f}% per year**")
+        print(f"Stage-1 duration: {args.years} years")
+        if args.growth2 is not None:
+            print(f"Fixed stage 2: {args.growth2:.2f}% for {args.years2} years")
+    print(
+        "\nThe implied rate is conditional on the stated base FCFF, horizon, terminal growth, "
+        "WACC, net claims, and share count."
+    )
+
+
+def main() -> None:
+    parser = _build_parser()
+    args = parser.parse_args()
+    _validate_common(parser, args)
+    if args.command == "forward":
+        _run_forward(parser, args)
+    elif args.command == "forecast":
+        _run_forecast(parser, args)
+    else:
+        _run_reverse(parser, args)
 
 
 if __name__ == "__main__":

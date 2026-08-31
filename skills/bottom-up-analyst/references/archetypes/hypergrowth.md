@@ -1,68 +1,59 @@
-# Archetype: Hypergrowth
+# Archetype: cash-burning or high-growth operating company
 
-A company growing the top line fast (often >25–30%/yr) where **profits are immature or
-absent** — earnings are being deliberately deferred into customer acquisition, R&D, or land
-grab. This is the shape Lou never invested in, and it needs analysis his playbook doesn't
-contain: the question isn't "what does it earn today" but "**what will the unit economics
-look like at scale, how durable is the growth, and is that future already in the price?**"
+Use this lens when current profit understates or fails to show the economics management expects
+at scale, but the company has observable customers, revenue, and operating drivers. Do not use it
+for a predominantly binary clinical, exploration, or legal asset.
 
-## Tell it by
+## Establish the shape
 
-Rapid revenue growth with GAAP losses or thin margins, heavy S&M and/or R&D as a % of
-revenue, a large TAM claim, negative or marginal FCF reinvested into growth, frequent equity
-issuance, and metrics management steers you to (ARR, net revenue retention, GMV, MAUs).
+Growth rates alone do not define the archetype. Look for deliberate investment ahead of revenue,
+immature margins, evolving product-market fit, meaningful stock compensation or external
+financing, and operating metrics that can connect customers or units to cash flow.
 
-## Where the value (and the trap) hides
+Separate:
 
-- **Unit economics at maturity.** Strip the growth spend and look at a *cohort* or a mature
-  segment: are the underlying customers profitable once you stop acquiring more? A business
-  that's "unprofitable because it's investing" is wonderful; one that's unprofitable because
-  the unit economics don't work is a value trap with a story.
-- **Durability of growth.** TAM size, share gains vs. market growth, competitive intensity,
-  and whether growth is *organic* or bought with discounts and incentives.
-- **The dilution tax.** Stock comp and secondary raises can quietly transfer most of the
-  upside to employees and new shareholders — per-*share* value is what matters.
+- growth caused by customer value from growth purchased with discounts or uneconomic spend;
+- mature-cohort economics from blended company economics;
+- organic growth from acquisitions;
+- gross retention from expansion revenue;
+- addressable demand from management's TAM; and
+- company growth from per-share value after dilution.
 
-## Pull these (drive sec-edgar)
+Metrics such as retention, CAC payback, LTV/CAC, active users, GMV, ARR, or Rule of 40 apply only
+when they match the business model and are defined consistently. Reconcile non-GAAP measures to
+reported results and track definition changes.
 
-- 10-K/10-Q MD&A and the latest earnings 8-K (Exhibit 99.1) — growth drivers, cohort/retention
-  disclosure, the metrics management reports and how their definitions change.
-- The cash-flow statement and stock-comp footnote — real cash burn and the dilution rate.
-- The S-1 / early 10-Ks if recently public — original unit-economics and TAM framing to test
-  against what actually happened.
-- Peers' filings — to separate company-specific share gains from a rising-tide market.
+## Evidence to pull
 
-## Key metrics
+- cohort, retention, pricing, usage, backlog, and contribution-margin disclosures;
+- gross margin and sales, marketing, R&D, support, capex, and working capital by period;
+- cash, burn, debt, covenants, funding needs, and runway under a downside case;
+- stock compensation, grants, issuance, repurchases, and diluted share history;
+- early public filings and prior targets, to compare the original model with outcomes; and
+- peers or substitutes that reveal acquisition cost, churn, price, and mature margins.
 
-Revenue growth (organic), gross margin and its *trajectory*, net revenue retention / cohort
-retention, CAC payback and LTV/CAC, contribution margin, **Rule of 40** (and its trend),
-FCF burn and **runway**, fully-diluted share-count growth.
+## Valuation
 
-## Normalize / adjust
+Do not grow a negative FCFF base with the constant-growth DCF route. Build explicit annual
+revenue, margin, tax, reinvestment, and FCFF scenarios, then use `dcf.py forecast` once the annual
+FCFF sequence is defensible. Reconcile the current price to combinations of scale, mature margin,
+capital intensity, and dilution rather than presenting one implied growth rate as unique.
 
-- Treat stock-based comp as the real expense it is and fold dilution into shares — *the* swing
-  factor between "profitable at scale" and not.
-- Distinguish **growth** opex/capex from **maintenance**: model the steady-state margin by
-  scaling S&M down to a renewal level, not zero.
-- Watch metric definitions — "adjusted EBITDA" that addbacks stock comp and "non-recurring"
-  growth costs can manufacture profitability that doesn't exist.
+Forward revenue multiples are shorthand for future margin, growth, and reinvestment assumptions;
+make that bridge explicit. Include financing and dilution before the company reaches positive
+cash flow.
 
-## Valuation lens
+## Disqualifiers and counterevidence
 
-**Reverse-DCF is the lead lens** — solve for the growth/margin the price implies and judge
-whether it's achievable, because forecasting a hyper-growth decade forward is mostly
-self-deception. Cross-check with a scenario forward DCF on *mature-state* margins (bear/base/
-bull) and with forward multiples. Anchor on per-share, post-dilution.
+Mark down or reject the case when:
 
-## Disqualifiers — kill it (or mark it down) if…
+- mature cohorts or units remain uneconomic;
+- growth depends on rising incentives, falling price, or worsening acquisition efficiency;
+- retention, backlog quality, or metric definitions deteriorate;
+- a plausible scale and margin path still cannot reconcile to the price;
+- the reachable market is not supported by bottom-up customers or units;
+- funding runs out before operating break-even or creates unacceptable dilution; or
+- the model assumes costs disappear rather than scale with service obligations.
 
-- **Unit economics don't work at scale** — mature cohorts/segments still don't generate cash;
-  growth is buying revenue at a structural loss.
-- **The priced-in growth is fantasy** — reverse-DCF requires a decade above what the company
-  (or anyone in the category) has ever sustained.
-- **Growth is decelerating** while the valuation still assumes acceleration.
-- **Dilution eats the upside** — share count compounds so fast that per-share value barely
-  moves even if the business wins.
-- **The TAM is a mirage** — top-down "1% of a huge market" with no bottom-up path, or a market
-  that shrinks as the product commoditizes.
-- **Runway is short** and the next raise will be dilutive or unavailable.
+The memo should identify the metric that distinguishes temporary investment from structurally
+poor unit economics and the date by which evidence should emerge.

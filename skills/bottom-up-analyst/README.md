@@ -1,64 +1,55 @@
 # Bottom-Up Analyst
 
-An [agent skill](SKILL.md) that turns **one company** into an **earned investment thesis**,
-written up as a detailed, auditable due-diligence memo. It is the analytical engine of a
-bottom-up research stack: given a ticker or a name, it drives SEC-filing and market-data
-tools for grounding, reasons over the evidence, classifies the business into an archetype,
-triangulates an intrinsic-value range, tries to kill its own thesis, and writes the memo.
+An [agent skill](SKILL.md) for substantive, long-only fundamental research on one
+non-financial operating company. It turns filing, market, industry, and ownership evidence
+into a scoped answer or a full, auditable due-diligence memo.
 
-## Where it sits
-
-The **analyst** in a three-layer stack: the [data skills](../sec-edgar-skill/) ground it, and
-[`pitch-like-lou`](../pitch-like-lou/) renders a pitch from its memo. The analyst is the missing
-middle — it decides what to pull, reasons to a verdict, values the business, and writes the memo;
-the data skills decide nothing and Lou assumes the work is already done. See the
-[stack overview](../README.md) for how the four compose. **Production order:** analyst → memo →
-(optionally) Lou pitches from it; the definition of done is a **pitch-ready memo**.
+The framework is designed for companies whose operating economics and cash flows can be
+underwritten. It is not the primary framework for banks, insurers, REITs, funds, or
+predominantly binary-asset companies.
 
 ## What it does
 
-- **Classifies** the company into one of six archetypes and loads the matching playbook —
-  *compounder, hypergrowth, cyclical, turnaround/inflection, special-situation, deep-value* —
-  so the right questions get the weight. (Lou's three value-investing shapes are a subset;
-  the rest extend past where he worked. "Anything else" falls back to the core method.)
-- **Normalizes** GAAP into owner earnings — maintenance vs. growth capex, stock comp, deferred
-  revenue, one-offs — and shows capital allocation as a year-by-year trend.
-- **Analyzes competitive position** filings-first (including *peers'* filings for management
-  commentary), using the web only for what filings genuinely can't give — and labels it.
-- **Values** by triangulation, weighted by archetype, with a **reverse-DCF** ("what's priced
-  in?") as a first-class lens alongside forward DCF, EPV, and multiples.
-- **Stress-tests** every thesis against the archetype's disqualifiers and a borrowed
-  discipline: separate what you *know* from what you *believe*, concede the weak points, never
-  let conviction outrun the evidence.
+- Scales the work to the question instead of forcing every request into a full memo.
+- Selects one or more optional analytical lenses: compounder, hypergrowth, cyclical,
+  turnaround, special situation, or deep value.
+- Reconciles reported results to normalized economics without double-counting stock
+  compensation, leases, working capital, or enterprise-to-equity adjustments.
+- Underwrites competitive position, management incentives, ownership, and governance when
+  they are material to value.
+- Chooses valuation methods for the business rather than mechanically running every method.
+- Separates verified evidence, estimates, assumptions, and external evidence, with citations.
+- Builds the strongest countercase and lets conviction fall when evidence is incomplete.
 
 ## Layout
 
-- `SKILL.md` — the skill itself (the entry point an agent loads): the loop, archetype routing,
-  how it drives the tools, and the valuation tooling.
-- `references/` — lazily-loaded guides: the memo template, normalization, competitive analysis,
-  valuation, ownership signals, and one playbook per archetype (`references/archetypes/`).
-- `scripts/` — thin, self-documenting valuation tools:
-  - `dcf.py` — two-stage DCF, **forward** (assumptions → intrinsic value) and **reverse**
-    (price → implied growth), with a bear/base/bull sensitivity table.
-  - `epv.py` — Earnings Power Value, the no-growth floor.
+- `SKILL.md` — workflow, evidence discipline, resource routing, and script examples.
+- `references/memo_template.md` — adaptable full-memo skeleton.
+- `references/guide_*.md` — normalization, competition, valuation, and
+  ownership/governance guidance.
+- `references/archetypes/` — optional playbooks for six common thesis shapes.
+- `scripts/dcf.py` — forward, explicit-forecast, and reverse enterprise DCF.
+- `scripts/epv.py` — no-growth Earnings Power Value arithmetic.
 
 ## Setup
 
-The valuation scripts are pure-Python (standard library only) — no install needed:
+The valuation scripts use only the Python standard library:
 
 ```bash
 python scripts/dcf.py --help
 python scripts/epv.py --help
 ```
 
-For the data layer, install and configure [`sec-edgar-skill`](../sec-edgar-skill/) (it needs an
-`EDGAR_IDENTITY`) and, for market data, [`market-scout`](../market-scout/); this skill drives
-those tools but does not re-document them.
+They require material assumptions explicitly. `dcf.py` accepts free cash flow to the firm
+(FCFF), discounts it at WACC, and bridges enterprise value to equity using net claims: debt and
+other senior claims less non-operating assets.
 
-## A note on scope
+Install and configure [`sec-edgar-skill`](../sec-edgar-skill/) for SEC evidence and
+[`market-scout`](../market-scout/) for market data and transcripts. Each data skill owns its
+runtime, cache, and source instructions.
 
-This skill produces analysis, not advice. It is a tool for doing research rigorously and
-honestly; it does not know your circumstances and nothing it writes is a recommendation to buy
-or sell a security. Its entire design — the honesty markup, the pre-mortem, the
-verified-vs-assumed tagging — exists to keep an LLM's fluent prose tethered to evidence, so
-that a human can audit every claim and reach their own judgment.
+## Scope and judgment
+
+This skill supports research, not personalized investment advice. Its memo is an auditable
+argument rather than a recommendation tailored to a person's circumstances. A human remains
+responsible for checking the evidence, assumptions, suitability, and decision.
