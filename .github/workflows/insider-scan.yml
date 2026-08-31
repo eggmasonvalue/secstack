@@ -2,8 +2,7 @@ name: Daily Insider Scan
 
 on:
   schedule:
-    # 7:00 AM ET on weekdays (11:00 UTC Nov-Mar, 12:00 UTC Mar-Nov)
-    # Using 12:00 UTC to cover EDT; during EST this runs at 7 AM still fine
+    # 12:00 UTC on weekdays (7 AM EST / 8 AM EDT).
     - cron: "0 12 * * 1-5"
   workflow_dispatch:
     inputs:
@@ -27,8 +26,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
       - name: Install dependencies
-        run: pip install -r skills/signal-sweep/requirements.txt
+        working-directory: skills/signal-sweep
+        run: uv sync --locked
 
       - name: Run insider scan
         env:
@@ -40,16 +45,10 @@ jobs:
           LOOKBACK="${{ github.event.inputs.lookback || '5' }}"
           ZSCORE="${{ github.event.inputs.zscore || '1.5' }}"
 
-          WEBHOOK_ARG=""
-          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-            WEBHOOK_ARG="--webhook $DISCORD_WEBHOOK_URL"
-          fi
-
-          python scripts/scan_insiders.py \
+          uv run python scripts/scan_insiders.py \
             --date "$DATE" \
             --lookback "$LOOKBACK" \
-            --zscore "$ZSCORE" \
-            $WEBHOOK_ARG
+            --zscore "$ZSCORE"
 
       - name: Upload scan results
         if: always()

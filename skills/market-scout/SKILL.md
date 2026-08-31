@@ -1,81 +1,85 @@
 ---
 name: market-scout
 description: >-
-  Pull public market data for US-listed stocks via Yahoo Finance: price, market cap, shares,
-  52-week range, trailing returns, sector/industry peer tables and pre-ranked screens, and
-  earnings call transcripts. Use this whenever a task needs a quick market snapshot or quote
-  for a ticker, trailing performance, a company's peer set, a sector/theme shortlist, or
-  earnings call transcripts — e.g. "what's the price/return on X", "who are X's peers",
-  "best-performing names in this industry", "get me the latest earnings call", or turning a
-  theme into a concrete list of tickers. This is an unopinionated data layer; it does not
-  decide what is cheap, good, or worth buying.
+  Retrieve current public market data and earnings-call transcripts for US-listed stocks via
+  Yahoo Finance: quotes, market capitalization, shares, price history and trailing returns,
+  industry context, peer tables, and transcript text. Use when a task needs a current market
+  snapshot, performance calculation, Yahoo peer or industry data, a market-data field, or an
+  earnings-call transcript. Use primary filings for facts that Yahoo does not author or when a
+  load-bearing figure needs regulatory verification.
 ---
 
 # Market Scout
 
-Pull **public market data**, **sector/peer screening**, and **earnings call transcripts**
-for US-listed stocks. Unopinionated: it surfaces prices, returns, peers, rankings, and
-management commentary; it does not decide what is cheap or worth buying — leave that to
-whatever framework is driving.
+Retrieve market context and transcript text without turning the result into an investment
+conclusion.
 
-## Setup (install first)
+## Runtime and paths
 
-Install this skill's dependencies from this directory before running any script:
+Resolve bundled paths relative to this `SKILL.md`. Invoke scripts by absolute path while keeping
+the shell working directory at the research workspace. This puts the default
+`./transcript-cache` beside the work rather than inside the installed skill; alternatively pass
+`--cache-dir`.
 
-```bash
-uv sync
-# In the packaged SecStack profile, agent-browser is installed by the bootstrap.
-agent-browser install
-```
+The packaged SecStack profile already exposes this skill's Python dependencies. For standalone
+use, run `uv sync --project "<skill-dir>"`, then either activate that environment or prefix the
+examples below with `uv run --project "<skill-dir>"`. `fetch_transcripts.py` also requires the
+`agent-browser` binary and its one-time browser installation (`agent-browser install`). No API key
+or SEC identity is required.
 
-- `agent-browser` is required for earnings-call transcripts (`fetch_transcripts.py`).
-- No API key or identity is needed — Yahoo Finance is public.
+## Choose a route
 
-## Market snapshot and peers
+### Snapshot, returns, industry, and peers
 
-`fetch_market_data.py` prints a compact Markdown summary to stdout — price, market cap,
-shares outstanding, 52-week range, trailing returns, and (optionally) industry overview and
-peer tables. Output is live and never cached. `--help` is the authoritative flag reference:
-
-```bash
-python scripts/fetch_market_data.py --ticker AAPL --industry --peers
-```
-
-## Earnings call transcripts
-
-`fetch_transcripts.py` scrapes Yahoo Finance's Quartr-powered transcript pages via
-`agent-browser` (Yahoo requires JS rendering). It lists available transcripts or downloads
-them as LLM-friendly Markdown to `transcript-cache/<TICKER>/transcripts/`. Files are
-named `Q3-FY2026.md` etc., cached and reused across runs. `--help` for all flags:
+`fetch_market_data.py` prints a live Markdown report to stdout. It does not cache time-sensitive
+market data.
 
 ```bash
-python scripts/fetch_transcripts.py --ticker AAPL --list           # list available
-python scripts/fetch_transcripts.py --ticker AAPL --latest 1       # most recent
-python scripts/fetch_transcripts.py --ticker AAPL --year 2025      # full fiscal year
-python scripts/fetch_transcripts.py --ticker AAPL --quarter Q3 --year 2025
+python "<skill-dir>/scripts/fetch_market_data.py" --ticker AAPL
+python "<skill-dir>/scripts/fetch_market_data.py" --ticker AAPL --industry --peers
 ```
 
-Each cached file has a summary, `## Prepared Remarks` with `### Speaker — Title` headings,
-and a `## Q&A` section — greppable by speaker name, "guidance", "margin", or any keyword.
+The default report includes common trailing windows available inside the requested history period.
+Use `--period` to change how much history is fetched. For a different interval or field, use the
+runtime-discovery route below rather than treating the bundled report as Yahoo's full schema.
 
-## Beyond the bundled scripts — yfinance is self-documenting
+### Earnings-call transcripts
 
-The scripts above wrap the common cases. yfinance exposes far more (financials, holders,
-options, earnings dates, calendar, sector/industry screens, …). When a task needs something
-the scripts don't cover, **discover at runtime** rather than guessing field names:
+List the periods Yahoo currently exposes, then request the exact period or latest count needed:
+
+```bash
+python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --list
+python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --latest 1
+python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --year 2025
+python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --quarter Q3 --year 2025
+```
+
+Downloads are written to `<cache>/<TICKER>/transcripts/Q3-FY2026.md` and reused on later runs.
+Artifact-producing mode emits one absolute path per completed transcript to stdout and diagnostics
+to stderr. A partial or total retrieval failure exits nonzero rather than masquerading as an empty
+period.
+
+Each file preserves the Yahoo source URL and, when present, separates prepared remarks from Q&A.
+Transcript text and speaker attribution are third-party data; verify a consequential quote against
+the issuer's own transcript, webcast, or filing when available.
+
+## Runtime discovery beyond the wrappers
+
+The bundled scripts cover frequent jobs, not the limits of `yfinance`. Inspect the installed API
+instead of guessing field names or assuming a fixed metric template:
 
 ```python
 import yfinance as yf
 
-t = yf.Ticker("AAPL")
+ticker = yf.Ticker("AAPL")
+print([name for name in dir(ticker) if not name.startswith("_")])
+print(sorted((ticker.info or {}).keys()))
+help(ticker.history)
 
-print([a for a in dir(t) if not a.startswith("_")])  # all attributes/methods
-list(t.info.keys())  # every field in the snapshot
-
-# Sector/industry screening (theme -> shortlist):
-ind = yf.Industry(t.info["industryKey"])
-print([a for a in dir(ind) if not a.startswith("_")])  # top_companies, overview, ...
+industry = yf.Industry((ticker.info or {})["industryKey"])
+print([name for name in dir(industry) if not name.startswith("_")])
 ```
 
-When a field or method isn't what you expected, `dir()` / `help()` / `.info.keys()` recover
-the answer inline — prefer that over guessing.
+Use this route for calendars, options, holders, financial tables, custom return windows, or other
+Yahoo fields. Report the field name, period, units, and retrieval date. Treat missing or stale data
+as missing; do not silently substitute a different field or period.

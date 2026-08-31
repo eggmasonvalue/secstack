@@ -11,7 +11,9 @@
   },
   "ignores": [
     ".venv",
+    "**/.venv/**",
     "node_modules",
+    "**/node_modules/**",
     ".git",
     "**/sec-cache/**",
     "**/signal-sweep-cache/**",

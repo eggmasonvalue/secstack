@@ -1,43 +1,37 @@
 # Pitch Like Norbert Lou
 
-An [agent skill](SKILL.md) that teaches an LLM to **investigate and write an investment
-pitch the way Norbert Lou** (username `charlie479` on Value Investors Club) did — the analyst
-whose NVR, Quilmes, and Winmill write-ups Joel Greenblatt handed out to his students as
-exemplars of high-conviction value investing.
+An [agent skill](SKILL.md) for rendering an already-researched investment thesis as a concise,
+numbers-first pitch inspired by Norbert Lou's Value Investors Club writing. It focuses on the
+transferable craft: document-level specificity, reproducible arithmetic, a fair statement of the
+objection, and candor about weak evidence.
 
-The skill is deliberately scoped to two reproducible things: a **disposition** (where value
-tends to hide, what to read, what to normalize) and a **voice** (how Lou structures and argues
-a pitch, and the temperament that makes it credible). It does **not** invent a thesis — the raw
-material comes from SEC-filing and market-data tools (it composes naturally with the
-[`sec-edgar-skill`](../sec-edgar-skill/) and [`market-scout`](../market-scout/) data skills, and
-with [`bottom-up-analyst`](../bottom-up-analyst/) as the framework), and the actual analytical
-insight comes from reasoning over real filings. See [SKILL.md](SKILL.md) for the full design, or
-the [stack overview](../README.md) for how the skills fit together.
+The skill is a presentation layer. It does not source a company, form a thesis, or confer conviction
+on incomplete work. Within [SecStack](../README.md), [`bottom-up-analyst`](../bottom-up-analyst/)
+owns the research and valuation workflow; [`sec-edgar-skill`](../sec-edgar-skill/) and
+[`market-scout`](../market-scout/) retrieve source material.
 
 ## Layout
 
-- `SKILL.md` — the skill itself (the only file an agent needs to load).
-- `references/corpus/` — the seven primary-source pitches, used for voice calibration. They ship
-  with the skill; an agent greps them for a specific rhetorical move rather than loading them whole.
+- `SKILL.md` — the rendering workflow, voice guidance, and evidence pass.
+- `references/corpus/` — seven primary-source pitches and public discussion threads for targeted
+  style calibration. The skill tells the agent when and how narrowly to consult them.
 
-## A note on the corpus
+## Corpus
 
-`references/corpus/` contains Markdown extractions of seven Value Investors Club write-ups (and
-their public discussion threads) authored by `charlie479`:
+The corpus contains Markdown extractions of Value Investors Club write-ups authored by
+`charlie479`:
 
-| Pitch | Shape |
+| Pitch | Broad situation |
 |---|---|
-| NVR, Sportsman's Guide | quality compounder |
-| Winmill | cigar-butt asset play |
-| Quilmes, MCI, NII Holdings, Telemig | special situation / structural arbitrage |
+| NVR, Sportsman's Guide | Operating business / compounder |
+| Winmill | Asset discount |
+| Quilmes, MCI, NII Holdings, Telemig | Special situation / capital structure |
 
-These are **legacy ideas (2001–2009)** that VIC itself makes publicly available after a 45-day
-delay, and which have circulated freely for years (they are widely reproduced verbatim — e.g.,
-across investing newsletters and Substacks — and were distributed in classrooms by Joel
-Greenblatt). They are archived here **solely** as a small, fixed reference set for an educational
-tool, with **no commercial use** intended.
+They are legacy ideas from 2001–2009, not current research or templates whose facts and metrics
+should be copied into a new pitch. They are included as a small educational reference set; an
+agent should retrieve only the passage needed to calibrate a specific writing move.
 
 Copyright in the underlying write-ups remains with their respective authors and Value Investors
-Club. This repository is a non-commercial, educational project and is not affiliated with or
-endorsed by Value Investors Club. If you are a rights holder and would prefer a pitch not be
-included, please open an issue or contact the maintainer and it will be removed promptly.
+Club. This repository is a non-commercial educational project and is not affiliated with or
+endorsed by Value Investors Club. A rights holder may open an issue or contact the maintainer to
+request removal.

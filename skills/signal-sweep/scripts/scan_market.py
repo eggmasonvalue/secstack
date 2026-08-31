@@ -1,13 +1,7 @@
-"""Config-driven market screens via yfinance EquityQuery.
+"""Run config-driven Yahoo Finance equity screens.
 
-Reads screen definitions from screens.json, injects universe bounds
-($50M-$10B, region=us), runs yf.screen(), and optionally enriches the
-top results with Ticker.info data.
-
-Usage:
-    python scripts/scan_market.py --screen near-52wk-low
-    python scripts/scan_market.py --all
-    python scripts/scan_market.py --list
+Definitions and universe bounds come from ``screens.json``. Each successful run
+writes a Markdown report and emits its absolute path.
 """
 
 from __future__ import annotations
@@ -22,16 +16,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common as c
 
 
-def _load_screens(screens_file: Path) -> dict:
-    """Load screens.json and return the parsed dict."""
-    if not screens_file.exists():
-        c.log(f"ERROR: screens file not found: {screens_file}")
+def _load_screens(path: Path) -> dict:
+    """Load and parse a screen configuration."""
+    if not path.exists():
+        c.log(f"ERROR: screens file not found: {path}")
         sys.exit(1)
-    return json.loads(screens_file.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        c.log(f"ERROR: invalid screens file {path}: {exc}")
+        sys.exit(1)
 
 
 def _build_query(screen: dict, universe: dict):
-    """Build a yfinance EquityQuery from screen config + universe bounds."""
+    """Build a yfinance EquityQuery from one definition and its universe."""
     import yfinance as yf
 
     conditions = [
@@ -41,222 +39,206 @@ def _build_query(screen: dict, universe: dict):
             "lte", ["intradaymarketcap", universe.get("market_cap_max", 10_000_000_000)]
         ),
     ]
-
-    op_map = {"eq": "eq", "lte": "lte", "gte": "gte", "lt": "lt", "gt": "gt", "btwn": "btwn"}
-
-    for f in screen.get("filters", []):
-        op = op_map.get(f["op"], f["op"])
-        if op == "btwn":
-            conditions.append(yf.EquityQuery(op, [f["field"], f["value"][0], f["value"][1]]))
-        else:
-            conditions.append(yf.EquityQuery(op, [f["field"], f["value"]]))
-
+    for filter_ in screen.get("filters", []):
+        value = filter_["value"]
+        operands = (
+            [filter_["field"], *value] if isinstance(value, list) else [filter_["field"], value]
+        )
+        conditions.append(yf.EquityQuery(filter_["op"], operands))
     return yf.EquityQuery("and", conditions)
 
 
 def _enrich(quotes: list[dict], size: int) -> list[dict]:
-    """Enrich top results with yf.Ticker().info data."""
+    """Add report columns from Yahoo's per-ticker snapshot."""
     import yfinance as yf
 
     enriched = []
-    for i, q in enumerate(quotes[:size]):
-        symbol = q.get("symbol", "")
-        c.log(f"  Enriching {i + 1}/{min(size, len(quotes))}: {symbol}")
+    for index, quote in enumerate(quotes[:size]):
+        symbol = quote.get("symbol", "")
+        c.log(f"  Enriching {index + 1}/{min(size, len(quotes))}: {symbol}")
         try:
             info = yf.Ticker(symbol).info or {}
         except Exception:
             info = {}
 
-        q["analyst_rating"] = info.get("averageAnalystRating", "n/a")
-        q["target_mean"] = info.get("targetMeanPrice")
-        q["target_median"] = info.get("targetMedianPrice")
-        q["short_pct"] = info.get("shortPercentOfFloat")
-        q["insider_pct"] = info.get("heldPercentInsiders")
-        q["inst_pct"] = info.get("heldPercentInstitutions")
-        q["earnings_growth"] = info.get("earningsQuarterlyGrowth")
-        q["revenue_growth"] = info.get("revenueGrowth")
-        q["sector"] = info.get("sector", q.get("sector", ""))
-        q["industry"] = info.get("industry", q.get("industry", ""))
-        q["pe"] = info.get("trailingPE") or info.get("forwardPE")
-        q["current_price"] = info.get("currentPrice", q.get("regularMarketPrice"))
-        q["market_cap"] = info.get("marketCap", q.get("marketCap"))
-
-        # Trailing 2Y/3Y returns for the "forgotten" screen
-        try:
-            hist = yf.Ticker(symbol).history(period="3y")
-            if hist is not None and len(hist) > 1:
-                close = hist["Close"].dropna()
-                last = close.iloc[-1]
-                import pandas as pd
-
-                last_date = close.index[-1]
-                # 2Y return
-                prior_2y = close[close.index <= last_date - pd.Timedelta(days=730)]
-                if len(prior_2y):
-                    q["return_2y"] = (last / prior_2y.iloc[-1] - 1) * 100
-                # 3Y return
-                prior_3y = close[close.index <= last_date - pd.Timedelta(days=1095)]
-                if len(prior_3y):
-                    q["return_3y"] = (last / prior_3y.iloc[-1] - 1) * 100
-        except Exception:
-            pass
-
-        enriched.append(q)
-
+        quote["analyst_rating"] = info.get("averageAnalystRating", "n/a")
+        quote["short_pct"] = info.get("shortPercentOfFloat")
+        quote["insider_pct"] = info.get("heldPercentInsiders")
+        quote["inst_pct"] = info.get("heldPercentInstitutions")
+        quote["sector"] = info.get("sector", quote.get("sector", ""))
+        quote["pe"] = info.get("trailingPE") or info.get("forwardPE")
+        quote["current_price"] = info.get("currentPrice", quote.get("regularMarketPrice"))
+        quote["market_cap"] = info.get("marketCap", quote.get("marketCap"))
+        enriched.append(quote)
     return enriched
 
 
-def _fmt_pct(v, mult100=False) -> str:
-    if v is None:
+def _fmt_pct(value, *, decimal: bool = False) -> str:
+    if value is None:
         return "n/a"
-    val = v * 100 if mult100 else v
-    return f"{val:.1f}%"
+    return f"{value * 100 if decimal else value:.1f}%"
 
 
-def _fmt_num(v) -> str:
-    if v is None:
-        return "n/a"
-    return f"{v:.1f}"
+def _fmt_num(value) -> str:
+    return "n/a" if value is None else f"{value:.1f}"
 
 
-def _render_markdown(screen: dict, quotes: list[dict], enriched: bool) -> str:
+def _render_markdown(
+    screen: dict,
+    quotes: list[dict],
+    *,
+    enriched: bool,
+    universe: dict,
+    total: int | str,
+) -> str:
     """Render screen results as a Markdown table."""
-    lines = []
     emoji = screen.get("emoji", "📊")
     name = screen.get("name", screen.get("id", "Screen"))
-    lines.append(f"# {emoji} Screen: {name} ({c.universe_label()})\n")
-    lines.append(f"_{screen.get('description', '')}_\n")
-    lines.append(f"**Results:** {len(quotes)}\n")
+    lines = [f"# {emoji} Screen: {name} ({c.universe_label(universe)})\n"]
+    if screen.get("description"):
+        lines.append(f"_{screen['description']}_\n")
+    lines.append(f"**Results returned:** {len(quotes)} of {total} matching\n")
 
     if not quotes:
         lines.append("No results matched this screen.\n")
         return "\n".join(lines)
 
     if enriched:
-        lines.append(
-            "| # | Ticker | Company | Price | Mkt Cap | P/E | Short % | Insider % | Inst % | Analyst | Sector |"
-        )
-        lines.append(
-            "|---|--------|---------|-------|---------|-----|---------|-----------|--------|---------|--------|"
-        )
-        for i, q in enumerate(quotes, 1):
-            ticker = q.get("symbol", "?")
-            company = q.get("shortName") or q.get("longName") or "?"
-            price = q.get("current_price") or q.get("regularMarketPrice")
-            price_s = f"${price:.2f}" if price else "n/a"
-            mcap_s = c.fmt_mcap(q.get("market_cap"))
-            pe_s = _fmt_num(q.get("pe"))
-            short_s = _fmt_pct(q.get("short_pct"), mult100=True)
-            insider_s = _fmt_pct(q.get("insider_pct"), mult100=True)
-            inst_s = _fmt_pct(q.get("inst_pct"), mult100=True)
-            analyst = q.get("analyst_rating", "n/a")
-            sector = q.get("sector", "n/a")
+        lines += [
+            "| # | Ticker | Company | Price | Mkt Cap | P/E | Short % | Insider % | Inst % | Analyst | Sector |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---|---|",
+        ]
+        for index, quote in enumerate(quotes, 1):
+            price = quote.get("current_price")
             lines.append(
-                f"| {i} | {ticker} | {company} | {price_s} | {mcap_s} | "
-                f"{pe_s} | {short_s} | {insider_s} | {inst_s} | {analyst} | {sector} |"
+                f"| {index} | {c.md_cell(quote.get('symbol', '?'))} | "
+                f"{c.md_cell(quote.get('shortName') or quote.get('longName') or '?')} | "
+                f"{f'${price:.2f}' if price is not None else 'n/a'} | "
+                f"{c.fmt_mcap(quote.get('market_cap'))} | {_fmt_num(quote.get('pe'))} | "
+                f"{_fmt_pct(quote.get('short_pct'), decimal=True)} | "
+                f"{_fmt_pct(quote.get('insider_pct'), decimal=True)} | "
+                f"{_fmt_pct(quote.get('inst_pct'), decimal=True)} | "
+                f"{c.md_cell(quote.get('analyst_rating', 'n/a'))} | "
+                f"{c.md_cell(quote.get('sector') or 'n/a')} |"
             )
     else:
-        lines.append("| # | Ticker | Company | Price | Mkt Cap |")
-        lines.append("|---|--------|---------|-------|---------|")
-        for i, q in enumerate(quotes, 1):
-            ticker = q.get("symbol", "?")
-            company = q.get("shortName") or q.get("longName") or "?"
-            price = q.get("regularMarketPrice")
-            price_s = f"${price:.2f}" if price else "n/a"
-            mcap_s = c.fmt_mcap(q.get("marketCap"))
-            lines.append(f"| {i} | {ticker} | {company} | {price_s} | {mcap_s} |")
-
+        lines += [
+            "| # | Ticker | Company | Price | Mkt Cap |",
+            "|---|---|---|---:|---:|",
+        ]
+        for index, quote in enumerate(quotes, 1):
+            price = quote.get("regularMarketPrice")
+            lines.append(
+                f"| {index} | {c.md_cell(quote.get('symbol', '?'))} | "
+                f"{c.md_cell(quote.get('shortName') or quote.get('longName') or '?')} | "
+                f"{f'${price:.2f}' if price is not None else 'n/a'} | "
+                f"{c.fmt_mcap(quote.get('marketCap'))} |"
+            )
     lines.append("")
     return "\n".join(lines)
 
 
-def run_screen(screen: dict, universe: dict, size: int | None, do_enrich: bool, cache: Path) -> str:
-    """Run a single screen and return Markdown output."""
+def run_screen(
+    screen: dict,
+    universe: dict,
+    size: int | None,
+    do_enrich: bool,
+) -> tuple[str, bool]:
+    """Run one screen and return its report plus a success flag."""
     import yfinance as yf
 
     screen_id = screen.get("id", "unknown")
-    screen_size = size or screen.get("size", 25)
+    screen_size = size if size is not None else screen.get("size", 25)
     c.log(f"Running screen: {screen_id} (size={screen_size})...")
 
-    query = _build_query(screen, universe)
-    sort_field = screen.get("sort", {}).get("field")
-    sort_asc = screen.get("sort", {}).get("asc", True)
-
     try:
+        query = _build_query(screen, universe)
         kwargs = {"query": query, "size": screen_size}
-        if sort_field:
-            kwargs["sortField"] = sort_field
-            kwargs["sortAsc"] = sort_asc
+        sort = screen.get("sort", {})
+        if sort.get("field"):
+            kwargs["sortField"] = sort["field"]
+            kwargs["sortAsc"] = sort.get("asc", True)
         result = yf.screen(**kwargs)
     except Exception as exc:
         c.log(f"  ERROR: screen failed: {exc}")
-        return f"# Screen: {screen_id}\n\nError: {exc}\n"
+        return f"# Screen: {screen_id}\n\nRetrieval failed: {exc}\n", False
 
     quotes = result.get("quotes", [])
     c.log(f"  Got {len(quotes)} results (total matching: {result.get('total', '?')})")
-
     should_enrich = do_enrich and screen.get("enrich", True)
     if should_enrich and quotes:
         quotes = _enrich(quotes, screen_size)
-
-    return _render_markdown(screen, quotes, enriched=should_enrich)
-
-
-def main():
-    p = argparse.ArgumentParser(description="Config-driven market screens.")
-    p.add_argument("--screen", help="Screen ID from screens.json.")
-    p.add_argument("--all", action="store_true", help="Run all screens.")
-    p.add_argument("--list", action="store_true", help="List available screen IDs.")
-    p.add_argument("--size", type=int, help="Override the screen's default result size.")
-    p.add_argument("--no-enrich", action="store_true", help="Skip enrichment pass.")
-    p.add_argument(
-        "--screens-file",
-        help="Path to screens.json (default: ./screens.json relative to script).",
+    return (
+        _render_markdown(
+            screen,
+            quotes,
+            enriched=should_enrich,
+            universe=universe,
+            total=result.get("total", "unknown"),
+        ),
+        True,
     )
-    c.add_cache_arg(p)
-    args = p.parse_args()
 
-    # Resolve screens.json
-    if args.screens_file:
-        screens_path = Path(args.screens_file)
-    else:
-        screens_path = Path(__file__).resolve().parent.parent / "screens.json"
 
+def main() -> None:
+    """Run the market-screen CLI."""
+    parser = argparse.ArgumentParser(description="Config-driven market screens.")
+    parser.add_argument("--screen", help="Screen ID from screens.json.")
+    parser.add_argument("--all", action="store_true", help="Run all screens.")
+    parser.add_argument("--list", action="store_true", help="List available screen IDs.")
+    parser.add_argument("--size", type=int, help="Override the screen's result size.")
+    parser.add_argument("--no-enrich", action="store_true", help="Skip enrichment.")
+    parser.add_argument("--screens-file", help="Alternate screens.json path.")
+    c.add_cache_arg(parser)
+    args = parser.parse_args()
+
+    if args.size is not None and args.size < 1:
+        parser.error("--size must be at least 1.")
+
+    screens_path = (
+        Path(args.screens_file).resolve()
+        if args.screens_file
+        else Path(__file__).resolve().parent.parent / "screens.json"
+    )
     config = _load_screens(screens_path)
     universe = config.get("universe", {})
     screens = config.get("screens", [])
-    cache = c.cache_root(args.cache_dir)
 
     if args.list:
         print("Available screens:\n")
-        for s in screens:
-            emoji = s.get("emoji", "📊")
-            print(f"  {emoji} {s['id']:25s} {s.get('name', '')} — {s.get('description', '')}")
+        for screen in screens:
+            print(
+                f"  {screen.get('emoji', '📊')} {screen['id']:25s} "
+                f"{screen.get('name', '')} — {screen.get('description', '')}"
+            )
         return
-
     if not args.screen and not args.all:
-        p.error("Specify --screen <id>, --all, or --list.")
+        parser.error("Specify --screen <id>, --all, or --list.")
 
-    do_enrich = not args.no_enrich
+    selected = screens if args.all else [next((s for s in screens if s["id"] == args.screen), None)]
+    if selected == [None]:
+        available = ", ".join(screen["id"] for screen in screens)
+        c.log(f"ERROR: unknown screen {args.screen!r}. Available: {available}")
+        sys.exit(1)
+
+    reports = []
+    failures = 0
+    for screen in selected:
+        report, ok = run_screen(screen, universe, args.size, not args.no_enrich)
+        reports.append(report)
+        failures += int(not ok)
+
     today = datetime.now().strftime("%Y-%m-%d")
-
-    if args.all:
-        all_md = []
-        for s in screens:
-            md = run_screen(s, universe, args.size, do_enrich, cache)
-            all_md.append(md)
-        combined = "\n---\n\n".join(all_md)
-        slug = f"all-screens_{today}"
-        c.write_output(cache, "screens", slug, combined)
-    else:
-        screen = next((s for s in screens if s["id"] == args.screen), None)
-        if not screen:
-            available = ", ".join(s["id"] for s in screens)
-            c.log(f"ERROR: unknown screen '{args.screen}'. Available: {available}")
-            sys.exit(1)
-        md = run_screen(screen, universe, args.size, do_enrich, cache)
-        slug = f"{args.screen}_{today}"
-        c.write_output(cache, "screens", slug, md)
+    slug = f"all-screens_{today}" if args.all else f"{args.screen}_{today}"
+    c.write_output(
+        c.cache_root(args.cache_dir),
+        "screens",
+        slug,
+        "\n---\n\n".join(reports),
+    )
+    if failures:
+        c.log(f"ERROR: {failures} screen(s) failed; emitted report is incomplete.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

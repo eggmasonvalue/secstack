@@ -9,7 +9,7 @@
       "id": "near-52wk-low",
       "name": "Near 52-Week Low",
       "emoji": "📉",
-      "description": "Stocks within 15% of their 52-week low — price dislocation in a thinly-covered universe",
+      "description": "Last close no more than 15% above the trailing 52-week low",
       "filters": [
         {"field": "lastclose52weeklow.lasttwelvemonths", "op": "lte", "value": 1.15}
       ],
@@ -21,7 +21,7 @@
       "id": "high-short-interest",
       "name": "High Short Interest",
       "emoji": "🩳",
-      "description": "Stocks with >15% short interest and reasonable volume — someone disagrees strongly",
+      "description": "Short interest above 15% of float and 3-month average daily volume of at least 100,000 shares",
       "filters": [
         {"field": "short_percentage_of_float.value", "op": "gte", "value": 15},
         {"field": "avgdailyvol3m", "op": "gte", "value": 100000}
@@ -34,7 +34,7 @@
       "id": "short-covering",
       "name": "Shorts Covering (SI Dropping)",
       "emoji": "📈",
-      "description": "Stocks where short interest dropped >20% — shorts capitulating, overhang lifting",
+      "description": "Short interest down more than 20% while at least 5% of float remains short",
       "filters": [
         {"field": "short_interest_percentage_change.value", "op": "lt", "value": -20},
         {"field": "short_percentage_of_float.value", "op": "gte", "value": 5}
@@ -47,7 +47,7 @@
       "id": "insider-heavy",
       "name": "High Insider Ownership",
       "emoji": "🏠",
-      "description": "Stocks with >15% insider ownership — skin in the game, not just options",
+      "description": "Yahoo-reported insider ownership of at least 15%",
       "filters": [
         {"field": "pctheldinsider", "op": "gte", "value": 0.15}
       ],
@@ -57,9 +57,9 @@
     },
     {
       "id": "fallen-from-grace",
-      "name": "Fallen From Grace",
+      "name": "40–60% Below 52-Week High",
       "emoji": "💥",
-      "description": "Former momentum names 40-60% below their 52-week high ($200M+ market cap)",
+      "description": "Last close 40% to 60% below the 52-week high, with market cap of at least $200M",
       "filters": [
         {"field": "lastclose52weekhigh.lasttwelvemonths", "op": "gte", "value": 0.40},
         {"field": "lastclose52weekhigh.lasttwelvemonths", "op": "lte", "value": 0.60},
@@ -71,9 +71,9 @@
     },
     {
       "id": "low-institutional",
-      "name": "Under-Owned by Institutions",
+      "name": "Low Institutional Ownership",
       "emoji": "🔍",
-      "description": "Stocks with <30% institutional ownership ($200M+) — under-discovered, no index flows",
+      "description": "Yahoo-reported institutional ownership below 30%, with market cap of at least $200M",
       "filters": [
         {"field": "pctheldinst", "op": "lt", "value": 0.30},
         {"field": "intradaymarketcap", "op": "gte", "value": 200000000}
@@ -84,9 +84,9 @@
     },
     {
       "id": "forgotten",
-      "name": "Forgotten Stocks",
+      "name": "Flat 52-Week Return",
       "emoji": "😴",
-      "description": "Stocks that went nowhere over 12 months (-10% to +10%) — the market hasn't noticed",
+      "description": "Trailing 52-week price change between -10% and +10%",
       "filters": [
         {"field": "fiftytwowkpercentchange", "op": "gte", "value": -10},
         {"field": "fiftytwowkpercentchange", "op": "lte", "value": 10}
