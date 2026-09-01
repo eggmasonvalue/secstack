@@ -1,30 +1,15 @@
-"""Scan Form 4 insider purchases for cluster buys, rip/dip buys, and 13D filings.
+"""Scan Form 4 purchases and Schedule 13D filings.
 
-Pulls the daily Form 4 bulk index over a rolling lookback window, filters to
-the $50M-$10B universe, parses open-market purchases (code P only), and
-detects:
-  - Cluster buys: 2+ distinct insiders buying the same stock within the window
-  - Rip buys: insider buys after an unusually large rally (z-score based)
-  - Dip buys: insider buys into an unusually large decline (z-score based)
-
-Rip/dip detection is volatility-adjusted — a 20% move means nothing for a
-biotech that swings 20% monthly, but it's exceptional for a utility. The
-trailing 30-day return is measured against the stock's own historical
-volatility (annualized stdev of daily returns over the prior year, scaled to
-a 30-day window). A z-score beyond the threshold (default ±1.5) flags the
-purchase.
-
-Also pulls SC 13D / 13D/A filings for activist blockholders.
-
-Usage:
-    python scripts/scan_insiders.py --date yesterday --lookback 5
-    python scripts/scan_insiders.py --date 2026-06-16 --lookback 5 --webhook $DISCORD_WEBHOOK_URL
+Form 4 transaction code ``P`` rows are preserved individually. Clusters use
+distinct reporting-owner identities, and price-move context is measured as of
+the transaction date rather than the day the script runs.
 """
 
 from __future__ import annotations
 
 import argparse
 import math
+import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -33,486 +18,477 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common as c
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+_TRADING_DAYS_IN_MONTH = 22
 
 
-def _trading_dates(end_date: str, lookback: int) -> list[str]:
-    """Generate dates to scan (calendar days, skipping weekends)."""
+def _weekdays(end_date: str, lookback: int) -> list[str]:
+    """Return the requested number of weekdays ending on or before a date."""
     end = datetime.strptime(end_date, "%Y-%m-%d")
     dates = []
-    d = end
+    current = end
     while len(dates) < lookback:
-        if d.weekday() < 5:
-            dates.append(d.strftime("%Y-%m-%d"))
-        d -= timedelta(days=1)
+        if current.weekday() < 5:
+            dates.append(current.strftime("%Y-%m-%d"))
+        current -= timedelta(days=1)
     return list(reversed(dates))
 
 
 def _post_discord(webhook_url: str, embeds: list[dict]) -> None:
-    """Post embeds to Discord webhook, batching at 10 per request."""
+    """Post Discord embeds in API-sized batches."""
     import requests
 
-    for i in range(0, len(embeds), 10):
-        batch = embeds[i : i + 10]
-        resp = requests.post(webhook_url, json={"embeds": batch}, timeout=30)
-        if resp.status_code not in (200, 204):
-            c.log(f"WARNING: Discord webhook returned {resp.status_code}: {resp.text[:200]}")
+    for index in range(0, len(embeds), 10):
+        try:
+            response = requests.post(
+                webhook_url, json={"embeds": embeds[index : index + 10]}, timeout=30
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise RuntimeError(f"Discord webhook failed: {exc}") from exc
 
 
-# ---------------------------------------------------------------------------
-# Rip / dip detection
-# ---------------------------------------------------------------------------
+def _number(value) -> float | None:
+    """Return a finite float or None."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
 
-_TRADING_DAYS_30D = 22  # ~22 trading days in a calendar month
+
+def _date(value, fallback: str) -> str:
+    """Return a YYYY-MM-DD date from a dataframe value."""
+    try:
+        import pandas as pd
+
+        parsed = pd.to_datetime(value, errors="coerce")
+        if not pd.isna(parsed):
+            return parsed.date().isoformat()
+    except Exception:
+        pass
+    return fallback
 
 
-def compute_move_zscore(ticker: str) -> dict | None:
-    """Compute the trailing 30-day return z-score for a stock.
+def _owner_identity(ownership, insider_name: str) -> tuple[str, str]:
+    """Return a stable reporting-owner identity and optional CIK."""
+    owners = list(getattr(getattr(ownership, "reporting_owners", None), "owners", []) or [])
+    normalized = "".join(ch for ch in insider_name.upper() if ch.isalnum())
+    for owner in owners:
+        owner_name = str(getattr(owner, "name", ""))
+        owner_normalized = "".join(ch for ch in owner_name.upper() if ch.isalnum())
+        if len(owners) == 1 or owner_normalized == normalized:
+            cik = str(getattr(owner, "cik", "") or "").lstrip("0")
+            if cik:
+                return f"cik:{cik}", cik
+    return f"name:{normalized}", ""
 
-    Returns {"return_30d": float, "vol_30d": float, "zscore": float} or None
-    if there isn't enough price history.
 
-    The z-score measures how unusual the recent 30-day move is relative to the
-    stock's own historical behavior:
-      - trailing_return = price now / price 22 trading days ago - 1
-      - vol_30d = stdev of daily returns over the prior year, scaled to a
-        22-trading-day window (multiply by sqrt(22))
-      - zscore = trailing_return / vol_30d
-    """
+def compute_move_context(ticker: str, as_of_dates: list[str]) -> dict[str, dict | None]:
+    """Compute event-date 22-trading-day returns and rolling-return z-scores."""
+    import pandas as pd
     import yfinance as yf
 
+    unique_dates = sorted(set(as_of_dates))
+    if not unique_dates:
+        return {}
+    first = datetime.strptime(unique_dates[0], "%Y-%m-%d") - timedelta(days=450)
+    last = datetime.strptime(unique_dates[-1], "%Y-%m-%d") + timedelta(days=1)
+
     try:
-        hist = yf.Ticker(ticker).history(period="1y")
-        if hist is None or len(hist) < 60:
-            return None
-        close = hist["Close"].dropna()
-        if len(close) < 60:
-            return None
+        history = yf.Ticker(ticker).history(
+            start=first.strftime("%Y-%m-%d"),
+            end=last.strftime("%Y-%m-%d"),
+            auto_adjust=True,
+        )
+        close = history["Close"].dropna().copy()
+        close.index = pd.DatetimeIndex(close.index).tz_localize(None).normalize()
     except Exception:
-        return None
+        return {date: None for date in unique_dates}
 
-    daily_returns = close.pct_change().dropna()
-    if len(daily_returns) < 40:
-        return None
+    contexts: dict[str, dict | None] = {}
+    for date in unique_dates:
+        cutoff = pd.Timestamp(date)
+        series = close[close.index <= cutoff]
+        if len(series) < 80:
+            contexts[date] = None
+            continue
 
-    # Trailing 30-day return
-    n = min(_TRADING_DAYS_30D, len(close) - 1)
-    trailing_return = close.iloc[-1] / close.iloc[-1 - n] - 1
+        rolling_returns = series.pct_change(_TRADING_DAYS_IN_MONTH).dropna()
+        if len(rolling_returns) < 41:
+            contexts[date] = None
+            continue
+        current_return = float(rolling_returns.iloc[-1])
+        baseline = rolling_returns.iloc[:-1].tail(252)
+        baseline_std = float(baseline.std())
+        if not math.isfinite(baseline_std) or baseline_std == 0:
+            contexts[date] = None
+            continue
+        baseline_mean = float(baseline.mean())
+        contexts[date] = {
+            "return_22d": current_return,
+            "baseline_mean": baseline_mean,
+            "baseline_std": baseline_std,
+            "zscore": (current_return - baseline_mean) / baseline_std,
+        }
+    return contexts
 
-    # Historical daily stdev, scaled to 30-day window
-    daily_std = daily_returns.std()
-    if daily_std == 0 or math.isnan(daily_std):
-        return None
-    vol_30d = daily_std * math.sqrt(n)
 
-    zscore = trailing_return / vol_30d
-
-    return {
-        "return_30d": trailing_return,
-        "vol_30d": vol_30d,
-        "zscore": zscore,
-    }
-
-
-def tag_rip_dip(purchases_by_ticker: dict[str, list[dict]], zscore_threshold: float = 1.5) -> None:
-    """Tag each purchase with rip/dip signals based on move z-score.
-
-    Mutates purchase dicts in place, adding:
-      - "return_30d", "vol_30d", "zscore": the raw numbers
-      - "signal": "rip" | "dip" | None
-    """
-    tickers = list(purchases_by_ticker.keys())
-    c.log(f"Computing move z-scores for {len(tickers)} tickers...")
-
-    for i, ticker in enumerate(tickers):
-        if i % 20 == 0 and i > 0:
-            c.log(f"  z-scores: {i}/{len(tickers)}...")
-
-        result = compute_move_zscore(ticker)
-
-        for purchase in purchases_by_ticker[ticker]:
-            if result is None:
-                purchase["return_30d"] = None
-                purchase["vol_30d"] = None
-                purchase["zscore"] = None
-                purchase["signal"] = None
-                continue
-
-            purchase["return_30d"] = result["return_30d"]
-            purchase["vol_30d"] = result["vol_30d"]
-            purchase["zscore"] = result["zscore"]
-
-            z = result["zscore"]
-            if z >= zscore_threshold:
+def tag_move_context(
+    purchases_by_ticker: dict[str, list[dict]],
+    zscore_threshold: float = 1.5,
+) -> None:
+    """Attach event-date price context and dip/rip labels to purchases."""
+    c.log(f"Computing event-date move context for {len(purchases_by_ticker)} tickers...")
+    for index, (ticker, purchases) in enumerate(purchases_by_ticker.items()):
+        if index and index % 20 == 0:
+            c.log(f"  Move context: {index}/{len(purchases_by_ticker)}...")
+        contexts = compute_move_context(
+            ticker, [purchase["transaction_date"] for purchase in purchases]
+        )
+        for purchase in purchases:
+            context = contexts.get(purchase["transaction_date"])
+            purchase["return_22d"] = context["return_22d"] if context else None
+            purchase["zscore"] = context["zscore"] if context else None
+            zscore = purchase["zscore"]
+            if zscore is not None and zscore >= zscore_threshold:
                 purchase["signal"] = "rip"
-            elif z <= -zscore_threshold:
+            elif zscore is not None and zscore <= -zscore_threshold:
                 purchase["signal"] = "dip"
             else:
                 purchase["signal"] = None
 
-    c.log("  z-scores done.")
 
-
-# ---------------------------------------------------------------------------
-# Form 4 scanning
-# ---------------------------------------------------------------------------
-
-
-def scan_form4s(dates: list[str], cache: Path, mcap_data: dict) -> dict[str, list[dict]]:
-    """Scan Form 4 filings across dates, return all purchases by ticker.
-
-    Returns {ticker: [purchase_dicts]} — downstream code detects clusters
-    and rip/dip from this raw collection.
-    """
+def scan_form4s(dates: list[str], mcap_data: dict) -> tuple[dict[str, list[dict]], dict]:
+    """Collect code-P transactions from Form 4 filings received on given dates."""
     import edgar
 
     purchases_by_ticker: dict[str, list[dict]] = defaultdict(list)
-    seen_keys: dict[str, set] = defaultdict(set)
+    stats = {
+        "failed_dates": [],
+        "filings_seen": 0,
+        "filings_parsed": 0,
+        "parse_errors": 0,
+        "unresolved_market_cap": 0,
+    }
 
-    for date_str in dates:
-        c.log(f"Fetching Form 4 index for {date_str}...")
+    for requested_date in dates:
+        c.log(f"Fetching Form 4 index for {requested_date}...")
         try:
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            parsed_date = datetime.strptime(requested_date, "%Y-%m-%d")
             filings = edgar.get_filings(
-                year=dt.year,
-                quarter=(dt.month - 1) // 3 + 1,
+                year=parsed_date.year,
+                quarter=(parsed_date.month - 1) // 3 + 1,
                 form="4",
-                filing_date=date_str,
+                filing_date=requested_date,
                 amendments=False,
             )
         except Exception as exc:
-            c.log(f"  WARNING: could not fetch Form 4 index for {date_str}: {exc}")
+            c.log(f"  ERROR: could not fetch Form 4 index: {exc}")
+            stats["failed_dates"].append(requested_date)
             continue
-
         if filings is None:
-            c.log(f"  No Form 4 filings found for {date_str}")
             continue
 
-        try:
-            df = filings.to_pandas()
-        except Exception:
-            c.log(f"  WARNING: could not convert filings to DataFrame for {date_str}")
-            continue
-
-        c.log(f"  Found {len(df)} Form 4 filings for {date_str}")
-
-        for idx, filing in enumerate(filings):
-            if idx >= len(df):
-                break
-
+        c.log(f"  Found {len(filings)} Form 4 filings")
+        for index, filing in enumerate(filings):
+            stats["filings_seen"] += 1
             try:
-                obj = filing.obj()
+                ownership = filing.obj()
+                transactions = ownership.to_dataframe()
+                stats["filings_parsed"] += 1
             except Exception:
+                stats["parse_errors"] += 1
+                continue
+            if transactions is None or transactions.empty or "Code" not in transactions:
+                continue
+            purchases = transactions[transactions["Code"] == "P"]
+            if purchases.empty:
                 continue
 
-            ticker = None
-            try:
-                issuer = obj.issuer
-                ticker = getattr(issuer, "ticker", None)
-                if not ticker:
-                    ticker = getattr(issuer, "trading_symbol", None)
-            except Exception:
-                pass
-
+            ticker = str(getattr(ownership.issuer, "ticker", "") or "").upper().strip()
             if not ticker:
                 continue
-            ticker = ticker.upper().strip()
-
             mcap = c.get_market_cap(ticker, mcap_data)
+            if mcap is None:
+                stats["unresolved_market_cap"] += 1
+                continue
             if not c.in_universe(mcap):
                 continue
 
-            # Use to_dataframe() to get transactions + remaining shares
-            try:
-                txn_df = obj.to_dataframe()
-            except Exception:
-                continue
+            filing_date = str(getattr(filing, "filing_date", requested_date))
+            accession = str(
+                getattr(filing, "accession_no", "") or getattr(filing, "accession_number", "") or ""
+            )
+            cik = str(getattr(ownership.issuer, "cik", "") or "").lstrip("0")
+            source_url = c.sec_filing_url(cik, accession) if cik and accession else ""
 
-            if txn_df is None or len(txn_df) == 0:
-                continue
-
-            # Filter to open-market purchases (code P)
-            p_mask = txn_df["Code"] == "P" if "Code" in txn_df.columns else None
-            if p_mask is None:
-                continue
-            purchases_df = txn_df[p_mask]
-
-            for _, row in purchases_df.iterrows():
-                shares = row.get("Shares", 0) or 0
-                price = row.get("Price", 0) or 0
-                if shares <= 0:
+            for _, row in purchases.iterrows():
+                shares = _number(row.get("Shares"))
+                if shares is None or shares <= 0:
                     continue
+                price = _number(row.get("Price"))
+                remaining = _number(row.get("Remaining Shares"))
+                insider = str(row.get("Insider") or getattr(ownership, "insider_name", "Unknown"))
+                owner_id, owner_cik = _owner_identity(ownership, insider)
+                role = str(row.get("Position") or getattr(ownership, "position", "Unknown"))
+                transaction_date = _date(row.get("Date"), filing_date)
+                purchases_by_ticker[ticker].append(
+                    {
+                        "insider": insider,
+                        "insider_id": owner_id,
+                        "insider_cik": owner_cik,
+                        "role": role,
+                        "shares": shares,
+                        "price": price,
+                        "transaction_date": transaction_date,
+                        "filing_date": filing_date,
+                        "company": str(getattr(ownership.issuer, "name", ticker)),
+                        "mcap": mcap,
+                        "remaining": remaining,
+                        "shares_out": c.get_cached_shares_out(ticker, mcap_data),
+                        "accession": accession,
+                        "source_url": source_url,
+                    }
+                )
+            if index and index % 50 == 0:
+                c.log(f"  Parsed {index}/{len(filings)} filings...")
 
-                insider_name = row.get("Insider") or getattr(obj, "insider_name", "Unknown")
-                position = row.get("Position") or getattr(obj, "position", "Unknown")
-                try:
-                    company_name = getattr(obj.issuer, "name", ticker)
-                except Exception:
-                    company_name = ticker
-
-                remaining = row.get("Remaining Shares")
-                shares_out = c.get_cached_shares_out(ticker, mcap_data)
-
-                key = f"{insider_name}|{date_str}"
-                if key not in seen_keys[ticker]:
-                    seen_keys[ticker].add(key)
-                    purchases_by_ticker[ticker].append(
-                        {
-                            "insider": insider_name,
-                            "role": position,
-                            "shares": shares,
-                            "price": price,
-                            "date": date_str,
-                            "company": company_name,
-                            "mcap": mcap,
-                            "remaining": remaining,
-                            "shares_out": shares_out,
-                        }
-                    )
-
-            if idx % 50 == 0 and idx > 0:
-                c.log(f"  Parsed {idx}/{len(df)} filings...")
-
-        c.log(f"  Done with {date_str}")
-
-    return dict(purchases_by_ticker)
+    return dict(purchases_by_ticker), stats
 
 
 def detect_clusters(purchases_by_ticker: dict[str, list[dict]]) -> list[dict]:
-    """Find cluster buys: 2+ distinct insiders buying the same ticker."""
+    """Find tickers with purchases by at least two reporting owners."""
     clusters = []
-    for ticker, buys in purchases_by_ticker.items():
-        unique_insiders = set(b["insider"] for b in buys)
-        if len(unique_insiders) >= 2:
-            # Collect signals present on any purchase in the cluster
-            signals = set()
-            for b in buys:
-                if b.get("signal"):
-                    signals.add(b["signal"])
-
-            clusters.append(
-                {
-                    "ticker": ticker,
-                    "company": buys[0]["company"],
-                    "mcap": buys[0]["mcap"],
-                    "insiders": buys,
-                    "num_insiders": len(unique_insiders),
-                    "date_range": (
-                        f"{min(b['date'] for b in buys)} to {max(b['date'] for b in buys)}"
-                    ),
-                    "signals": sorted(signals),
-                    # Use the first purchase's z-score data (same ticker, same values)
-                    "return_30d": buys[0].get("return_30d"),
-                    "zscore": buys[0].get("zscore"),
-                }
-            )
-
-    clusters.sort(key=lambda x: x["num_insiders"], reverse=True)
+    for ticker, purchases in purchases_by_ticker.items():
+        distinct_owners = {purchase["insider_id"] for purchase in purchases}
+        if len(distinct_owners) < 2:
+            continue
+        clusters.append(
+            {
+                "ticker": ticker,
+                "company": purchases[0]["company"],
+                "mcap": purchases[0]["mcap"],
+                "insiders": purchases,
+                "num_insiders": len(distinct_owners),
+                "date_range": (
+                    f"{min(p['transaction_date'] for p in purchases)} to "
+                    f"{max(p['transaction_date'] for p in purchases)}"
+                ),
+                "signals": sorted({p["signal"] for p in purchases if p.get("signal")}),
+            }
+        )
+    clusters.sort(key=lambda cluster: cluster["num_insiders"], reverse=True)
     return clusters
 
 
 def collect_notable_singles(
     purchases_by_ticker: dict[str, list[dict]], cluster_tickers: set[str]
 ) -> list[dict]:
-    """Collect rip/dip-tagged purchases that aren't part of a cluster.
-
-    These are individual insider buys that are notable because of the
-    volatility-adjusted price context, even without a second insider
-    confirming.
-    """
-    notable = []
-    for ticker, buys in purchases_by_ticker.items():
-        if ticker in cluster_tickers:
-            continue
-        for b in buys:
-            if b.get("signal"):
-                notable.append({**b, "ticker": ticker})
-
-    # Sort by absolute z-score (most extreme first)
-    notable.sort(key=lambda x: abs(x.get("zscore") or 0), reverse=True)
+    """Collect event-context labels outside cluster tickers."""
+    notable = [
+        {**purchase, "ticker": ticker}
+        for ticker, purchases in purchases_by_ticker.items()
+        if ticker not in cluster_tickers
+        for purchase in purchases
+        if purchase.get("signal")
+    ]
+    notable.sort(key=lambda purchase: abs(purchase.get("zscore") or 0), reverse=True)
     return notable
 
 
-# ---------------------------------------------------------------------------
-# 13D scanning (unchanged)
-# ---------------------------------------------------------------------------
-
-
-def scan_13d(dates: list[str], cache: Path, mcap_data: dict) -> list[dict]:
-    """Scan SC 13D / 13D/A filings for activist blockholders."""
+def scan_13d(dates: list[str], mcap_data: dict) -> tuple[list[dict], dict]:
+    """Collect Schedule 13D and 13D/A filings without presuming activism."""
     import edgar
 
     results = []
-    for date_str in dates:
-        c.log(f"Fetching 13D/13D-A index for {date_str}...")
+    stats = {"failed_dates": [], "unresolved_ticker": 0, "unresolved_market_cap": 0}
+    for requested_date in dates:
+        c.log(f"Fetching Schedule 13D index for {requested_date}...")
         try:
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            parsed_date = datetime.strptime(requested_date, "%Y-%m-%d")
             filings = edgar.get_filings(
-                year=dt.year,
-                quarter=(dt.month - 1) // 3 + 1,
+                year=parsed_date.year,
+                quarter=(parsed_date.month - 1) // 3 + 1,
                 form=["SC 13D", "SC 13D/A"],
-                filing_date=date_str,
+                filing_date=requested_date,
             )
         except Exception as exc:
-            c.log(f"  WARNING: could not fetch 13D index for {date_str}: {exc}")
+            c.log(f"  ERROR: could not fetch Schedule 13D index: {exc}")
+            stats["failed_dates"].append(requested_date)
             continue
-
         if filings is None:
             continue
 
         for filing in filings:
-            company = getattr(filing, "company", "Unknown")
-            cik = getattr(filing, "cik", "")
-
+            issuer_cik = str(getattr(filing, "cik", "") or "").lstrip("0")
             ticker = None
             try:
                 from edgar import Company
 
-                co = Company(int(cik))
-                tickers = getattr(co, "tickers", [])
+                tickers = getattr(Company(int(issuer_cik)), "tickers", [])
                 if tickers:
-                    ticker = next(iter(tickers))
+                    ticker = str(next(iter(tickers))).upper().replace(".", "-")
             except Exception:
                 pass
-
             if not ticker:
+                stats["unresolved_ticker"] += 1
                 continue
 
             mcap = c.get_market_cap(ticker, mcap_data)
+            if mcap is None:
+                stats["unresolved_market_cap"] += 1
+                continue
             if not c.in_universe(mcap):
                 continue
 
+            blockholders = "(see filing)"
+            try:
+                schedule = filing.obj()
+                names = [
+                    str(person.name)
+                    for person in (getattr(schedule, "reporting_persons", []) or [])
+                    if getattr(person, "name", None)
+                ]
+                if names:
+                    blockholders = "; ".join(dict.fromkeys(names))
+            except Exception:
+                pass
+
+            accession = str(
+                getattr(filing, "accession_no", "") or getattr(filing, "accession_number", "") or ""
+            )
             results.append(
                 {
-                    "ticker": ticker.upper(),
-                    "company": company,
+                    "ticker": ticker,
+                    "company": str(getattr(filing, "company", "Unknown")),
                     "mcap": mcap,
-                    "filer": getattr(filing, "company", "Unknown"),
-                    "date": date_str,
-                    "form": getattr(filing, "form", "SC 13D"),
-                    "accession": (
-                        getattr(filing, "accession_no", "")
-                        or getattr(filing, "accession_number", "")
-                    ),
+                    "blockholders": blockholders,
+                    "filing_date": str(getattr(filing, "filing_date", requested_date)),
+                    "form": str(getattr(filing, "form", "SC 13D")),
+                    "accession": accession,
+                    "source_url": c.sec_filing_url(issuer_cik, accession),
                 }
             )
-
-    return results
-
-
-# ---------------------------------------------------------------------------
-# Markdown output
-# ---------------------------------------------------------------------------
+    return results, stats
 
 
 def _signal_badge(signal: str | None) -> str:
-    if signal == "rip":
-        return " 🚀"
-    if signal == "dip":
-        return " 🔻"
-    return ""
+    return " 🚀" if signal == "rip" else " 🔻" if signal == "dip" else ""
 
 
-def _zscore_str(z: float | None) -> str:
-    if z is None:
-        return "n/a"
-    return f"{z:+.1f}σ"
+def _zscore(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:+.1f}σ"
 
 
-def _return_str(r: float | None) -> str:
-    if r is None:
-        return "n/a"
-    return f"{r * 100:+.1f}%"
+def _return(value: float | None) -> str:
+    return "n/a" if value is None else f"{value * 100:+.1f}%"
+
+
+def _price(value: float | None) -> str:
+    return "n/a" if value is None else f"${value:.2f}"
 
 
 def _pct_of_holding(shares: float, remaining: float | None) -> str:
-    """Purchase as % of post-transaction holding."""
-    if not remaining or remaining <= 0:
-        return "n/a"
-    return f"{shares / remaining * 100:.1f}%"
+    return "n/a" if not remaining or remaining <= 0 else f"{shares / remaining * 100:.1f}%"
 
 
 def _pct_of_outstanding(shares: float, shares_out: int | None) -> str:
-    """Purchase as % of total shares outstanding."""
     if not shares_out or shares_out <= 0:
         return "n/a"
-    pct = shares / shares_out * 100
-    if pct < 0.01:
-        return "<0.01%"
-    return f"{pct:.2f}%"
+    percentage = shares / shares_out * 100
+    return "<0.01%" if percentage < 0.01 else f"{percentage:.2f}%"
 
 
 def _build_summary(
     purchases_by_ticker: dict[str, list[dict]],
     clusters: list[dict],
-    notable: list[dict],
     filings_13d: list[dict],
     mcap_data: dict,
-    zscore_threshold: float = 1.5,
+    threshold: float,
 ) -> list[str]:
-    """Build a summary header with key stats and sector breakdown."""
-    lines = []
+    """Build report-level counts and sector totals."""
+    purchases = [purchase for rows in purchases_by_ticker.values() for purchase in rows]
+    priced = [purchase for purchase in purchases if purchase["price"] is not None]
+    total_dollar = sum(purchase["shares"] * purchase["price"] for purchase in priced)
+    lines = [
+        "## Summary\n",
+        "| Metric | Value |",
+        "|---|---:|",
+        f"| Code-P transaction rows ({c.universe_label()}) | {len(purchases)} |",
+        f"| Unique tickers | {len(purchases_by_ticker)} |",
+        f"| Distinct reporting owners | {len({p['insider_id'] for p in purchases})} |",
+        f"| Priced purchase value | ${total_dollar:,.0f} |",
+        f"| Cluster tickers | {len(clusters)} |",
+        f"| Dip rows (≤ -{threshold}σ) | {sum(p.get('signal') == 'dip' for p in purchases)} |",
+        f"| Rip rows (≥ +{threshold}σ) | {sum(p.get('signal') == 'rip' for p in purchases)} |",
+        f"| Schedule 13D filings | {len(filings_13d)} |",
+        "",
+    ]
 
-    # Aggregate stats
-    all_purchases = [b for buys in purchases_by_ticker.values() for b in buys]
-    total_purchases = len(all_purchases)
-    unique_tickers = len(purchases_by_ticker)
-    unique_insiders = len(set(b["insider"] for b in all_purchases))
-    total_dollar = sum(b["shares"] * b["price"] for b in all_purchases)
-    rip_count = sum(1 for b in all_purchases if b.get("signal") == "rip")
-    dip_count = sum(1 for b in all_purchases if b.get("signal") == "dip")
-
-    lines.append("## Summary\n")
-    lines.append("| Metric | Value |")
-    lines.append("|--------|-------|")
-    lines.append(f"| Purchases (code P, {c.universe_label()}) | {total_purchases} |")
-    lines.append(f"| Unique tickers | {unique_tickers} |")
-    lines.append(f"| Unique insiders | {unique_insiders} |")
-    lines.append(f"| Total dollar volume | ${total_dollar:,.0f} |")
-    lines.append(f"| Cluster buys | {len(clusters)} |")
-    lines.append(f"| Dip buys (\u2264 -{zscore_threshold}\u03c3) | {dip_count} |")
-    lines.append(f"| Rip buys (\u2265 +{zscore_threshold}\u03c3) | {rip_count} |")
-    lines.append(f"| 13D filings | {len(filings_13d)} |")
-    lines.append("")
-
-    # Largest purchase
-    if all_purchases:
-        largest = max(all_purchases, key=lambda b: b["shares"] * b["price"])
-        lval = largest["shares"] * largest["price"]
-        # Find the ticker for this purchase
-        lticker = ""
-        for t, buys in purchases_by_ticker.items():
-            if largest in buys:
-                lticker = t
-                break
+    if priced:
+        largest = max(priced, key=lambda purchase: purchase["shares"] * purchase["price"])
+        ticker = next(t for t, rows in purchases_by_ticker.items() if largest in rows)
         lines.append(
-            f"**Largest purchase:** {largest['insider']} "
-            f"({largest['role']}) bought ${lval:,.0f} of "
-            f"{lticker} ({largest['company']})\n"
+            f"**Largest priced row:** {c.md_cell(largest['insider'])} bought "
+            f"${largest['shares'] * largest['price']:,.0f} of {ticker}.\n"
         )
 
-    # Sector breakdown
     sector_counts: dict[str, int] = defaultdict(int)
     sector_dollars: dict[str, float] = defaultdict(float)
-    for ticker, buys in purchases_by_ticker.items():
+    for ticker, rows in purchases_by_ticker.items():
         sector = c.get_cached_sector(ticker, mcap_data)
-        sector_counts[sector] += len(buys)
-        sector_dollars[sector] += sum(b["shares"] * b["price"] for b in buys)
-
+        sector_counts[sector] += len(rows)
+        sector_dollars[sector] += sum(
+            row["shares"] * row["price"] for row in rows if row["price"] is not None
+        )
     if sector_counts:
-        # Sort by dollar volume descending
-        sorted_sectors = sorted(sector_dollars.items(), key=lambda x: x[1], reverse=True)
-        lines.append("### Sector Breakdown\n")
-        lines.append("| Sector | Purchases | Dollar Volume |")
-        lines.append("|--------|-----------|---------------|")
-        for sector, dollars in sorted_sectors:
-            count = sector_counts[sector]
-            lines.append(f"| {sector} | {count} | ${dollars:,.0f} |")
+        lines += [
+            "### Sector breakdown\n",
+            "| Sector | Transaction rows | Priced value |",
+            "|---|---:|---:|",
+        ]
+        for sector, dollars in sorted(
+            sector_dollars.items(), key=lambda item: item[1], reverse=True
+        ):
+            lines.append(f"| {c.md_cell(sector)} | {sector_counts[sector]} | ${dollars:,.0f} |")
         lines.append("")
-
     return lines
+
+
+def _coverage_notes(form4_stats: dict, schedule_stats: dict) -> list[str]:
+    """Render omissions that affect interpretation of an otherwise valid report."""
+    notes = []
+    if form4_stats["failed_dates"]:
+        notes.append(
+            f"Form 4 index retrieval failed for: {', '.join(form4_stats['failed_dates'])}."
+        )
+    if schedule_stats["failed_dates"]:
+        notes.append(
+            f"Schedule 13D index retrieval failed for: {', '.join(schedule_stats['failed_dates'])}."
+        )
+    if form4_stats["parse_errors"]:
+        notes.append(
+            f"{form4_stats['parse_errors']} of {form4_stats['filings_seen']} Form 4 filings could not be parsed."
+        )
+    if schedule_stats["unresolved_ticker"]:
+        notes.append(
+            f"No current ticker resolved for {schedule_stats['unresolved_ticker']} Schedule 13D filing(s); "
+            "those were omitted."
+        )
+    unresolved = form4_stats["unresolved_market_cap"] + schedule_stats["unresolved_market_cap"]
+    if unresolved:
+        notes.append(
+            f"Yahoo market cap was unavailable for {unresolved} filing ticker lookup(s); those were omitted."
+        )
+    if not notes:
+        return []
+    return ["## Coverage notes\n", *[f"- {note}" for note in notes], ""]
+
+
+def _source(purchase: dict) -> str:
+    accession = purchase.get("accession") or "filing"
+    url = purchase.get("source_url")
+    return f"[{accession}]({url})" if url else accession
 
 
 def _build_markdown(
@@ -522,320 +498,219 @@ def _build_markdown(
     filings_13d: list[dict],
     dates: list[str],
     mcap_data: dict,
-    zscore_threshold: float = 1.5,
+    form4_stats: dict,
+    schedule_stats: dict,
+    threshold: float,
 ) -> str:
-    """Build Markdown output from scan results."""
-    lines = []
+    """Build the source-linked scan report."""
     date_range = f"{dates[0]} to {dates[-1]}" if len(dates) > 1 else dates[0]
-    lines.append(f"# Insider Activity Scan ({date_range})\n")
+    lines = [f"# Insider Filing Scan ({date_range})\n"]
+    lines.extend(_coverage_notes(form4_stats, schedule_stats))
+    lines.extend(_build_summary(purchases_by_ticker, clusters, filings_13d, mcap_data, threshold))
 
-    # Summary header
-    lines.extend(
-        _build_summary(
-            purchases_by_ticker,
-            clusters,
-            notable,
-            filings_13d,
-            mcap_data,
-            zscore_threshold=zscore_threshold,
-        )
+    lines.append(f"## Cluster purchases ({len(clusters)} tickers)\n")
+    lines.append(
+        "A cluster has code-P rows from at least two distinct reporting owners in Form 4 filings received during the scan window.\n"
     )
-
-    # --- Cluster buys ---
-    lines.append(f"## Cluster Buys ({len(clusters)} found)\n")
     if not clusters:
-        lines.append("No cluster buys detected in this window.\n")
-    else:
-        lines.append(
-            "A cluster buy = 2+ distinct insiders buying the same stock within the window.\n"
-        )
-        for cl in clusters:
-            badges = "".join(_signal_badge(s) for s in cl.get("signals", []))
-            lines.append(f"### {cl['ticker']} — {cl['company']}{badges}")
-            lines.append(f"- **Market Cap:** {c.fmt_mcap(cl['mcap'])}")
-            lines.append(f"- **Insiders buying:** {cl['num_insiders']}")
-            lines.append(f"- **Window:** {cl['date_range']}")
-            z = cl.get("zscore")
-            r = cl.get("return_30d")
-            if z is not None:
-                lines.append(
-                    f"- **30-day move:** {_return_str(r)} ({_zscore_str(z)} vs own history)"
-                )
+        lines.append("No clusters were detected in completed coverage.\n")
+    for cluster in clusters:
+        badges = "".join(_signal_badge(signal) for signal in cluster["signals"])
+        lines += [
+            f"### {cluster['ticker']} — {c.md_cell(cluster['company'])}{badges}",
+            f"- **Market cap:** {c.fmt_mcap(cluster['mcap'])}",
+            f"- **Distinct reporting owners:** {cluster['num_insiders']}",
+            f"- **Transaction-date range:** {cluster['date_range']}",
+            "",
+            "| Insider | Role | Shares | Price | % of Holding | % of O/S | Transaction date | Filed | Source |",
+            "|---|---|---:|---:|---:|---:|---|---|---|",
+        ]
+        for purchase in cluster["insiders"]:
             lines.append(
-                f"- **Link:** [Yahoo Finance](https://finance.yahoo.com/quote/{cl['ticker']})"
-            )
-            lines.append("")
-            lines.append("| Insider | Role | Shares | Price | % of Holding | % of O/S | Date |")
-            lines.append("|---------|------|--------|-------|--------------|----------|------|")
-            for ins in cl["insiders"]:
-                lines.append(
-                    f"| {ins['insider']} | {ins['role']} | "
-                    f"{ins['shares']:,.0f} | ${ins['price']:.2f} | "
-                    f"{_pct_of_holding(ins['shares'], ins.get('remaining'))} | "
-                    f"{_pct_of_outstanding(ins['shares'], ins.get('shares_out'))} | "
-                    f"{ins['date']} |"
-                )
-            lines.append("")
-
-    # --- Notable individual purchases (rip/dip) ---
-    if notable:
-        rips = [n for n in notable if n.get("signal") == "rip"]
-        dips = [n for n in notable if n.get("signal") == "dip"]
-
-        lines.append(f"## Notable Individual Purchases ({len(rips)} rip, {len(dips)} dip)\n")
-        lines.append(
-            "Volatility-adjusted: the 30-day return is measured against "
-            "the stock's own historical volatility. A z-score beyond "
-            f"±{zscore_threshold}σ flags the purchase as unusual.\n"
-        )
-
-        if dips:
-            lines.append("### 🔻 Dip Buys (buying into unusual weakness)\n")
-            lines.append(
-                "| Ticker | Company | Insider | Role | Shares | Price "
-                "| % of Holding | 30d Move | Z-Score | Mkt Cap |"
-            )
-            lines.append(
-                "|--------|---------|---------|------|--------|-------"
-                "|--------------|---------|---------|---------|"
-            )
-            for n in dips:
-                lines.append(
-                    f"| {n['ticker']} | {n['company']} | {n['insider']} | "
-                    f"{n['role']} | {n['shares']:,.0f} | ${n['price']:.2f} | "
-                    f"{_pct_of_holding(n['shares'], n.get('remaining'))} | "
-                    f"{_return_str(n.get('return_30d'))} | "
-                    f"{_zscore_str(n.get('zscore'))} | "
-                    f"{c.fmt_mcap(n.get('mcap'))} |"
-                )
-            lines.append("")
-
-        if rips:
-            lines.append("### 🚀 Rip Buys (buying into unusual strength)\n")
-            lines.append(
-                "| Ticker | Company | Insider | Role | Shares | Price "
-                "| % of Holding | 30d Move | Z-Score | Mkt Cap |"
-            )
-            lines.append(
-                "|--------|---------|---------|------|--------|-------"
-                "|--------------|---------|---------|---------|"
-            )
-            for n in rips:
-                lines.append(
-                    f"| {n['ticker']} | {n['company']} | {n['insider']} | "
-                    f"{n['role']} | {n['shares']:,.0f} | ${n['price']:.2f} | "
-                    f"{_pct_of_holding(n['shares'], n.get('remaining'))} | "
-                    f"{_return_str(n.get('return_30d'))} | "
-                    f"{_zscore_str(n.get('zscore'))} | "
-                    f"{c.fmt_mcap(n.get('mcap'))} |"
-                )
-            lines.append("")
-
-    # --- 13D filings ---
-    lines.append(f"## Activist 13D Filings ({len(filings_13d)} found)\n")
-    if not filings_13d:
-        lines.append(
-            f"No SC 13D / 13D/A filings in the {c.universe_label()} universe for this window.\n"
-        )
-    else:
-        lines.append("| Ticker | Company | Market Cap | Filer | Date | Form |")
-        lines.append("|--------|---------|-----------|-------|------|------|")
-        for f13 in filings_13d:
-            lines.append(
-                f"| {f13['ticker']} | {f13['company']} | "
-                f"{c.fmt_mcap(f13['mcap'])} | {f13['filer']} | "
-                f"{f13['date']} | {f13['form']} |"
+                f"| {c.md_cell(purchase['insider'])} | {c.md_cell(purchase['role'])} | "
+                f"{purchase['shares']:,.0f} | {_price(purchase['price'])} | "
+                f"{_pct_of_holding(purchase['shares'], purchase['remaining'])} | "
+                f"{_pct_of_outstanding(purchase['shares'], purchase['shares_out'])} | "
+                f"{purchase['transaction_date']} | {purchase['filing_date']} | {_source(purchase)} |"
             )
         lines.append("")
 
+    if notable:
+        dips = [purchase for purchase in notable if purchase["signal"] == "dip"]
+        rips = [purchase for purchase in notable if purchase["signal"] == "rip"]
+        lines += [
+            f"## Event-date move context ({len(dips)} dip, {len(rips)} rip)\n",
+            "The 22-trading-day return is compared with the stock's prior rolling 22-day returns as of the transaction date.\n",
+        ]
+        for label, rows in (("Dip", dips), ("Rip", rips)):
+            if not rows:
+                continue
+            lines += [
+                f"### {label} rows\n",
+                "| Ticker | Company | Insider | Shares | Price | 22d Move | Z-score | Transaction date | Filed | Source |",
+                "|---|---|---|---:|---:|---:|---:|---|---|---|",
+            ]
+            for purchase in rows:
+                lines.append(
+                    f"| {purchase['ticker']} | {c.md_cell(purchase['company'])} | "
+                    f"{c.md_cell(purchase['insider'])} | {purchase['shares']:,.0f} | "
+                    f"{_price(purchase['price'])} | {_return(purchase['return_22d'])} | "
+                    f"{_zscore(purchase['zscore'])} | {purchase['transaction_date']} | "
+                    f"{purchase['filing_date']} | {_source(purchase)} |"
+                )
+            lines.append("")
+
+    lines.append(f"## Schedule 13D filings ({len(filings_13d)})\n")
+    lines.append(
+        "A Schedule 13D is a beneficial-ownership filing under Section 13(d); it does not by itself establish an activist campaign.\n"
+    )
+    if not filings_13d:
+        lines.append("No Schedule 13D or 13D/A filings were found in completed coverage.\n")
+    else:
+        lines += [
+            "| Ticker | Issuer | Market Cap | Reporting person(s) | Filed | Form | Source |",
+            "|---|---|---:|---|---|---|---|",
+        ]
+        for filing in filings_13d:
+            lines.append(
+                f"| {filing['ticker']} | {c.md_cell(filing['company'])} | "
+                f"{c.fmt_mcap(filing['mcap'])} | {c.md_cell(filing['blockholders'])} | "
+                f"{filing['filing_date']} | {filing['form']} | "
+                f"[{filing['accession']}]({filing['source_url']}) |"
+            )
+        lines.append("")
     return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
-# Discord embeds
-# ---------------------------------------------------------------------------
 
 
 def _build_discord_embeds(
     clusters: list[dict], notable: list[dict], filings_13d: list[dict]
 ) -> list[dict]:
-    """Build Discord embed objects for webhook posting."""
+    """Build concise, source-linked Discord alerts."""
     embeds = []
-
-    for cl in clusters:
-        insider_lines = []
-        for ins in cl["insiders"]:
-            insider_lines.append(
-                f"• {ins['insider']} ({ins['role']}) — "
-                f"{ins['shares']:,.0f} shares @ ${ins['price']:.2f}"
-            )
-        signals = cl.get("signals", [])
-        signal_str = ""
-        if signals:
-            tags = []
-            if "dip" in signals:
-                tags.append("DIP BUY")
-            if "rip" in signals:
-                tags.append("RIP BUY")
-            signal_str = " [" + " + ".join(tags) + "]"
-
-        fields = [
-            {"name": "Ticker", "value": cl["ticker"], "inline": True},
-            {"name": "Market Cap", "value": c.fmt_mcap(cl["mcap"]), "inline": True},
-            {"name": "Window", "value": cl["date_range"], "inline": True},
-            {"name": "Insiders", "value": str(cl["num_insiders"]), "inline": True},
+    for cluster in clusters:
+        descriptions = [
+            f"• {row['insider']} ({row['role']}) — {row['shares']:,.0f} shares @ {_price(row['price'])}"
+            for row in cluster["insiders"]
         ]
-        z = cl.get("zscore")
-        r = cl.get("return_30d")
-        if z is not None:
-            fields.append(
-                {
-                    "name": "30d Move",
-                    "value": f"{_return_str(r)} ({_zscore_str(z)})",
-                    "inline": True,
-                }
-            )
-
         embeds.append(
             {
-                "title": (
-                    f"\U0001f7e2 Insider Cluster Buy — {cl['ticker']} ({cl['company']}){signal_str}"
-                ),
-                "url": f"https://finance.yahoo.com/quote/{cl['ticker']}",
+                "title": f"Insider purchase cluster — {cluster['ticker']} ({cluster['company']})",
+                "url": cluster["insiders"][0]["source_url"],
                 "color": 0x2ECC71,
-                "description": "\n".join(insider_lines),
-                "fields": fields,
-            }
-        )
-
-    # Notable singles — only post the most extreme (top 10)
-    for n in notable[:10]:
-        signal = n.get("signal", "")
-        if signal == "dip":
-            emoji = "\U0001f4c9"  # 📉
-            color = 0x3498DB  # blue
-            label = "Dip Buy"
-        else:
-            emoji = "\U0001f4c8"  # 📈
-            color = 0xE74C3C  # red
-            label = "Rip Buy"
-
-        embeds.append(
-            {
-                "title": (f"{emoji} {label} — {n['ticker']} ({n['company']})"),
-                "url": f"https://finance.yahoo.com/quote/{n['ticker']}",
-                "color": color,
-                "description": (
-                    f"• {n['insider']} ({n['role']}) — "
-                    f"{n['shares']:,.0f} shares @ ${n['price']:.2f}"
-                ),
+                "description": "\n".join(descriptions),
                 "fields": [
-                    {"name": "30d Move", "value": _return_str(n.get("return_30d")), "inline": True},
-                    {"name": "Z-Score", "value": _zscore_str(n.get("zscore")), "inline": True},
-                    {"name": "Market Cap", "value": c.fmt_mcap(n.get("mcap")), "inline": True},
+                    {"name": "Market Cap", "value": c.fmt_mcap(cluster["mcap"]), "inline": True},
+                    {"name": "Owners", "value": str(cluster["num_insiders"]), "inline": True},
+                    {"name": "Transaction dates", "value": cluster["date_range"], "inline": True},
                 ],
             }
         )
-
-    for f13 in filings_13d:
+    for purchase in notable:
+        label = "Dip" if purchase["signal"] == "dip" else "Rip"
         embeds.append(
             {
-                "title": (f"\U0001f3db\ufe0f Activist 13D — {f13['ticker']} ({f13['company']})"),
-                "url": f"https://finance.yahoo.com/quote/{f13['ticker']}",
+                "title": f"{label} purchase context — {purchase['ticker']} ({purchase['company']})",
+                "url": purchase["source_url"],
+                "color": 0x3498DB if label == "Dip" else 0xE74C3C,
+                "description": (
+                    f"{purchase['insider']} ({purchase['role']}) — "
+                    f"{purchase['shares']:,.0f} shares @ {_price(purchase['price'])}"
+                ),
+                "fields": [
+                    {"name": "22d move", "value": _return(purchase["return_22d"]), "inline": True},
+                    {"name": "Z-score", "value": _zscore(purchase["zscore"]), "inline": True},
+                    {
+                        "name": "Transaction date",
+                        "value": purchase["transaction_date"],
+                        "inline": True,
+                    },
+                ],
+            }
+        )
+    for filing in filings_13d:
+        embeds.append(
+            {
+                "title": f"Schedule 13D filing — {filing['ticker']} ({filing['company']})",
+                "url": filing["source_url"],
                 "color": 0xE67E22,
                 "fields": [
-                    {"name": "Filer", "value": f13["filer"], "inline": True},
-                    {"name": "Market Cap", "value": c.fmt_mcap(f13["mcap"]), "inline": True},
-                    {"name": "Date", "value": f13["date"], "inline": True},
+                    {
+                        "name": "Reporting person(s)",
+                        "value": filing["blockholders"],
+                        "inline": False,
+                    },
+                    {"name": "Market Cap", "value": c.fmt_mcap(filing["mcap"]), "inline": True},
+                    {"name": "Filed", "value": filing["filing_date"], "inline": True},
                 ],
             }
         )
-
     return embeds
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+def main() -> None:
+    """Run the insider-filing scan CLI."""
+    parser = argparse.ArgumentParser(description="Scan Form 4 purchases and Schedule 13D filings.")
+    parser.add_argument(
+        "--date", required=True, help='End filing date (YYYY-MM-DD, "today", or "yesterday").'
+    )
+    parser.add_argument("--lookback", type=int, default=5, help="Weekdays to scan (default: 5).")
+    parser.add_argument(
+        "--zscore", type=float, default=1.5, help="Absolute dip/rip threshold (default: 1.5)."
+    )
+    parser.add_argument("--webhook", help="Discord webhook URL (else $DISCORD_WEBHOOK_URL).")
+    c.add_identity_arg(parser)
+    c.add_cache_arg(parser)
+    args = parser.parse_args()
 
-
-def main():
-    p = argparse.ArgumentParser(
-        description="Scan Form 4 cluster buys, rip/dip buys, and 13D filings."
-    )
-    p.add_argument(
-        "--date",
-        required=True,
-        help='Filing date to scan (YYYY-MM-DD, "today", or "yesterday").',
-    )
-    p.add_argument(
-        "--lookback",
-        type=int,
-        default=5,
-        help="Days to look back for cluster detection (default: 5).",
-    )
-    p.add_argument(
-        "--zscore",
-        type=float,
-        default=1.5,
-        help="Z-score threshold for rip/dip tagging (default: 1.5).",
-    )
-    p.add_argument(
-        "--webhook",
-        help="Discord webhook URL (optional; if omitted, no Discord post).",
-    )
-    c.add_identity_arg(p)
-    c.add_cache_arg(p)
-    args = p.parse_args()
+    if args.lookback < 1:
+        parser.error("--lookback must be at least 1.")
+    if args.zscore <= 0:
+        parser.error("--zscore must be greater than zero.")
 
     c.resolve_identity(args.identity)
     cache = c.cache_root(args.cache_dir)
-
     end_date = c.parse_date(args.date)
-    dates = _trading_dates(end_date, args.lookback)
-    c.log(f"Scanning {len(dates)} trading days: {dates[0]} to {dates[-1]}")
+    dates = _weekdays(end_date, args.lookback)
+    c.log(f"Scanning {len(dates)} weekdays: {dates[0]} to {dates[-1]}")
 
     mcap_data = c.load_mcap_cache(cache)
-
     try:
-        purchases = scan_form4s(dates, cache, mcap_data)
-        filings_13d = scan_13d(dates, cache, mcap_data)
-
-        # Tag rip/dip on all purchases
+        purchases, form4_stats = scan_form4s(dates, mcap_data)
+        filings_13d, schedule_stats = scan_13d(dates, mcap_data)
         if purchases:
-            tag_rip_dip(purchases, zscore_threshold=args.zscore)
-
-        # Detect clusters
+            tag_move_context(purchases, args.zscore)
         clusters = detect_clusters(purchases)
-        cluster_tickers = set(cl["ticker"] for cl in clusters)
-
-        # Collect notable singles (rip/dip that aren't in a cluster)
-        notable = collect_notable_singles(purchases, cluster_tickers)
+        notable = collect_notable_singles(purchases, {cluster["ticker"] for cluster in clusters})
     finally:
         c.save_mcap_cache(cache, mcap_data)
 
-    total_rip = sum(1 for t in purchases.values() for b in t if b.get("signal") == "rip")
-    total_dip = sum(1 for t in purchases.values() for b in t if b.get("signal") == "dip")
-    c.log(
-        f"Found {len(clusters)} cluster buys, "
-        f"{total_rip} rip buys, {total_dip} dip buys, "
-        f"{len(filings_13d)} 13D filings"
+    report = _build_markdown(
+        purchases,
+        clusters,
+        notable,
+        filings_13d,
+        dates,
+        mcap_data,
+        form4_stats,
+        schedule_stats,
+        args.zscore,
     )
+    c.write_output(cache, "insiders", end_date, report)
 
-    md = _build_markdown(
-        purchases, clusters, notable, filings_13d, dates, mcap_data, zscore_threshold=args.zscore
-    )
-    slug = end_date
-    c.write_output(cache, "insiders", slug, md)
-
-    if args.webhook:
+    webhook = args.webhook or os.environ.get("DISCORD_WEBHOOK_URL")
+    if webhook:
         embeds = _build_discord_embeds(clusters, notable, filings_13d)
         if embeds:
-            c.log(f"Posting {len(embeds)} embeds to Discord...")
-            _post_discord(args.webhook, embeds)
-            c.log("Discord post complete.")
-        else:
-            c.log("No embeds to post to Discord.")
+            try:
+                _post_discord(webhook, embeds)
+            except RuntimeError as exc:
+                c.log(f"ERROR: {exc}")
+                sys.exit(1)
+
+    total_parser_failure = form4_stats["filings_seen"] > 0 and form4_stats["filings_parsed"] == 0
+    if form4_stats["failed_dates"] or schedule_stats["failed_dates"] or total_parser_failure:
+        c.log("ERROR: emitted report has incomplete SEC index or parser coverage.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

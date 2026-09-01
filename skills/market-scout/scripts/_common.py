@@ -1,9 +1,10 @@
-"""Minimal shared runtime setup for market-scout scripts."""
+"""Shared runtime and output helpers for market-scout scripts."""
 
+import os
 import sys
+from pathlib import Path
 
-# yfinance/pandas can emit non-ASCII text (e.g. company names like "Société");
-# force UTF-8 so a Windows cp1252 console doesn't raise UnicodeEncodeError.
+# Provider data can contain non-ASCII company and speaker names.
 if sys.platform.startswith("win"):
     for _stream in (sys.stdout, sys.stderr):
         try:
@@ -11,7 +12,19 @@ if sys.platform.startswith("win"):
         except Exception:
             pass
 
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except Exception:
+    pass
+
 
 def log(msg: str) -> None:
-    """Progress/diagnostics -> stderr (keeps stdout clean for the result)."""
+    """Write human-readable progress to stderr."""
     print(msg, file=sys.stderr, flush=True)
+
+
+def emit(path: str | os.PathLike) -> None:
+    """Write one absolute artifact path to stdout."""
+    print(str(Path(path).resolve()), flush=True)

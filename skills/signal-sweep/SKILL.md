@@ -1,108 +1,106 @@
 ---
 name: signal-sweep
 description: >-
-  Surface new investment ideas for a long-only investor by scanning SEC filings and market
-  data across the $50M–$10B US-listed universe. Use this skill to discover tickers you do not
-  yet have, via four scans: insider buying (cluster/dip/rip buys from Form 4), market screens
-  (near-52-week-low, high-short-interest, forgotten, and other presets), keyword/theme
-  exposure across filing full-text, and conference presenters. Triggers include "find me new
-  ideas", "show me insider buying", "run the screens", "who's exposed to [theme]", and "who's
-  presenting this week". This skill *produces* tickers for the rest of the stack to research:
-  reach for bottom-up-analyst to deep-dive a name you already have, market-scout for a quote,
-  sec-edgar-skill for a specific filing.
+  Discover US-listed equity research candidates by scanning Form 4 purchases and Schedule 13D
+  filings, configurable Yahoo Finance market screens, SEC filing full-text for a keyword or
+  theme, and 8-K disclosures for investor events. Use when the user wants new tickers or asks
+  who is buying, what companies match a market condition, which issuers mention a theme, or who
+  is presenting at investor events. Use company-research skills instead when the ticker is
+  already known and the task is diligence rather than discovery.
 ---
 
 # Signal Sweep
 
-Top-of-funnel idea surfacing for long-only investors. Scans SEC filings and market data
-across a configurable US-listed universe (NYSE, NASDAQ, OTC) and produces shortlists of
-tickers with reasons. It sits upstream of the research stack — it *produces* tickers that
-`bottom-up-analyst` then deep-dives. The market-cap floor and ceiling are set in
-`screens.json` under `universe.market_cap_min` / `universe.market_cap_max` (default
-$50M–$10B); all scripts read from that file.
+Produce auditable candidate lists for further research. A match is a lead, not an investment
+thesis.
 
-## Capabilities
+## Runtime and universe
 
-### 1. Insider buying scanner + 13D alerts
+Resolve bundled paths relative to this `SKILL.md` and invoke scripts by absolute path while keeping
+the shell working directory at the research workspace. Generated reports then land in the
+workspace's `./signal-sweep-cache`; pass `--cache-dir` to put them elsewhere.
 
-Scans Form 4 open-market purchases (code `P` only) and detects three signal types:
-
-- **Cluster buys:** 2+ distinct insiders buying the same stock within the lookback
-  window. Breadth signal — multiple people agree.
-- **Dip buys:** an insider buys after an unusually large decline, measured against the
-  stock's own volatility (trailing 30-day return z-score ≤ -1.5σ). A CEO buying into a
-  -2σ drawdown on a normally calm stock is high-signal even without a second insider.
-- **Rip buys:** an insider buys after an unusually large rally (z-score ≥ +1.5σ).
-  Insiders usually buy on weakness — buying into strength suggests the move has legs.
-
-The z-score is volatility-adjusted: a 20% drop is routine for a biotech but exceptional
-for a utility. The threshold adapts to each stock's personality.
+The packaged SecStack profile already exposes this skill's Python dependencies. For standalone
+use, run `uv sync --project "<skill-dir>"`, then activate that environment or prefix the commands
+below with `uv run --project "<skill-dir>"`. SEC-facing routes require `EDGAR_IDENTITY`; market
+screens do not:
 
 ```bash
-# On-demand
-python scripts/scan_insiders.py --date yesterday --lookback 5
-
-# Tighter threshold (only flag ≥2σ moves)
-python scripts/scan_insiders.py --date yesterday --lookback 5 --zscore 2.0
-
-# Daily CI with Discord webhook
-python scripts/scan_insiders.py --date yesterday --lookback 5 --webhook $DISCORD_WEBHOOK_URL
+export EDGAR_IDENTITY="Jane Analyst jane@example.com"
 ```
 
-Option exercises, tax withholding, awards, gifts, and sales are filtered out.
-`--help` for all flags.
+The default universe is Yahoo Finance equities in region `us` between the market-cap bounds in
+`screens.json` (currently $50M–$10B). Those bounds are configuration, not a definition of what is
+investable, and can be changed for the task.
 
-### 2. Market screens
+## Routes
 
-Config-driven screens via yfinance. Definitions live in `screens.json` — edit the JSON
-to add or tweak screens, no Python changes needed.
+### Insider purchases and Schedule 13D filings
 
 ```bash
-python scripts/scan_market.py --screen near-52wk-low
-python scripts/scan_market.py --all
-python scripts/scan_market.py --list
+python "<skill-dir>/scripts/scan_insiders.py" --date yesterday --lookback 5
 ```
 
-The 7 presets: `near-52wk-low`, `high-short-interest`, `short-covering`, `insider-heavy`,
-`fallen-from-grace`, `low-institutional`, `forgotten`. Each enriches the top results with
-P/E, short %, insider %, analyst rating, and sector. `--no-enrich` for
-faster runs. See `references/guide_screens.md` for the field reference and how to add
-custom screens.
+The scan counts only Form 4 transaction code `P`. It reports:
 
-### 3. Keyword / theme discovery
+- **clusters** — purchases by at least two distinct reporting owners in filings received during
+  the scan window; and
+- **dip/rip context** — a purchase whose trailing 22-trading-day return is unusually negative or
+  positive relative to that stock's prior rolling returns (default threshold ±1.5 standard
+  deviations).
 
-Goes from a keyword to a list of exposed companies by searching the full text of SEC
-filings via EDGAR's EFTS engine. Finds non-obvious exposures — the REIT that leases to
-cannabis growers, the testing lab, the BDC that lends to the sector.
+Transaction date and filing date remain distinct. The move is measured as of the transaction date,
+so a historical scan does not use today's price action. Schedule 13D and 13D/A matches are labeled
+as blockholder filings, not presumed activism; inspect the linked filing for purpose and ownership.
+Use `--zscore` only when the task calls for a different sensitivity. Prefer the
+`DISCORD_WEBHOOK_URL` environment variable for optional alerts.
+
+### Configurable market screens
 
 ```bash
-python scripts/search_themes.py --keyword "cannabis" --since 2026-01-01
-python scripts/search_themes.py --keyword "tariff" --since 2025-01-01 --until 2026-06-17
+python "<skill-dir>/scripts/scan_market.py" --list
+python "<skill-dir>/scripts/scan_market.py" --screen near-52wk-low
+python "<skill-dir>/scripts/scan_market.py" --all
 ```
 
-Results are deduplicated by company, filtered to the configured universe, and enriched.
+`screens.json` contains the bundled query definitions. Results are ranked by each screen's declared
+sort field and can be enriched with Yahoo snapshot fields. Read `references/guide_screens.md` only
+when adding or changing a screen; it shows how to discover fields from the installed `yfinance`
+version rather than treating a static list as exhaustive.
 
-### 4. Conference discovery
-
-Finds companies presenting at conferences by scanning 8-K Item 8.01 filings for
-conference-related keywords.
+### SEC full-text theme search
 
 ```bash
-python scripts/scan_conferences.py --start 2026-06-16 --end 2026-06-20
+python "<skill-dir>/scripts/search_themes.py" --keyword "cannabis" --since 2026-01-01
+python "<skill-dir>/scripts/search_themes.py" --keyword "tariff" --since 2025-01-01 --until 2026-06-17
 ```
 
-Item 8.01 is a catch-all, so expect some false positives. The interesting follow-ups are
-interactive — "which of these also show insider buying?", "any in healthcare?"
+This searches EDGAR's full-text index, deduplicates the returned filing matches by issuer, applies
+the configured market-cap universe, and links the most recent matching filing. `--limit` caps
+filing documents before issuer deduplication; the report discloses when the server had more matches
+than were fetched. A keyword match establishes mention, not economic exposure—open the linked filing
+and inspect context before carrying a candidate forward.
 
-## Output
+### Investor-event discovery
 
-Every script writes a timestamped `.md` to `signal-sweep-cache/` and prints the absolute
-path to stdout (same `emit(path)` pattern as `sec-edgar-skill`). Market-cap lookups are
-cached to disk with a 24h TTL.
+```bash
+python "<skill-dir>/scripts/scan_conferences.py" --start 2026-06-16 --end 2026-06-20
+```
 
-## Resources
+This searches 8-K full text for third-party conferences, fireside chats, forums, symposia, and
+issuer-hosted investor or capital-markets days. It uses both Reg FD and Other Events disclosures;
+it is not an Item 8.01-only scan. The report links each source accession and discloses query
+truncation or retrieval failures. Classification is heuristic, so verify the event and date in the
+filing.
 
-| File | Purpose |
-|------|---------|
-| `screens.json` | The 7 preset screen definitions (user-editable) |
-| `references/guide_screens.md` | yfinance EquityQuery field reference + custom screen howto |
+## Output and failure semantics
+
+Each successful scan writes a date- or range-keyed Markdown report under
+`signal-sweep-cache/<route>/` and emits its absolute path to stdout. Re-running the same request
+refreshes that report. Shared Yahoo market-cap lookups used by SEC-facing routes have a 24-hour disk
+cache.
+
+Reports distinguish a valid empty result from incomplete retrieval. Source-query, index, and total
+parser failures exit nonzero. Recoverable omissions—such as an individually unparseable filing or
+an unavailable Yahoo market cap—remain explicit coverage notes rather than becoming false no-data
+claims.

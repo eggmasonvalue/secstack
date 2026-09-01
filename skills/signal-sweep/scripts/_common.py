@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime, timedelta
@@ -195,12 +196,12 @@ def load_universe() -> dict:
     return _universe_cache
 
 
-def universe_label() -> str:
-    """Human-readable universe range, e.g. '$50M\u2013$10B'."""
-    u = load_universe()
-    lo = fmt_mcap(u.get("market_cap_min", 50_000_000))
-    hi = fmt_mcap(u.get("market_cap_max", 10_000_000_000))
-    return f"{lo}\u2013{hi}"
+def universe_label(universe: dict | None = None) -> str:
+    """Return a human-readable market-cap range, such as '$50M to $10B'."""
+    bounds = universe or load_universe()
+    lo = fmt_mcap(bounds.get("market_cap_min", 50_000_000))
+    hi = fmt_mcap(bounds.get("market_cap_max", 10_000_000_000))
+    return f"{lo}–{hi}"
 
 
 def in_universe(mcap: int | None, floor: int | None = None, ceiling: int | None = None) -> bool:
@@ -228,6 +229,29 @@ def fmt_mcap(mcap: int | None) -> str:
     if mcap >= 1_000_000:
         return f"${mcap / 1_000_000:.0f}M"
     return f"${mcap:,.0f}"
+
+
+def extract_ticker(company: str) -> str | None:
+    """Extract the first Yahoo-style ticker from an EFTS company label."""
+    for group in re.findall(r"\(([^()]*)\)", company):
+        if group.upper().lstrip().startswith("CIK"):
+            continue
+        candidate = group.split(",", 1)[0].strip().upper().replace(".", "-")
+        if re.fullmatch(r"[A-Z][A-Z0-9-]{0,9}", candidate):
+            return candidate
+    return None
+
+
+def sec_filing_url(cik: str | int, accession: str) -> str:
+    """Build the SEC filing-index URL for an accession."""
+    bare_cik = str(cik).lstrip("0")
+    compact = accession.replace("-", "")
+    return f"https://www.sec.gov/Archives/edgar/data/{bare_cik}/{compact}/{accession}-index.html"
+
+
+def md_cell(value: object) -> str:
+    """Escape a value for a Markdown table cell."""
+    return str(value).replace("|", "\\|").replace("\n", " ").strip()
 
 
 def parse_date(s: str) -> str:

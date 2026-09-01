@@ -130,21 +130,44 @@ def _run_browser_script(script: str, timeout: int = 45) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _fetch_listing(ticker: str) -> list[dict]:
-    """Fetch the list of available transcripts for a ticker."""
+def _fetch_listing(ticker: str) -> list[dict] | None:
+    """Fetch available transcripts, or return None when retrieval fails."""
     url = f"{_BASE}/quote/{ticker}/earnings-calls/"
     if not _open_url(url, timeout=45):
-        return []
+        return None
     time.sleep(3)
-    script = 'JSON.stringify(Array.from(document.querySelectorAll(\'a[href*="earnings_call"]\')).map(a=>({url:a.getAttribute("href"),title:(a.textContent||"").trim()||a.getAttribute("aria-label")||a.getAttribute("href")})).filter(x=>x.url).filter((x,i,arr)=>arr.findIndex(y=>y.url===x.url)===i))'
+    script = r"""
+JSON.stringify((() => {
+  const links = Array.from(document.querySelectorAll('a[href*="earnings_call"]'))
+    .map(a => ({
+      url: a.getAttribute("href"),
+      title: (a.textContent || "").trim() || a.getAttribute("aria-label") || a.getAttribute("href")
+    }))
+    .filter(x => x.url)
+    .filter((x, i, all) => all.findIndex(y => y.url === x.url) === i);
+  const text = ((document.querySelector("main") || document.body).innerText || "").slice(0, 5000);
+  return { links, text };
+})())
+"""
     raw = _run_browser_script(script)
     if not raw:
-        return []
+        return None
     try:
-        return json.loads(raw)
+        payload = json.loads(raw)
+        if not isinstance(payload, dict) or not isinstance(payload.get("links"), list):
+            return None
+        if payload["links"]:
+            return payload["links"]
+        text = str(payload.get("text", ""))
+        if re.search(
+            r"no (?:earnings call )?transcripts|transcripts? (?:are )?not available", text, re.I
+        ):
+            return []
+        c.log("ERROR: Yahoo loaded without a transcript list or an explicit no-data message.")
+        return None
     except json.JSONDecodeError:
-        c.log("WARNING: could not parse listing response.")
-        return []
+        c.log("ERROR: could not parse Yahoo's transcript listing response.")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -297,11 +320,19 @@ def main():
     )
     args = p.parse_args()
 
+    if args.latest < 0:
+        p.error("--latest must be zero or greater.")
+    if args.quarter and not re.fullmatch(r"Q[1-4]", args.quarter.upper()):
+        p.error("--quarter must be Q1, Q2, Q3, or Q4.")
+
     ticker = args.ticker.upper()
 
     # Step 1: Fetch listing
     c.log(f"Fetching transcript listing for {ticker}...")
     transcripts = _fetch_listing(ticker)
+    if transcripts is None:
+        c.log(f"ERROR: transcript listing retrieval failed for {ticker}.")
+        sys.exit(1)
     if not transcripts:
         c.log(f"No earnings call transcripts found for {ticker}.")
         sys.exit(0)
@@ -333,6 +364,8 @@ def main():
     root = _cache_root(args.cache_dir)
     out_dir = _transcript_dir(root, ticker)
     c.log(f"Saving to: {out_dir}")
+    completed = 0
+    failed = 0
 
     for i, t in enumerate(transcripts):
         fname = _filename_from_title(t["title"])
@@ -340,13 +373,15 @@ def main():
 
         if out_path.exists():
             c.log(f"  [{i + 1}/{len(transcripts)}] Already cached: {fname}")
-            print(str(out_path.resolve()))
+            c.emit(out_path)
+            completed += 1
             continue
 
         c.log(f"  [{i + 1}/{len(transcripts)}] Downloading: {t['title']}")
         data = _fetch_transcript(t["url"])
         if not data or not data.get("blocks"):
-            c.log("    WARNING: no transcript content found, skipping.")
+            c.log("    ERROR: no transcript content found, skipping.")
+            failed += 1
             continue
 
         md = _render_markdown(ticker, t["url"], data)
@@ -354,12 +389,16 @@ def main():
         Path(out_path).write_text(md, encoding="utf-8")
         block_count = len(data.get("blocks", []))
         c.log(f"    Saved: {fname} ({block_count} speaker turns)")
-        print(str(out_path.resolve()))
+        c.emit(out_path)
+        completed += 1
 
         if i < len(transcripts) - 1:
             time.sleep(_DELAY)
 
-    c.log("Done.")
+    if failed:
+        c.log(f"ERROR: {failed} transcript(s) failed; {completed} completed or cached.")
+        sys.exit(1)
+    c.log(f"Done: {completed} transcript(s) completed or cached.")
 
 
 if __name__ == "__main__":

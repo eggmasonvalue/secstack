@@ -56,62 +56,8 @@ the skill that owns them. Load only the guide or script required for the current
 - [`bottom-up-analyst`](bottom-up-analyst/) contains valuation arithmetic and memo frameworks.
 - [`pitch-like-lou`](pitch-like-lou/) contains the pitch-writing workflow and reference corpus.
 
-Each skill's README documents its own dependencies and usage. Runtime caches are generated
-next to the relevant workspace and are git-ignored.
-
-## Current snapshot
-
-The following commands measure the entry-point surface and the explicitly referenced skill
-resources from the repository root:
-
-```bash
-cloc --by-file --include-lang=Markdown \
-  skills/bottom-up-analyst/SKILL.md \
-  skills/pitch-like-lou/SKILL.md \
-  skills/sec-edgar-skill/SKILL.md \
-  skills/signal-sweep/SKILL.md \
-  skills/market-scout/SKILL.md
-```
-
-```bash
-cloc \
-  skills/bottom-up-analyst/SKILL.md \
-  skills/bottom-up-analyst/references/memo_template.md \
-  skills/bottom-up-analyst/references/guide_normalization.md \
-  skills/bottom-up-analyst/references/guide_competitive.md \
-  skills/bottom-up-analyst/references/guide_valuation.md \
-  skills/bottom-up-analyst/references/guide_ownership_signals.md \
-  skills/bottom-up-analyst/references/archetypes/*.md \
-  skills/bottom-up-analyst/scripts/dcf.py \
-  skills/bottom-up-analyst/scripts/epv.py \
-  skills/market-scout/SKILL.md \
-  skills/market-scout/scripts/fetch_market_data.py \
-  skills/market-scout/scripts/fetch_transcripts.py \
-  skills/pitch-like-lou/SKILL.md \
-  skills/pitch-like-lou/references/corpus/*.md \
-  skills/sec-edgar-skill/SKILL.md \
-  skills/sec-edgar-skill/references/guide_core.md \
-  skills/sec-edgar-skill/references/guide_filings.md \
-  skills/sec-edgar-skill/references/guide_financials.md \
-  skills/sec-edgar-skill/references/guide_ownership.md \
-  skills/sec-edgar-skill/references/guide_proxy.md \
-  skills/sec-edgar-skill/references/guide_holdings.md \
-  skills/sec-edgar-skill/scripts/orient.py \
-  skills/sec-edgar-skill/scripts/fetch_filing.py \
-  skills/sec-edgar-skill/scripts/fetch_filings.py \
-  skills/sec-edgar-skill/scripts/parse_financials.py \
-  skills/sec-edgar-skill/scripts/list_headings.py \
-  skills/sec-edgar-skill/scripts/fetch_insider_trades.py \
-  skills/sec-edgar-skill/scripts/fetch_13f_holders.py \
-  skills/sec-edgar-skill/scripts/test_setup.py \
-  skills/signal-sweep/SKILL.md \
-  skills/signal-sweep/screens.json \
-  skills/signal-sweep/references/guide_screens.md \
-  skills/signal-sweep/scripts/scan_insiders.py \
-  skills/signal-sweep/scripts/scan_market.py \
-  skills/signal-sweep/scripts/search_themes.py \
-  skills/signal-sweep/scripts/scan_conferences.py
-```
+Each skill's README documents its dependencies and usage. Invoke installed artifact-producing
+scripts from the research workspace so their git-ignored runtime caches stay beside the work.
 
 ## Research scope
 

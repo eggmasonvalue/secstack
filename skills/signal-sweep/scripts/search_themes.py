@@ -1,12 +1,7 @@
-"""Keyword / theme discovery via EDGAR EFTS full-text search.
+"""Discover issuers through SEC EFTS full-text keyword matches.
 
-Searches the actual text of SEC filings for a keyword or phrase, deduplicates
-by company, filters to the $50M-$10B universe, and enriches with market data.
-Goes from a keyword to a list of exposed companies — including non-obvious ones.
-
-Usage:
-    python scripts/search_themes.py --keyword "cannabis" --since 2026-01-01
-    python scripts/search_themes.py --keyword "tariff" --since 2025-01-01 --until 2026-06-17
+The report distinguishes matching filing documents from keyword occurrences and
+discloses when ``--limit`` truncates the server result set.
 """
 
 from __future__ import annotations
@@ -21,211 +16,263 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common as c
 
 
-def _extract_ticker_from_company(company_str: str) -> str | None:
-    """Try to extract ticker from EFTS company string like 'SNDL Inc.  (SNDL)  (CIK ...)'."""
-    m = re.search(r"\(([A-Z]{1,5})\)", company_str)
-    if m:
-        return m.group(1)
-    return None
-
-
 def _resolve_ticker_for_cik(cik: str) -> str | None:
-    """Try to resolve a ticker from a CIK via edgartools."""
+    """Resolve the first issuer ticker exposed by edgartools."""
     try:
         from edgar import Company
 
-        co = Company(int(cik.lstrip("0")))
-        tickers = getattr(co, "tickers", [])
+        company = Company(int(cik.lstrip("0")))
+        tickers = getattr(company, "tickers", [])
         if tickers:
-            return next(iter(tickers))
+            return str(next(iter(tickers))).upper().replace(".", "-")
     except Exception:
         pass
     return None
 
 
 def search_and_filter(
-    keyword: str, since: str, until: str, limit: int, cache: Path, mcap_data: dict
-) -> tuple[list[dict], int]:
-    """Search EFTS, deduplicate, filter to universe, enrich.
-
-    Returns (enriched_results, total_unique_before_filter).
-    """
+    keyword: str, since: str, until: str, limit: int, mcap_data: dict
+) -> tuple[list[dict], dict]:
+    """Search EFTS, deduplicate by CIK, and apply the configured universe."""
     import edgar
 
-    c.log(f"Searching EFTS for '{keyword}' ({since} to {until}, limit={limit})...")
-
-    # EFTS search — both start_date AND end_date must be provided together
+    c.log(f"Searching EFTS for {keyword!r} ({since} to {until}, limit={limit})...")
     try:
-        results = edgar.search_filings(
-            keyword, start_date=since, end_date=until, limit=min(limit, 100)
+        search = edgar.search_filings(
+            keyword,
+            start_date=since,
+            end_date=until,
+            limit=min(limit, 100),
         )
     except Exception as exc:
-        c.log(f"ERROR: EFTS search failed: {exc}")
-        return [], 0
+        raise RuntimeError(f"EFTS search failed: {exc}") from exc
 
-    total_server = getattr(results, "total", "?")
-    c.log(f"  Server reports {total_server} total matches")
+    if search is None:
+        raise RuntimeError("EFTS returned no search object")
 
-    # Fetch more if needed
-    fetched = len(list(results)) if results else 0
-    if fetched < limit and fetched > 0:
+    server_total = int(getattr(search, "total", 0) or 0)
+    fetched = len(list(search))
+    if fetched < min(limit, server_total):
         try:
-            remaining = limit - fetched
-            results.fetch_more(remaining)
-            c.log(f"  Fetched {remaining} more results")
+            search = search.fetch_more(min(limit, server_total) - fetched)
         except Exception as exc:
-            c.log(f"  WARNING: fetch_more failed: {exc}")
+            raise RuntimeError(f"EFTS pagination failed after {fetched} results: {exc}") from exc
+    rows = list(search)[:limit]
+    fetched = len(rows)
+    c.log(f"  Fetched {fetched} of {server_total} matching filing documents")
 
-    # Deduplicate by CIK -> collect mention counts and most recent filing
-    companies: dict[
-        str, dict
-    ] = {}  # cik -> {company, cik, mentions, forms, latest_date, latest_form}
-    for r in results:
-        cik = str(getattr(r, "cik", "")).lstrip("0")
+    companies: dict[str, dict] = {}
+    for result in rows:
+        cik = str(getattr(result, "cik", "")).lstrip("0")
         if not cik:
             continue
+        company_name = str(getattr(result, "company", "Unknown"))
+        form = str(getattr(result, "form", ""))
+        filed = str(getattr(result, "filed", ""))
+        accession = str(getattr(result, "accession_number", "") or "")
 
-        company_name = getattr(r, "company", "Unknown")
-        form = getattr(r, "form", "")
-        filed = str(getattr(r, "filed", ""))
-
-        if cik not in companies:
-            companies[cik] = {
+        entry = companies.setdefault(
+            cik,
+            {
                 "cik": cik,
                 "company_raw": company_name,
-                "mentions": 0,
-                "forms": set(),
+                "matching_documents": 0,
                 "latest_date": "",
                 "latest_form": "",
-            }
-
-        entry = companies[cik]
-        entry["mentions"] += 1
-        entry["forms"].add(form)
+                "latest_accession": "",
+            },
+        )
+        entry["matching_documents"] += 1
         if filed > entry["latest_date"]:
             entry["latest_date"] = filed
             entry["latest_form"] = form
+            entry["latest_accession"] = accession
 
     total_unique = len(companies)
-    c.log(f"  {total_unique} unique companies found")
+    c.log(f"  {total_unique} unique CIKs in the fetched result set")
 
-    # Resolve tickers and filter by market cap
     enriched = []
-    for i, (cik, info) in enumerate(companies.items()):
-        if i % 20 == 0:
-            c.log(f"  Resolving tickers/market caps: {i}/{total_unique}...")
+    unresolved_tickers = 0
+    unresolved_market_caps = 0
+    outside_universe = 0
+    for index, (cik, info) in enumerate(companies.items()):
+        if index % 20 == 0:
+            c.log(f"  Resolving tickers/market caps: {index}/{total_unique}...")
 
-        # Try to extract ticker from company string first
-        ticker = _extract_ticker_from_company(info["company_raw"])
+        ticker = c.extract_ticker(info["company_raw"]) or _resolve_ticker_for_cik(cik)
         if not ticker:
-            ticker = _resolve_ticker_for_cik(cik)
-
-        if not ticker:
+            unresolved_tickers += 1
             continue
 
-        ticker = ticker.upper()
         mcap = c.get_market_cap(ticker, mcap_data)
+        if mcap is None:
+            unresolved_market_caps += 1
+            continue
         if not c.in_universe(mcap):
+            outside_universe += 1
             continue
 
-        # Enrich with yfinance data
         import yfinance as yf
 
         try:
-            yf_info = yf.Ticker(ticker).info or {}
+            yahoo = yf.Ticker(ticker).info or {}
         except Exception:
-            yf_info = {}
+            yahoo = {}
 
+        accession = info["latest_accession"]
         enriched.append(
             {
                 "ticker": ticker,
-                "company": yf_info.get("shortName")
-                or yf_info.get("longName")
-                or info["company_raw"],
-                "sector": yf_info.get("sector", "n/a"),
-                "industry": yf_info.get("industry", "n/a"),
+                "company": yahoo.get("shortName") or yahoo.get("longName") or info["company_raw"],
+                "sector": yahoo.get("sector", "n/a"),
                 "mcap": mcap,
-                "price": yf_info.get("currentPrice"),
-                "mentions": info["mentions"],
+                "price": yahoo.get("currentPrice") or yahoo.get("regularMarketPrice"),
+                "matching_documents": info["matching_documents"],
                 "latest_date": info["latest_date"],
                 "latest_form": info["latest_form"],
+                "latest_accession": accession,
+                "source_url": c.sec_filing_url(cik, accession) if accession else "",
             }
         )
 
-    # Sort by most recent filing date (recency-first)
-    enriched.sort(key=lambda x: x["latest_date"], reverse=True)
-    return enriched, total_unique
+    enriched.sort(key=lambda item: item["latest_date"], reverse=True)
+    coverage = {
+        "server_total": server_total,
+        "fetched": fetched,
+        "unique_ciks": total_unique,
+        "truncated_by_limit": server_total > limit,
+        "pagination_incomplete": fetched < min(server_total, limit),
+        "unresolved_tickers": unresolved_tickers,
+        "unresolved_market_caps": unresolved_market_caps,
+        "outside_universe": outside_universe,
+    }
+    return enriched, coverage
 
 
 def _render_markdown(
-    keyword: str, since: str, until: str, results: list[dict], total_unique: int
+    keyword: str,
+    since: str,
+    until: str,
+    results: list[dict],
+    coverage: dict,
 ) -> str:
-    """Render theme search results as Markdown."""
-    lines = []
-    lines.append(f'# Theme Search: "{keyword}" (since {since})\n')
+    """Render a source-linked theme-search report."""
+    lines = [f'# Theme Search: "{keyword}" ({since} to {until})\n']
     lines.append(
-        f'Found {total_unique} unique companies mentioning "{keyword}" in SEC filings.\n'
-        f"After universe filter ({c.universe_label()}): **{len(results)} companies**.\n"
+        f"EFTS returned **{coverage['fetched']} of {coverage['server_total']}** matching filing "
+        f"documents, representing **{coverage['unique_ciks']} unique CIKs** in the fetched set."
+    )
+    if coverage["truncated_by_limit"]:
+        lines.append(
+            "\n_Coverage is truncated by `--limit`; issuer counts and rankings are not complete._"
+        )
+    if coverage["pagination_incomplete"]:
+        lines.append(
+            "\n_EFTS returned fewer documents than requested; source coverage is incomplete._"
+        )
+    lines.append(
+        f"\nAfter the configured universe filter ({c.universe_label()}): "
+        f"**{len(results)} companies**.\n"
+    )
+    if coverage["unresolved_tickers"] or coverage["unresolved_market_caps"]:
+        lines.append(
+            f"_Omitted for unresolved current metadata: {coverage['unresolved_tickers']} CIK(s) "
+            f"without a ticker and {coverage['unresolved_market_caps']} ticker(s) without a Yahoo "
+            "market cap._\n"
+        )
+    lines.append(
+        "A full-text match shows that the filing contains the term; inspect the linked source to "
+        "determine context and materiality.\n"
     )
 
     if not results:
-        lines.append(f"No companies in the {c.universe_label()} universe matched this search.\n")
+        lines.append("No companies in the configured universe appeared in the fetched matches.\n")
         return "\n".join(lines)
 
-    lines.append(
-        "| # | Ticker | Company | Sector | Mkt Cap | Price | Mentions | Most Recent Filing |"
-    )
-    lines.append(
-        "|---|--------|---------|--------|---------|-------|----------|--------------------|"
-    )
-    for i, r in enumerate(results, 1):
-        price_s = f"${r['price']:.2f}" if r.get("price") else "n/a"
-        lines.append(
-            f"| {i} | {r['ticker']} | {r['company']} | {r['sector']} | "
-            f"{c.fmt_mcap(r['mcap'])} | {price_s} | {r['mentions']} | "
-            f"{r['latest_form']} {r['latest_date']} |"
+    lines += [
+        "| # | Ticker | Company | Sector | Mkt Cap | Price | Matching documents | Latest source |",
+        "|---|---|---|---|---:|---:|---:|---|",
+    ]
+    for index, result in enumerate(results, 1):
+        price = result.get("price")
+        price_text = f"${price:.2f}" if price is not None else "n/a"
+        accession = result["latest_accession"] or "source"
+        source = (
+            f"[{result['latest_form']} {result['latest_date']} · {accession}]({result['source_url']})"
+            if result["source_url"]
+            else f"{result['latest_form']} {result['latest_date']}"
         )
-
+        lines.append(
+            f"| {index} | {c.md_cell(result['ticker'])} | {c.md_cell(result['company'])} | "
+            f"{c.md_cell(result['sector'])} | {c.fmt_mcap(result['mcap'])} | {price_text} | "
+            f"{result['matching_documents']} | {source} |"
+        )
     lines.append("")
     return "\n".join(lines)
 
 
-def main():
-    p = argparse.ArgumentParser(description="Keyword/theme discovery via EDGAR EFTS.")
-    p.add_argument("--keyword", required=True, help="Search term.")
-    p.add_argument("--since", required=True, help="Start date YYYY-MM-DD.")
-    p.add_argument("--until", help="End date YYYY-MM-DD (default: today).")
-    p.add_argument(
+def main() -> None:
+    """Run the theme-search CLI."""
+    parser = argparse.ArgumentParser(description="Keyword/theme discovery via SEC EFTS.")
+    parser.add_argument("--keyword", required=True, help="Search term.")
+    parser.add_argument("--since", required=True, help="Start date YYYY-MM-DD.")
+    parser.add_argument("--until", help="End date YYYY-MM-DD (default: today).")
+    parser.add_argument(
         "--limit",
         type=int,
         default=200,
-        help="Max EFTS results to fetch before dedup (default: 200).",
+        help="Maximum matching filing documents before issuer deduplication (default: 200).",
     )
-    c.add_identity_arg(p)
-    c.add_cache_arg(p)
-    args = p.parse_args()
+    c.add_identity_arg(parser)
+    c.add_cache_arg(parser)
+    args = parser.parse_args()
+
+    if args.limit < 1:
+        parser.error("--limit must be at least 1.")
+    try:
+        since = datetime.strptime(args.since, "%Y-%m-%d").date()
+        until = (
+            datetime.strptime(args.until, "%Y-%m-%d").date()
+            if args.until
+            else datetime.now().date()
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    if since > until:
+        parser.error("--since must not be later than --until.")
 
     c.resolve_identity(args.identity)
     cache = c.cache_root(args.cache_dir)
-    until = args.until or datetime.now().strftime("%Y-%m-%d")
-
     mcap_data = c.load_mcap_cache(cache)
 
     try:
-        results, total_unique = search_and_filter(
-            args.keyword, args.since, until, args.limit, cache, mcap_data
+        results, coverage = search_and_filter(
+            args.keyword,
+            since.isoformat(),
+            until.isoformat(),
+            args.limit,
+            mcap_data,
         )
+    except RuntimeError as exc:
+        c.log(f"ERROR: {exc}")
+        sys.exit(1)
     finally:
         c.save_mcap_cache(cache, mcap_data)
 
     c.log(f"Final: {len(results)} companies in universe")
-
-    md = _render_markdown(args.keyword, args.since, until, results, total_unique)
-
-    # Slug: sanitize keyword for filename
-    slug_kw = re.sub(r"[^a-zA-Z0-9]+", "-", args.keyword).strip("-").lower()
-    slug = f"{slug_kw}_since-{args.since}"
-    c.write_output(cache, "themes", slug, md)
+    markdown = _render_markdown(
+        args.keyword,
+        since.isoformat(),
+        until.isoformat(),
+        results,
+        coverage,
+    )
+    slug_keyword = re.sub(r"[^a-zA-Z0-9]+", "-", args.keyword).strip("-").lower() or "search"
+    slug = f"{slug_keyword}_{since.isoformat()}_to_{until.isoformat()}"
+    c.write_output(cache, "themes", slug, markdown)
+    if coverage["pagination_incomplete"]:
+        c.log("ERROR: emitted report has incomplete EFTS pagination coverage.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

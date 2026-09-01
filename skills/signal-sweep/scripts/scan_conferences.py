@@ -1,59 +1,36 @@
-r"""Discover companies presenting at investor conferences via 8-K filings.
+"""Discover investor-event announcements through SEC 8-K full-text search.
 
-Two-stage pipeline:
-  Stage 1 — EFTS server-side pre-filter (cheap, no downloads):
-    Run targeted full-text queries against EDGAR's search index, optionally
-    filtered by item number. Merge results and deduplicate by accession number.
-
-  Stage 2 — Client-side text classification (download & parse):
-    For each candidate, download the actual filing HTML and apply:
-      2a. Exclusion check  — reject if every occurrence of the signal word
-                             is inside a known false-positive phrase.
-      2b. Attendance check — accept only if an attendance verb pattern matches.
-    Some query types (investor day, capital markets day) skip Stage 2 entirely
-    because the signal is reliable enough from EFTS + item filter alone, and
-    the keyword often lives in the exhibit rather than the HTML body.
-
-Usage:
-    python scripts/scan_conferences.py --start 2026-06-16 --end 2026-06-20
-
-    # override classifier params at runtime (useful for testing)
-    python scripts/scan_conferences.py --start 2026-06-16 --end 2026-06-20 \\
-        --params '{"exclusions": ["conference call", "conference call and webcast"]}'
+Targeted EFTS queries produce candidates. Most candidates are then classified
+against filing text; exact investor-day queries can survive unavailable primary
+text because the indexed phrase and item filter are the signal. Reports disclose
+pagination caps and retrieval failures.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common as c
 
-# ---------------------------------------------------------------------------
-# Default classifier parameters
-# All three lists are tunable — start minimal, add one element at a time.
-# ---------------------------------------------------------------------------
-DEFAULT_PARAMS: dict = {
-    # Stage 1: EFTS full-text queries.
-    # Key   = quoted string exactly as passed to edgar.search_filings(query=...)
-    # Value = item filter string (or None for no filter)
+_MAX_RESULTS_PER_QUERY = 300
+
+# Specific queries precede the broad ``conference`` query because candidate
+# deduplication retains the first matching route.
+_CLASSIFIER: dict = {
     "queries": {
-        "conference": None,  # backbone — ~226/week, needs Stage 2
-        '"fireside chat"': None,  # ~8/week, near-zero noise
-        "symposium": None,  # ~4/week, clean
-        '"forum"': "7.01",  # ~408/week with 7.01; Stage 2 clears boilerplate
-        '"investor day"': "8.01",  # ~2/week, own-hosted events; skip Stage 2
-        '"capital markets day"': None,  # <1/week, European names; skip Stage 2
+        '"investor day"': "8.01",
+        '"capital markets day"': None,
+        '"fireside chat"': None,
+        "symposium": None,
+        '"forum"': "7.01",
+        "conference": None,
     },
-    # Queries where keyword is often in exhibit only or signal is reliable
-    # enough from EFTS+item filter — skip Stage 2 text classification.
-    "no_text_check_queries": ['"investor day"', '"capital markets day"'],
-    # Stage 2a: reject if EVERY occurrence of the signal word sits inside one
-    # of these phrases (case-insensitive substring match in a ±60-char window).
+    "trusted_index_queries": ['"investor day"', '"capital markets day"'],
     "exclusions": [
         "conference call",
         "conference call and webcast",
@@ -61,9 +38,7 @@ DEFAULT_PARAMS: dict = {
         "forum selection",
         "alternative forum",
     ],
-    # Stage 2b: accept if at least one of these patterns matches (re.IGNORECASE).
-    # Keep minimal — add only when a real filing fails to match.
-    "patterns": [
+    "attendance_patterns": [
         r"will present",
         r"presenting at",
         r"participate in",
@@ -76,198 +51,172 @@ DEFAULT_PARAMS: dict = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Stage 2 helpers
-# ---------------------------------------------------------------------------
-
-
 def _all_occurrences_excluded(text: str, signal_word: str, exclusions: list[str]) -> bool:
-    """Return True only if EVERY occurrence of signal_word in text is contained within an exclusion-phrase context (±60 chars).
-
-    Logic: if even one occurrence is NOT in an exclusion context, the filing
-    may be genuine — don't reject it.
-    """
-    positions = [m.start() for m in re.finditer(re.escape(signal_word), text, re.IGNORECASE)]
-
+    """Return whether every signal occurrence lies near an excluded phrase."""
+    positions = [
+        match.start() for match in re.finditer(re.escape(signal_word), text, re.IGNORECASE)
+    ]
     if not positions:
-        return False  # word not found → can't reject on this basis
-
-    for pos in positions:
-        window = text[max(0, pos - 60) : pos + 60 + len(signal_word)].lower()
-        if not any(ex.lower() in window for ex in exclusions):
-            return False  # found at least one occurrence outside exclusions
-
-    return True  # every occurrence was inside an exclusion phrase
-
-
-def _has_attendance_verb(text: str, patterns: list[str]) -> bool:
-    return any(re.search(p, text, re.IGNORECASE) for p in patterns)
+        return False
+    for position in positions:
+        window = text[max(0, position - 60) : position + 60 + len(signal_word)].lower()
+        if not any(exclusion.lower() in window for exclusion in exclusions):
+            return False
+    return True
 
 
 def _classify(text: str, query: str, params: dict) -> str:
-    """Apply Stage 2 classification.
-
-    Returns one of: "ACCEPT" | "REJECT_EXCLUSION" | "REJECT_NO_PATTERN" | "SKIP_NO_TEXT".
-    """
-    # Some queries trust EFTS + item filter — skip text check entirely.
-    if query in params["no_text_check_queries"]:
+    """Classify a downloaded candidate filing."""
+    if query in params["trusted_index_queries"]:
         return "ACCEPT"
 
-    # The signal word is the first meaningful word of the query.
     signal_word = query.strip('"').split()[0]
-
-    # If the signal word isn't in the HTML body at all, the match was in an
-    # exhibit — we can't classify it, so skip rather than false-accept.
     if not re.search(re.escape(signal_word), text, re.IGNORECASE):
-        return "SKIP_NO_TEXT"
-
-    # 2a — exclusion check
+        return "REJECT_NO_PRIMARY_TEXT_MATCH"
     if _all_occurrences_excluded(text, signal_word, params["exclusions"]):
         return "REJECT_EXCLUSION"
-
-    # 2b — attendance verb check
-    if _has_attendance_verb(text, params["patterns"]):
+    if any(re.search(pattern, text, re.IGNORECASE) for pattern in params["attendance_patterns"]):
         return "ACCEPT"
-
-    return "REJECT_NO_PATTERN"
-
-
-# ---------------------------------------------------------------------------
-# Stage 1: EFTS candidate retrieval
-# ---------------------------------------------------------------------------
+    return "REJECT_NO_ATTENDANCE_PATTERN"
 
 
-def _get_candidates(start: str, end: str, params: dict, limit: int = 300) -> dict[str, dict]:
-    """Run all EFTS queries, merge results, deduplicate by accession number.
-
-    Returns {accession_number: {"result": EFTSResult, "query": str}}.
-    First-match wins on deduplication (queries are ordered by signal quality).
-    """
+def _get_candidates(
+    start: str,
+    end: str,
+    params: dict,
+    max_per_query: int = _MAX_RESULTS_PER_QUERY,
+) -> tuple[dict[str, dict], list[dict]]:
+    """Search, paginate, and deduplicate EFTS candidates by accession."""
     import edgar
 
     candidates: dict[str, dict] = {}
+    query_stats = []
 
     for query, item_filter in params["queries"].items():
-        c.log(f"  EFTS: {query!r}" + (f" items={item_filter!r}" if item_filter else "") + " ...")
+        label = f"{query!r}" + (f" items={item_filter!r}" if item_filter else "")
+        c.log(f"  EFTS: {label} ...")
+        stat = {
+            "query": query,
+            "item_filter": item_filter,
+            "total": 0,
+            "fetched": 0,
+            "truncated": False,
+            "error": "",
+        }
         try:
-            results = edgar.search_filings(
+            search = edgar.search_filings(
                 query=query,
                 forms="8-K",
                 items=item_filter,
                 start_date=start,
                 end_date=end,
-                limit=limit,
+                limit=min(max_per_query, 100),
             )
-            if results is None:
-                continue
-            n = 0
-            for r in results:
-                acc = getattr(r, "accession_number", "") or ""
-                if not acc:
-                    continue
-                if acc not in candidates:
-                    candidates[acc] = {"result": r, "query": query}
-                    n += 1
-            c.log(f"    → {n} new candidates")
+            if search is None:
+                raise RuntimeError("EFTS returned no search object")
+            stat["total"] = int(getattr(search, "total", 0) or 0)
+            fetched = len(list(search))
+            target = min(stat["total"], max_per_query)
+            if fetched < target:
+                search = search.fetch_more(target - fetched)
+            rows = list(search)[:max_per_query]
+            stat["fetched"] = len(rows)
+            stat["truncated"] = stat["fetched"] < stat["total"]
         except Exception as exc:
+            stat["error"] = str(exc)
             c.log(f"    ERROR: {exc}")
+            query_stats.append(stat)
+            continue
 
-    return candidates
+        new_count = 0
+        for result in rows:
+            accession = str(getattr(result, "accession_number", "") or "")
+            if accession and accession not in candidates:
+                candidates[accession] = {"result": result, "query": query}
+                new_count += 1
+        c.log(f"    → {new_count} new candidates; fetched {stat['fetched']} of {stat['total']}")
+        query_stats.append(stat)
+
+    return candidates, query_stats
 
 
-# ---------------------------------------------------------------------------
-# Conference name extractor
-# ---------------------------------------------------------------------------
-
-
-def _extract_conference_name(text: str) -> str | None:
-    """Try to pull a conference / event name out of the filing text.
-
-    Returns a clean string or None.
-    """
+def _extract_event_name(text: str) -> str | None:
+    """Extract a best-effort event name from filing text."""
     patterns = [
-        r"(?:at|the)\s+([\w\s&\-\']{10,80}?"
+        r"(?:at|the)\s+([\w\s&\-']{10,80}?"
         r"(?:Conference|Forum|Symposium|Investor Day|Capital Markets Day|Fireside Chat))",
-        r"(?:will present at|presenting at|participate in|speak at)\s+(?:the\s+)?([^.]{10,80})",
     ]
-    for pat in patterns:
-        m = re.search(pat, text, re.IGNORECASE)
-        if m:
-            name = re.sub(r"[.,;:\s]+$", "", m.group(1)).strip()
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            name = re.sub(r"[.,;:\s]+$", "", match.group(1)).strip()
             if len(name) >= 10:
                 return name[:120]
     return None
 
 
-# ---------------------------------------------------------------------------
-# Main scan function
-# ---------------------------------------------------------------------------
+def scan_conferences(
+    start: str,
+    end: str,
+    params: dict,
+    mcap_data: dict,
+) -> tuple[list[dict], dict]:
+    """Run candidate retrieval, classification, and enrichment."""
+    c.log(f"Scanning 8-K filings for investor events: {start} to {end}")
+    candidates, query_stats = _get_candidates(start, end, params)
+    if query_stats and all(stat["error"] for stat in query_stats):
+        raise RuntimeError("all EFTS event queries failed")
 
-
-def scan_conferences(start: str, end: str, params: dict, mcap_data: dict) -> list[dict]:
-    """Run the full two-stage pipeline and return a list of conference dicts."""
-    c.log(f"Scanning 8-K filings for conferences: {start} to {end}")
-
-    candidates = _get_candidates(start, end, params)
-    c.log(f"  {len(candidates)} unique candidates after EFTS + dedup")
-
-    if not candidates:
-        return []
-
-    conferences = []
+    c.log(f"  {len(candidates)} unique candidates after EFTS deduplication")
     stats = {
         "checked": 0,
         "no_ticker": 0,
-        "out_of_universe": 0,
-        "no_text": 0,
+        "out_of_universe_or_unresolved": 0,
+        "text_retrieval_errors": 0,
         "rejected": 0,
         "accepted": 0,
+        "query_stats": query_stats,
     }
+    events = []
 
-    for acc, cand in candidates.items():
-        r = cand["result"]
-        query = cand["query"]
+    for accession, candidate in candidates.items():
+        result = candidate["result"]
+        query = candidate["query"]
         stats["checked"] += 1
 
-        # ── resolve ticker ──────────────────────────────────────────────────
-        company_raw = str(getattr(r, "company", "Unknown"))
-        str(getattr(r, "cik", "")).lstrip("0")
-        filed = str(getattr(r, "filed", ""))
-
-        # Ticker is in the EFTS company string: "NAME  (TICK)  (CIK ...)"
-        m = re.search(r"\(([A-Z]{1,5})\)", company_raw)
-        if not m:
+        company_raw = str(getattr(result, "company", "Unknown"))
+        cik = str(getattr(result, "cik", "")).lstrip("0")
+        filed = str(getattr(result, "filed", ""))
+        ticker = c.extract_ticker(company_raw)
+        if not ticker:
             stats["no_ticker"] += 1
             continue
-        ticker = m.group(1)
 
-        # ── universe filter (market cap $50M-$10B) ──────────────────────────
         mcap = c.get_market_cap(ticker, mcap_data)
         if not c.in_universe(mcap):
-            stats["out_of_universe"] += 1
+            stats["out_of_universe_or_unresolved"] += 1
             continue
 
-        # ── fetch filing text ───────────────────────────────────────────────
+        trusted_index_match = query in params["trusted_index_queries"]
         filing_text = ""
         try:
-            filing_text = r.get_filing().text()
+            filing_text = result.get_filing().text() or ""
         except Exception as exc:
-            c.log(f"  WARN: could not fetch text for {acc}: {exc}")
+            stats["text_retrieval_errors"] += 1
+            c.log(f"  WARNING: could not fetch filing text for {accession}: {exc}")
 
-        if not filing_text:
-            stats["no_text"] += 1
+        if trusted_index_match:
+            verdict = "ACCEPT"
+        elif not filing_text:
             continue
-
-        # ── Stage 2 classification ──────────────────────────────────────────
-        verdict = _classify(filing_text, query, params)
+        else:
+            verdict = _classify(filing_text, query, params)
 
         if verdict != "ACCEPT":
             stats["rejected"] += 1
             continue
-
         stats["accepted"] += 1
 
-        # ── enrich with yfinance ────────────────────────────────────────────
         try:
             import yfinance as yf
 
@@ -275,110 +224,126 @@ def scan_conferences(start: str, end: str, params: dict, mcap_data: dict) -> lis
         except Exception:
             info = {}
 
-        conferences.append(
+        events.append(
             {
                 "ticker": ticker,
                 "company": info.get("shortName") or info.get("longName") or company_raw,
                 "sector": info.get("sector", "n/a"),
                 "mcap": mcap,
-                "price": info.get("currentPrice"),
+                "price": info.get("currentPrice") or info.get("regularMarketPrice"),
                 "filed": filed,
-                "conference": _extract_conference_name(filing_text) or "(see filing)",
-                "query": query,  # which EFTS query surfaced this
+                "event": _extract_event_name(filing_text) or "(see filing)",
+                "matched_query": query.strip('"'),
+                "accession": accession,
+                "source_url": c.sec_filing_url(cik, accession),
             }
         )
 
+    events.sort(key=lambda event: (event["filed"], event["ticker"]), reverse=True)
     c.log(f"  Done — {stats}")
-    return conferences
+    return events, stats
 
 
-# ---------------------------------------------------------------------------
-# Output
-# ---------------------------------------------------------------------------
-
-
-def _render_markdown(start: str, end: str, conferences: list[dict]) -> str:
+def _render_markdown(start: str, end: str, events: list[dict], stats: dict) -> str:
+    """Render event candidates with source and coverage notes."""
     lines = [
-        f"# Conference Discovery: {start} to {end}\n",
-        f"Found **{len(conferences)}** companies in the {c.universe_label()} universe.\n",
+        f"# Investor-Event Discovery: {start} to {end}\n",
+        f"Found **{len(events)}** companies in the {c.universe_label()} universe.\n",
+        "Matches are heuristic leads. Verify the event name, date, and participation in the linked filing.\n",
     ]
 
-    if not conferences:
-        lines.append("No conference announcements found.\n")
+    truncated = [stat for stat in stats["query_stats"] if stat["truncated"]]
+    query_errors = [stat for stat in stats["query_stats"] if stat["error"]]
+    metadata_omissions = stats["no_ticker"] or stats["out_of_universe_or_unresolved"]
+    if truncated or query_errors or stats["text_retrieval_errors"] or metadata_omissions:
+        lines.append("## Coverage notes\n")
+        for stat in truncated:
+            lines.append(
+                f"- Query `{stat['query']}` fetched {stat['fetched']} of {stat['total']} matches."
+            )
+        for stat in query_errors:
+            lines.append(f"- Query `{stat['query']}` failed: {stat['error']}")
+        if stats["text_retrieval_errors"]:
+            lines.append(
+                f"- Filing text retrieval failed for {stats['text_retrieval_errors']} candidate(s)."
+            )
+        if stats["no_ticker"]:
+            lines.append(
+                f"- EFTS supplied no parseable ticker for {stats['no_ticker']} candidate(s)."
+            )
+        if stats["out_of_universe_or_unresolved"]:
+            lines.append(
+                f"- {stats['out_of_universe_or_unresolved']} candidate(s) were outside the "
+                "market-cap bounds or lacked a Yahoo market cap."
+            )
+        lines.append("")
+
+    if not events:
+        lines.append(
+            "No classified investor-event announcements were found in completed coverage.\n"
+        )
         return "\n".join(lines)
 
     lines += [
-        "| # | Ticker | Company | Sector | Mkt Cap | Price | Filed | Conference |",
-        "|---|--------|---------|--------|---------|-------|-------|------------|",
+        "| # | Ticker | Company | Sector | Mkt Cap | Price | Filed | Matched query | Event | Source |",
+        "|---|---|---|---|---:|---:|---|---|---|---|",
     ]
-    for i, conf in enumerate(conferences, 1):
-        price_s = f"${conf['price']:.2f}" if conf.get("price") else "n/a"
+    for index, event in enumerate(events, 1):
+        price = event.get("price")
         lines.append(
-            f"| {i} | {conf['ticker']} | {conf['company']} | {conf['sector']} | "
-            f"{c.fmt_mcap(conf['mcap'])} | {price_s} | {conf['filed']} | "
-            f"{conf['conference']} |"
+            f"| {index} | {c.md_cell(event['ticker'])} | {c.md_cell(event['company'])} | "
+            f"{c.md_cell(event['sector'])} | {c.fmt_mcap(event['mcap'])} | "
+            f"{f'${price:.2f}' if price is not None else 'n/a'} | {event['filed']} | "
+            f"{c.md_cell(event['matched_query'])} | {c.md_cell(event['event'])} | "
+            f"[{event['accession']}]({event['source_url']}) |"
         )
-
-    lines.append(
-        "\n_Sourced from 8-K filings via EFTS full-text search + "
-        "two-stage client-side classifier._\n"
-    )
+    lines.append("")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-
 def main() -> None:
-    """Run the CLI to discover companies presenting at investor conferences."""
-    p = argparse.ArgumentParser(
-        description="Conference discovery via 8-K filings (two-stage EFTS classifier)."
-    )
-    p.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
-    p.add_argument("--end", required=True, help="End date YYYY-MM-DD")
-    p.add_argument(
-        "--params",
-        help="JSON string to override/extend DEFAULT_PARAMS keys. "
-        'Example: \'{"exclusions": ["conference call"]}\'',
-    )
-    c.add_identity_arg(p)
-    c.add_cache_arg(p)
-    args = p.parse_args()
+    """Run the investor-event discovery CLI."""
+    parser = argparse.ArgumentParser(description="Investor-event discovery via 8-K filings.")
+    parser.add_argument("--start", required=True, help="Start date YYYY-MM-DD.")
+    parser.add_argument("--end", required=True, help="End date YYYY-MM-DD.")
+    c.add_identity_arg(parser)
+    c.add_cache_arg(parser)
+    args = parser.parse_args()
+
+    try:
+        start = datetime.strptime(args.start, "%Y-%m-%d").date()
+        end = datetime.strptime(args.end, "%Y-%m-%d").date()
+    except ValueError as exc:
+        parser.error(str(exc))
+    if start > end:
+        parser.error("--start must not be later than --end.")
 
     c.resolve_identity(args.identity)
-
-    # edgartools needs system certs on corporate networks
-    try:
-        from edgar import configure_http
-
-        configure_http(use_system_certs=True)
-    except Exception:
-        pass
-
-    params = {
-        k: (v.copy() if isinstance(v, (dict, list)) else v) for k, v in DEFAULT_PARAMS.items()
-    }
-    if args.params:
-        try:
-            overrides = json.loads(args.params)
-            params.update(overrides)
-        except json.JSONDecodeError as exc:
-            c.log(f"ERROR: invalid --params JSON: {exc}")
-            sys.exit(1)
-
     cache = c.cache_root(args.cache_dir)
     mcap_data = c.load_mcap_cache(cache)
-
     try:
-        conferences = scan_conferences(args.start, args.end, params, mcap_data)
+        events, stats = scan_conferences(
+            start.isoformat(),
+            end.isoformat(),
+            _CLASSIFIER,
+            mcap_data,
+        )
+    except RuntimeError as exc:
+        c.log(f"ERROR: {exc}")
+        sys.exit(1)
     finally:
         c.save_mcap_cache(cache, mcap_data)
 
-    md = _render_markdown(args.start, args.end, conferences)
-    slug = f"{args.start}_to_{args.end}"
-    c.write_output(cache, "conferences", slug, md)
+    report = _render_markdown(start.isoformat(), end.isoformat(), events, stats)
+    c.write_output(cache, "conferences", f"{start.isoformat()}_to_{end.isoformat()}", report)
+
+    incomplete = (
+        any(stat["truncated"] or stat["error"] for stat in stats["query_stats"])
+        or stats["text_retrieval_errors"] > 0
+    )
+    if incomplete:
+        c.log("ERROR: emitted report has incomplete source coverage.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
