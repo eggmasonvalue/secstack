@@ -1,66 +1,57 @@
-# Archetype: Quality Compounder
+# Archetype: quality compounder
 
-A business that earns **high returns on capital** and can **reinvest** a large share of its
-earnings at similar returns for years. The thesis is rarely "it's cheap" — it's "the market
-under-appreciates the *duration* and *reinvestment runway* of the compounding." Time is the
-ally; you are underwriting a machine, then trying to buy it at a fair price. (One of Lou's
-three value-investing shapes — see NVR, Sportsman's Guide in the `pitch-like-lou` corpus.)
+Use this lens when value depends on a business reinvesting substantial cash at attractive
+incremental returns for a long time. The analytical edge is usually duration and reinvestment,
+not merely calling the company “high quality.”
 
-## Tell it by
+## Establish the shape
 
-Durable ROIC/ROE well above the cost of capital (sustained, not a single year), pricing
-power, low incremental capital intensity, expanding or stable margins, and a reinvestment
-runway (new units, geographies, share gains) that isn't nearly exhausted.
+Look for persistent economic returns above the opportunity cost of capital, a demonstrated
+ability to reinvest, durable customer value, and room to deploy more capital. Do not use a fixed
+ROIC or growth threshold. Adjust accounting and compare through a cycle where relevant.
 
-## Where the value hides
+Distinguish:
 
-- **Duration the market won't extrapolate.** Screens see a high multiple and stop; the edge
-  is judging that the high return *persists* far longer than consensus assumes.
-- **Reinvestment math.** Value = return on incremental capital × the fraction reinvested. A
-  35% ROIC business reinvesting 70% of earnings compounds intrinsic value ~24%/yr before any
-  multiple change — that engine, not the entry multiple, is the thesis.
-- **Under-distorted economics** — GAAP often *understates* a compounder (expensed growth
-  investment, deferred revenue, conservative depreciation).
+- average ROIC from return on **incremental** invested capital;
+- organic reinvestment from acquisitions and financial leverage;
+- pricing power from temporary price/cost timing;
+- a long runway from a large but inaccessible TAM; and
+- per-share compounding from enterprise growth offset by dilution.
 
-## Pull these (drive sec-edgar)
+A useful approximation is sustainable operating growth = reinvestment rate × return on new
+capital. It is not an identity for shareholder return or intrinsic-value growth; taxes,
+distributions, financing, fade, and valuation still matter.
 
-- 10-K Item 7 (MD&A) and Item 1 (Business) — the unit economics and the runway in management's
-  words.
-- The cash-flow statement and the revenue / deferred-revenue / lease footnotes — for the
-  normalization that reveals true returns.
-- A multi-year financial history (`sec-edgar-skill`'s `parse_financials.py` across years) — to prove ROIC is
-  *durable*, not a one-year flatter.
-- The proxy (DEF 14A) — capital-allocation incentives; is management paid to compound or to
-  empire-build?
+## Evidence to pull
 
-## Key metrics
+- segment economics, unit growth, pricing, retention, and customer concentration;
+- capex, working capital, acquisitions, and other reinvestment by period;
+- gross margin, incremental margin, ROIC, and FCFF across enough years to test durability;
+- diluted share count, repurchases, stock compensation, and acquisition consideration;
+- incentives and capital-allocation record from proxies and filings; and
+- peers with similar customers and business models, not merely the same sector label.
 
-ROIC and **return on incremental invested capital** (the forward-looking one), reinvestment
-rate, organic revenue growth, gross-margin stability, FCF conversion, same-store / cohort /
-unit economics where disclosed.
+## Valuation
 
-## Normalize / adjust
+Connect the explicit forecast to reinvestment capacity and incremental returns. Test what growth
+duration and fade the current price implies. A forward enterprise DCF may be useful when FCFF is
+positive and predictable; an explicit forecast is better when margins or reinvestment change.
+EPV can show how much value comes from future reinvestment but is not a hard downside floor.
 
-- Split maintenance vs. growth capex carefully — a compounder's value is highly sensitive to
-  it (see `guide_normalization.md`).
-- Pull deferred revenue back into earning power; undo conservative-accounting drag.
-- Expense stock comp and bake dilution into the share count.
+Do not justify a terminal premium by repeating the word “quality.” Normalize returns and
+reinvestment in the terminal state.
 
-## Valuation lens
+## Disqualifiers and counterevidence
 
-Lead with a **forward two-stage DCF** that gives the long reinvestment runway room, then
-**reality-check with a reverse-DCF** (is the priced-in growth sane?) and floor it with EPV.
-The key question isn't today's multiple — it's whether the runway justifies it.
+Mark down or reject the case when:
 
-## Disqualifiers — kill it (or mark it down) if…
+- reported ROIC is an accounting artifact or omits required assets and obligations;
+- incremental returns are falling toward or below the cost of capital;
+- growth requires acquisitions or spending that the model excludes;
+- the reachable runway is nearly exhausted or competitors can copy the expansion;
+- customer concentration, regulation, or a temporary shortage explains the apparent moat;
+- buybacks occur above defensible value or only offset dilution; or
+- enterprise growth fails to produce per-share value.
 
-- High ROIC is an **accounting mirage** — goodwill-light denominators, off-balance-sheet
-  leverage, or returns that evaporate once you capitalize the real investment.
-- **Growth needs ever more capital at falling returns** — incremental ROIC is decaying toward
-  the cost of capital; the compounding is already ending.
-- The **reinvestment runway is nearly full** — you're paying a compounder multiple for what's
-  about to become a no-growth cash cow.
-- **Buybacks only when the stock is dear**, or capital allocation that destroys the very
-  compounding you're paying for.
-- Margins propped by a **temporary** advantage (a subsidy, a fad, one big customer) rather
-  than a structural moat.
+The memo should state the operating measure that will reveal runway or return decay before the
+headline growth rate does.

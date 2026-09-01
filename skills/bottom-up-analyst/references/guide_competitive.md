@@ -1,123 +1,115 @@
-# Competitive & industry analysis - filings first, web for the gaps
+# Competitive and industry analysis
 
-Phase 4 of the loop. A normalized earnings number is only as trustworthy as the moat under
-it: durable returns require a durable *reason*. This phase establishes industry structure,
-the company's place in it, and - the hard, decisive part - its **relative** competitive
-advantage. Assert nothing; explain the moat *mechanically* or concede there isn't one.
+Use this guide to determine whether the economics in the model can persist. The goal is not a
+list of moat labels or risk factors; it is a causal account of where industry profits come from,
+why this company captures its share, and what evidence would show that position changing.
 
-The governing rule of the stack applies here with full force: **SEC filings are the default
-and the grounding; the web fills only what filings genuinely cannot.** Filings are primary,
-auditable, and citable; the web is a labeled supplement that must never silently outrank a
-filing.
+## Start with the question, then choose sources
 
-## What filings give you - more than people expect
+Use the source authoritative for each claim rather than imposing one universal source order.
 
-Before touching the web, exhaust the documents. A surprising amount of "qualitative" insight
-is sitting in EDGAR, already auditable:
+- **Issuer filings and exhibits:** reported segments, customer concentration, contracts,
+  capacity, risk disclosures, and management's explanation of results. They are primary records
+  of the issuer's disclosure, not independent proof of market position.
+- **Peer filings and calls:** competitors' reported demand, pricing, capacity, strategy, and
+  financial outcomes. Select a few economically relevant peers; an automated industry list is a
+  candidate set, not ground truth.
+- **Regulators, courts, standards bodies, and government data:** rules, licenses, enforcement,
+  market statistics, and legal status.
+- **Customers, suppliers, product documentation, procurement records, and trade data:** buying
+  criteria, switching friction, price, reliability, channel behavior, and adoption.
+- **Independent research and reporting:** useful for discovery and triangulation. Assess source
+  access, method, date, incentives, and whether the claim can be checked directly.
 
-- **The subject's 10-K.** Item 1 (Business) describes competition, customers, suppliers, and
-  segments in the company's own words. Item 1A (Risk Factors) is a candid map of what
-  management fears - read it as a competitive document, not boilerplate. The MD&A (Item 7)
-  explains *why* the numbers moved.
-- **Peers' own filings - the high-leverage move.** `market-scout` hands you the **peer
-  set**. Pull each peer's recent **8-Ks, 10-Qs, and 10-K** and read
-  their management commentary: pricing actions, demand color, capacity, who's winning share.
-  Triangulating the same quarter across three competitors' filings is primary-source
-  competitive intelligence you can cite [V] - often sharper than any third-party take.
-- **Industry structure from the numbers.** Compare gross and operating margins, returns on
-  capital, capital intensity, and growth across the peer set. Persistent margin or ROIC
-  gaps are the *quantitative fingerprint* of a moat (or its absence) - pricing power, scale
-  economics, switching costs show up here before anyone writes them down.
+Cite and date material evidence. Use `[V]` for facts checked in an authoritative primary record
+and `[W]` for external or secondary evidence. When sources disagree, preserve the disagreement
+and explain which assumption the valuation uses.
 
-## What only the web can give - and how to use it
+## Map the industry economics
 
-Some questions no filing answers, and these are exactly where competitive theses are won or
-lost. Go to the web for:
+Answer the questions that determine profit durability:
 
-- **Relative positioning and market share** - who's actually winning, and the trend.
-- **Pricing dynamics and channel checks** - real-world price moves, distribution, customer
-  satisfaction, churn anecdotes.
-- **Industry tailwinds/headwinds** - regulation, technology shifts, end-market demand.
-- **Management quality and track record** - beyond the proxy's bare facts.
+1. **Value chain:** who supplies, distributes, pays, uses, and captures gross profit?
+2. **Market definition:** what product, customer, geography, and time period does a share or TAM
+   figure actually cover?
+3. **Structure:** concentration, capacity, entry and exit, substitutes, regulation, bargaining
+   power, and capital intensity.
+4. **Buying decision:** which attributes decide a purchase, who bears switching cost, and how
+   often a customer can reconsider?
+5. **Rate of change:** technology, regulation, supply, customer behavior, and new business
+   models that could alter the profit pool.
 
-When you do, observe the discipline that keeps the memo trustworthy:
+Avoid top-down market labels that mix unlike products or geographies. Reconcile market-size and
+share estimates to company revenue where possible.
 
-- **Attribute and date every web claim**, and prefer **primary** sources - company IR decks,
-  regulators, standards bodies, trade associations - over aggregators and secondary
-  commentary.
-- **Mark it [W]** in the memo so the reader can weight it differently from a filed fact.
-- **Never let a web assertion override a filing** without saying so explicitly and explaining
-  why you believe the web over the document.
-- **Separate fact from sentiment.** "Revenue grew 30%" (checkable) is not "analysts love the
-  story" (mood). Both can matter; don't let the second masquerade as the first.
+## Select and compare peers
 
-## The output of this phase
+Choose peers based on the economic question: product overlap, customer set, cost structure,
+geography, maturity, or capital intensity. Different questions may need different peer sets.
+Document why each peer belongs.
 
-A clear verdict on competitive position you can defend:
+Compare a multi-period set of relevant measures, which may include organic growth, unit volume,
+price/mix, gross margin, incremental margin, retention, capital intensity, ROIC, and customer
+concentration. Persistent differences are clues, not automatic proof of a moat. Test alternative
+explanations such as accounting policy, mix, geography, underinvestment, leverage, or a temporary
+cycle position.
 
-1. **Industry structure** - concentration, rivalry, where the profit pools sit, the
-   secular direction of travel.
-2. **The company's position** - leader/challenger/niche, and the *evidence* (the margin/ROIC
-   gap vs. peers, share trend, customer captivity).
-3. **The moat, named and tested** - which specific mechanism (scale, network, switching
-   costs, brand/share-of-mind, low-cost production, regulatory) and *why it persists*. State
-   what would erode it; a moat you can't imagine breaching is a moat you haven't examined.
+## Explain advantage as a mechanism
 
-Feed this straight into valuation: the strength and *durability* of the moat is what justifies
-the growth runway and the discount rate you'll defend in phase 5.
+For each claimed advantage, complete the chain:
 
-## Quantify impact, don't just list forces
+```text
+asset, capability, or structural position
+→ customer or cost consequence
+→ observable operating evidence
+→ economic outcome
+→ reason competitors cannot quickly copy or neutralize it
+```
 
-The most common failure in competitive analysis is **cataloguing without quantifying.**
-Listing five barriers to entry or four competitive threats is not analysis - it is
-inventory. The reader needs to understand *how much each force matters* to the thesis.
-For every competitive strength, weakness, threat, or moat mechanism, answer three
-questions:
+Examples of mechanisms include scale economies, network effects, switching costs, scarce assets,
+regulatory position, process advantage, brand, distribution, and counter-positioning. The label
+alone does no analytical work. State what would erode the mechanism and which metric would show
+that first.
 
-1. **How big is it?** Attach a number, a share, a dollar figure, or a rate. "High
-   switching costs" is a label; "multi-year contracts with 95%+ renewal rates and
-   12-18 month migration timelines" is evidence. "Competition is intensifying" is mood;
-   "Motorola's Command Center division grew 14% last year and now holds ~30% of the
-   call-handling market" is a fact you can reason from.
+## Quantify without inventing precision
 
-2. **How fast is it moving?** A static snapshot is not enough. Is the competitor
-   gaining share, losing it, or flat? Is the technology threat emerging (R&D stage),
-   arriving (first deployments), or mature (already displacing incumbents)? A threat
-   that is five years away at current pace is a different input to the thesis than one
-   that is already taking share. Cite the trajectory, not just the position.
+Size forces when reliable data permit. Useful forms include:
 
-3. **What is the dollar impact on *this company* if it plays out?** Translate the
-   competitive force into revenue, margin, or FCF impact on the subject. "Cloud-native
-   architectures could lower barriers" becomes "if a cloud-native entrant captured 10%
-   of the addressable NG9-1-1 market over 5 years, that's ~$12M/yr of revenue at risk
-   for Allerium, or ~5% of current revenue." Now the reader can weigh it. A risk you
-   can't size is a risk you haven't understood.
+- exposure: affected revenue, customers, units, capacity, or gross profit;
+- sensitivity: effect of a price, volume, churn, utilization, or cost change;
+- trajectory: direction, rate, and time to materiality; and
+- scenario range: a bounded impact under explicit assumptions.
 
-### Applying this to strengths and moats
+Some risks are discontinuous, legal, behavioral, or poorly disclosed. Do not fabricate a point
+estimate merely because a template asks for one. Use a range, break-even calculation, observable
+leading indicator, or `[A]` gap. Explain whether the unknown is capable of changing the decision.
 
-The same discipline applies to the bull case. "Strong installed base" is a label;
-"4,200 PSAPs on the platform with an average contract life of 7 years and a historical
-churn rate below 3%" is a moat you can underwrite. "Switching costs are high" is an
-assertion; "the Kentucky statewide migration took 8 months of planning and 4 months of
-execution for 12 PSAPs, and the state has 120 total" tells you *how* high.
+## Separate evidence from inference
 
-When you can't find the number, say so - mark it [A] and flag it as a gap the reader
-should investigate. An honest "I couldn't quantify this" is more useful than a
-confident-sounding assertion that melts under scrutiny.
+A contract term can be `[V]`; “therefore customers are captive” is an inference. A peer's claim
+that it gained share verifies the claim was made, not the share gain. Tie inferences to multiple
+observable premises when possible:
 
-### Applying this to risks and threats
+- renewal or churn history;
+- realized price versus input cost;
+- win/loss or backlog conversion;
+- gross-margin and incremental-margin persistence;
+- customer concentration and cohort behavior;
+- replacement cycle or migration effort; and
+- competitor investment and capacity response.
 
-Every risk factor in the memo should pass a **"so what" test**: if this risk
-materializes, what happens to revenue, margins, or FCF - and over what timeframe?
-A risk without an impact estimate is a worry, not an analysis. The pre-mortem
-(phase 6) is where you stress-test the risks against the thesis; the competitive
-section is where you *size* them so the pre-mortem has something to work with.
+Treat management tone and analyst questions as leads, not measurements.
 
-Examples of the shift from listing to quantifying:
+## Output
 
-| Listing (weak) | Quantifying (strong) |
-| :-- | :-- |
-| "Competition from larger players" | "Competitor X's revenue in the segment grew 14% YoY to ~$X00M; their new platform has been deployed in N states, directly overlapping with the subject's TAM" |
-| "Technology disruption risk" | "Cloud-native entrants have raised $X00M in VC funding and signed pilot contracts with N customers; at current adoption rates, they could reach ~5% market penetration by 2028" |
-| "Customer concentration" | "Top customer is ~25% of segment revenue (~$56M); the contract runs through 2029, but loss at renewal would cut segment EBITDA by ~$15M" |
-| "High switching costs" | "A statewide migration took 8 months planning + 4 months execution for 12 of 120 sites; full cutover expected to take 3+ years, creating de facto lock-in" |
+Conclude with a compact underwriting view:
+
+1. market and profit-pool definition;
+2. the company's position and relevant peers;
+3. two or three mechanisms that matter, with evidence and erosion tests;
+4. material threats and their best-supported ranges or indicators;
+5. implications for growth, margins, reinvestment, and valuation; and
+6. unresolved evidence gaps.
+
+The section earns its place only if it changes an assumption, probability, risk assessment, or
+monitorable in the thesis.

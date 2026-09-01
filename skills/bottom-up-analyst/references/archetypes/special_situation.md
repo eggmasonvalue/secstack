@@ -1,72 +1,54 @@
-# Archetype: Special Situation
+# Archetype: special situation
 
-A situation where a **structural, legal, or transactional fact** — not the ongoing business —
-drives the outcome: a spin-off, post-bankruptcy equity, a merger/arb spread, a seniority
-waterfall, a put/call formula, a squeeze-out or minority-protection statute, a recapitalization.
-The edge is *forensic*: you read the actual document, compute the formula yourself, and rebuild
-the capital structure — and you reach a conclusion that nearly *has* to resolve a certain way.
-(Lou's richest value-investing shape — see Quilmes, MCI, NII Holdings, Telemig in the
-`pitch-like-lou` corpus.)
+Use this lens when a transaction, security term, legal document, reorganization, spin-off,
+tender, recapitalization, or forced flow drives value more than ordinary operating growth. The
+edge is accurate document reading, a complete capital structure, and scenario arithmetic.
 
-## Tell it by
+## Establish the shape
 
-The thesis hinges on an event or a legal/structural mechanism rather than earnings growth:
-corporate actions (spin, merger, tender, reorg), unusual securities (pink-sheet preferreds,
-stubs, post-reorg equity), or a binding formula/statute that forces value to a class of
-holders.
+Identify the binding event or term, the security being valued, conditions and consents, seniority,
+timeline, and who controls each decision. Read the operative agreement, plan, indenture, exhibit,
+court order, or statute rather than relying on a summary.
 
-## Where the value hides
+A primary document verifies its text, not the analyst's legal interpretation. Mark uncertain
+interpretation as `[A]`, use qualified legal analysis where material, and do not describe an
+outcome as inevitable merely because the language appears favorable.
 
-- **In the document itself.** The put/call formula in an exhibit, the seniority of a security
-  in the waterfall, the squeeze-out price mechanism in foreign company law. The market prices
-  the *headline*; the edge is reading the *fine print* and computing the consequence.
-- **In forced/neglected selling.** Spin-offs dumped by index funds, post-bankruptcy equity
-  held by creditors who want out, complex securities no analyst covers — structural sellers
-  create mispricing unrelated to value.
-- **In the binding-ness.** The whole thesis rests on whether the legal fact *actually binds*.
-  That is the one thing you must verify yourself, not relay second-hand.
+## Evidence to pull
 
-## Pull these (drive sec-edgar)
+- operative transaction and security documents, including definitions, schedules, and exhibits;
+- SEC current reports, registration or information statements, tender materials, and amendments;
+- court, regulator, exchange, and home-jurisdiction records where applicable;
+- voting agreements, financing commitments, termination rights, fees, and outside dates;
+- 13D/13G purpose, control relationships, and minority protections;
+- the fully diluted pre- and post-event capital structure and claim waterfall; and
+- operating information needed to value each residual outcome.
 
-- **The primary document** — the merger agreement, indenture, plan of reorganization, 13D
-  exhibit, Form 10 spin filing, or the foreign-law statute. Read the *exhibit*, not the
-  summary. `sec-edgar-skill` can pull attachments/exhibits directly.
-- 8-Ks for the triggering event (Item 1.01, 1.03, 2.01, 5.01) and the timeline.
-- 13D/G for the activist or controlling holder and — critically —
-  `item4_purpose_of_transaction` (the *why*).
-- For foreign private issuers: 20-F and 6-K, and the local regulator's filings; reconcile to a
-  comparable basis.
-- Capital-structure detail to rebuild the **post-event** balance sheet and the waterfall.
+## Scenario arithmetic
 
-## Key metrics / objects
+For each material outcome, show:
 
-The payoff under each outcome (deal closes / breaks; put exercised / not), the **probability
-and timing** of each, the position in the capital structure, the spread vs. downside, the
-sum-of-the-parts value, the formula output you computed yourself.
+- payoff to the exact security and share class;
+- interim distributions, financing, taxes, fees, and dilution;
+- probability basis and dependencies;
+- expected timing and annualized return; and
+- break, delay, or residual value supported independently of the deal price.
 
-## Normalize / adjust
+Use sum-of-parts for separable businesses and a waterfall for layered claims. Rebuild the
+post-event balance sheet rather than subtracting today's net debt mechanically. Preserve
+currency, exchange-ratio, proration, and conversion assumptions.
 
-- **Compute the formula yourself** from the document — do not trust a summary or a third-hand
-  characterization (`pitch-like-lou`'s inviolable rule, the MCI lesson).
-- Rebuild the **pro-forma** capital structure as it exists *after* the event.
-- For foreign issuers, reconcile foreign-GAAP/IFRS to a comparable basis before valuing.
+## Disqualifiers and counterevidence
 
-## Valuation lens
+Mark down or reject the case when:
 
-**Event payoff / sum-of-the-parts**, probability-weighted across outcomes, with the spread
-measured against a hard downside. For spins, value the pieces separately on **multiples**; for
-arb, it's payoff × probability vs. break risk; for structural/legal, it's the formula output
-discounted for time and the (small) chance the fact doesn't bind.
+- a condition, definition, consent, financing out, or senior claim defeats the apparent term;
+- minority protections or enforcement are weaker than assumed;
+- the timeline is open-ended and carrying costs erase the expected return;
+- break value depends on the unaffected price without re-underwriting the business;
+- probability is asserted without a base rate or case-specific evidence;
+- taxes, fees, proration, dilution, tradability, or liquidity materially change the security payoff; or
+- a load-bearing legal interpretation has not been independently checked.
 
-## Disqualifiers — kill it (or mark it down) if…
-
-- **The legal/structural fact doesn't actually bind** — the formula has an out, the statute
-  doesn't apply, the seniority is subordinated by a clause you missed.
-- **Minorities have no protection** — a controller can take the value without sharing it
-  (no fair-price statute, no independent committee, coercive terms).
-- **The timeline is open-ended** — no forcing event or date; "eventually" is not a catalyst and
-  time decay eats arb returns.
-- **You're relying on something you didn't verify** — any load-bearing claim taken second-hand
-  is an unpriced risk; check it or mark the conviction down hard.
-- **The downside isn't bounded** — if the deal breaks or the put isn't exercised, the residual
-  business is worth far less than the spread implies.
+The memo should separate document facts, legal interpretation, probability judgment, and payoff
+calculation so a reader can disagree with one without losing the entire audit trail.

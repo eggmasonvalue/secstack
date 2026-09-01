@@ -16,7 +16,7 @@ skills/               Skill collection and skill-level documentation
   signal-sweep/       Discovery — scan the universe, surface tickers
   sec-edgar-skill/    Data — SEC EDGAR filings, ownership, 13F holders
   market-scout/       Data — price, peers, transcripts (Yahoo Finance)
-  bottom-up-analyst/  Analysis — one ticker → auditable memo (the conductor)
+  bottom-up-analyst/  Analysis — one operating company → scoped answer or memo
   pitch-like-lou/     Voice — finished thesis → VIC-style pitch
 context/              Agent-maintained project documentation
 ```
@@ -64,14 +64,14 @@ sessions, and unrelated settings remain profile-local and untouched.
 
 ```mermaid
 flowchart TD
-    SS[signal-sweep<br/>surfaces tickers] --> BUA[bottom-up-analyst<br/>deep dive + memo]
+    SS[signal-sweep<br/>surfaces tickers] --> BUA[bottom-up-analyst<br/>analysis + optional memo]
     BUA --> SEC[sec-edgar-skill<br/>filings]
     BUA --> MS[market-scout<br/>price / peers / transcripts]
     BUA --> PLL[pitch-like-lou<br/>renders pitch]
 ```
 
-- `bottom-up-analyst` is the brain and conductor: it decides what to pull, reasons over it,
-  and writes the memo. The data skills never decide what matters.
+- `bottom-up-analyst` selects evidence, reasons over it, and produces the requested analysis or
+  full memo. Retrieval contracts and source semantics remain in the data skills.
 - The two filing/market data skills know nothing of each other and are swappable.
 - `signal-sweep` and SEC-facing `sec-edgar-skill` commands read `EDGAR_IDENTITY` and use
   on-disk cache contracts defined in their `_common.py` modules. The SEC skill's routine 13F
@@ -80,7 +80,8 @@ flowchart TD
 
 ## Production order
 
-`signal-sweep` → `bottom-up-analyst` → memo → optionally `pitch-like-lou`.
+For a full thesis: `signal-sweep` → `bottom-up-analyst` → memo → optionally
+`pitch-like-lou`.
 
 For the package installation and isolated-profile workflow, start at the root
 [`README.md`](../README.md). For the collection overview, start at

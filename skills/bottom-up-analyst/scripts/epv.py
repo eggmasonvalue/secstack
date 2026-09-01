@@ -1,19 +1,20 @@
-"""Earnings Power Value (EPV) — the no-growth floor.
+"""Earnings Power Value for normalized no-growth operating earnings.
 
-Part of the bottom-up-analyst skill's valuation tooling. EPV capitalizes *current normalized*
-operating earnings with **zero growth credit**: what is the business worth if it simply earns
-what it earns today, forever? It is the conservative anchor in a triangulation — pair it with
-``dcf.py`` (which prices in growth) and read the gap between them as "how much of the price is
-growth I have to believe in." The reasoning behind the inputs is in
-``references/guide_valuation.md``.
+EPV capitalizes normalized after-tax operating cash earnings at WACC. It is a
+no-growth lens, not a guaranteed floor. Monetary inputs use one common unit;
+shares use the matching count unit. Rates are percentages.
 
-Conventions: monetary inputs (``--ebit``, ``--net-debt``, ``--maint-capex``, ``--da``) share one
-unit (e.g. $millions); ``--shares`` matches (e.g. millions) so per-share output is in dollars.
-``--tax`` and ``--wacc`` are percentages.
+Without the optional maintenance-capex refinement, the model assumes D&A and
+maintenance capex offset:
 
-EPV (enterprise) = normalized NOPAT / WACC, where NOPAT = adjusted EBIT x (1 - tax).
-With the optional Greenwald refinement (``--da`` and ``--maint-capex``), adjusted EBIT adds back
-the portion of depreciation that exceeds true maintenance capex — earnings the accounting hides.
+    operating earnings = normalized EBIT * (1 - cash tax rate)
+
+With both ``--da`` and ``--maint-capex``:
+
+    operating cash earnings = EBIT * (1 - tax) + D&A - maintenance capex
+
+The latter preserves the depreciation tax shield and does not tax the capex
+adjustment a second time.
 """
 
 import argparse
@@ -26,88 +27,103 @@ if sys.platform.startswith("win"):
         pass
 
 
-def main():
-    p = argparse.ArgumentParser(
-        description=__doc__.splitlines()[0],
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--ebit", type=float, required=True, help="Normalized operating EBIT.")
+    parser.add_argument(
+        "--tax", type=float, required=True, help="Normalized cash tax rate, in percent."
     )
-    p.add_argument(
-        "--ebit",
-        type=float,
-        required=True,
-        help="Normalized operating earnings (EBIT) in $M. For cyclicals use "
-        "mid-cycle EBIT, not the latest year.",
+    parser.add_argument(
+        "--wacc", type=float, required=True, help="Weighted average cost of capital, in percent."
     )
-    p.add_argument("--tax", type=float, default=21.0, help="Cash tax rate %% (default 21).")
-    p.add_argument(
-        "--wacc", type=float, required=True, help="Cost of capital %% used to capitalize earnings."
-    )
-    p.add_argument(
+    parser.add_argument(
         "--shares",
         type=float,
         required=True,
-        help="Diluted shares, same unit as --ebit (e.g. millions).",
+        help="Diluted shares; use the count unit matching the monetary inputs.",
     )
-    p.add_argument(
-        "--net-debt", type=float, default=0.0, help="Net debt in $M (negative = net cash)."
+    parser.add_argument(
+        "--net-claims",
+        type=float,
+        required=True,
+        help=(
+            "Debt and other senior claims minus excess cash and non-operating assets; "
+            "negative means net additions to enterprise value."
+        ),
     )
-    p.add_argument(
+    parser.add_argument(
         "--da",
         type=float,
-        default=None,
-        help="Depreciation & amortization in $M (optional, for the maintenance-capex "
-        "refinement; use with --maint-capex).",
+        help="Normalized depreciation and amortization; use with --maint-capex.",
     )
-    p.add_argument(
+    parser.add_argument(
         "--maint-capex",
         type=float,
-        default=None,
-        help="Maintenance capex in $M (optional). If D&A exceeds it, the excess is "
-        "added back to EBIT as hidden earning power.",
+        help="Estimated maintenance capex; use with --da.",
     )
-    p.add_argument(
-        "--price",
-        type=float,
-        default=None,
-        help="Current price/share (optional) to print EPV vs price.",
+    parser.add_argument(
+        "--price", type=float, help="Current price per share, to compare price with EPV."
     )
-    args = p.parse_args()
+    return parser
 
+
+def _validate(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not 0 <= args.tax < 100:
+        parser.error("--tax must be at least 0% and below 100%")
     if args.wacc <= 0:
-        p.error("--wacc must be positive")
+        parser.error("--wacc must be positive")
+    if args.shares <= 0:
+        parser.error("--shares must be positive")
+    if args.price is not None and args.price <= 0:
+        parser.error("--price must be positive")
+    if (args.da is None) != (args.maint_capex is None):
+        parser.error("--da and --maint-capex must be supplied together")
+    if args.da is not None and (args.da < 0 or args.maint_capex < 0):
+        parser.error("--da and --maint-capex cannot be negative")
 
-    tax = args.tax / 100.0
-    wacc = args.wacc / 100.0
 
-    adj_ebit = args.ebit
-    note = ""
-    if args.da is not None and args.maint_capex is not None:
-        excess = args.da - args.maint_capex
-        adj_ebit = args.ebit + excess
-        note = (
-            f" (adjusted from {args.ebit:,.0f} by D&A {args.da:,.0f} − maint capex "
-            f"{args.maint_capex:,.0f} = {excess:+,.0f})"
+def main() -> None:
+    parser = _build_parser()
+    args = parser.parse_args()
+    _validate(parser, args)
+
+    tax_rate = args.tax / 100
+    wacc = args.wacc / 100
+    after_tax_ebit = args.ebit * (1 - tax_rate)
+    operating_earnings = after_tax_ebit
+    if args.da is not None:
+        operating_earnings += args.da - args.maint_capex
+    if operating_earnings <= 0:
+        parser.error(
+            "normalized after-tax operating earnings must be positive; "
+            "a perpetuity cannot capitalize a non-positive base"
         )
 
-    nopat = adj_ebit * (1 - tax)
-    epv_enterprise = nopat / wacc
-    epv_equity = epv_enterprise - args.net_debt
-    epv_share = epv_equity / args.shares
+    enterprise_value = operating_earnings / wacc
+    equity_value = enterprise_value - args.net_claims
+    value_per_share = equity_value / args.shares
 
-    print("# Earnings Power Value — no-growth floor\n")
-    print(f"- Adjusted EBIT: {adj_ebit:,.0f}{note}")
-    print(f"- NOPAT (after {args.tax:.0f}% tax): {nopat:,.0f}")
-    print(f"- Capitalized at WACC {args.wacc:.1f}%  ->  EPV enterprise: {epv_enterprise:,.0f}")
-    print(f"- Less net debt {args.net_debt:,.0f}  ->  EPV equity: {epv_equity:,.0f}")
-    print(f"\n## EPV / share (no growth): **{epv_share:,.2f}**")
+    print("# Earnings Power Value — no-growth operating case\n")
+    print(f"- Normalized EBIT: {args.ebit:,.2f}")
+    print(f"- After-tax EBIT at {args.tax:.2f}%: {after_tax_ebit:,.2f}")
+    if args.da is not None:
+        print(f"- Add D&A: {args.da:,.2f}")
+        print(f"- Less maintenance capex: {args.maint_capex:,.2f}")
+    print(f"- Capitalized operating earnings: {operating_earnings:,.2f}")
+    print(f"- WACC: {args.wacc:.2f}%")
+    print(f"- Enterprise value: {enterprise_value:,.2f}")
+    print(f"- Net claims: {args.net_claims:,.2f}")
+    print(f"- Equity value: {equity_value:,.2f}")
+    print(f"- EPV per diluted share: **{value_per_share:,.2f}**")
+
     if args.price is not None:
-        gap = (args.price / epv_share - 1) * 100 if epv_share > 0 else float("nan")
-        print(
-            f"\nAt {args.price:,.2f}/share, the market pays **{gap:+.0f}%** versus the "
-            "no-growth value. That premium is what you are paying for growth and "
-            "improvement — decide whether the business can deliver it. A price *below* EPV "
-            "means the market assigns the growth (and maybe some of the base) negative value."
-        )
+        if value_per_share <= 0:
+            print(
+                "\nPrice comparison is not meaningful because modeled equity value is non-positive."
+            )
+        else:
+            discount = (1 - args.price / value_per_share) * 100
+            print(f"\nPrice discount/(premium) to EPV: {discount:+.1f}%")
 
 
 if __name__ == "__main__":

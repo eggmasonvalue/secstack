@@ -1,197 +1,206 @@
-# Valuation — triangulation, weighted by archetype
+# Valuation — match the method to the economics
 
-Phase 5 of the loop. Value is a *range*, reached from independent lenses, never a single
-false-precision point. Each lens has failure modes; the archetype tells you which to trust.
-The discipline is to make every assumption explicit and conservative enough that the thesis
-survives the *low* end — an intrinsic value that only works on heroic inputs is a hope, not a
-valuation.
+Valuation is a set of conditional claims, not a ritual. Choose methods that fit the business,
+state what each method assumes, and reconcile them to the same security, date, currency, share
+count, and capital structure. Multiple inapplicable methods do not create triangulation.
 
-Run the arithmetic with the bundled scripts (`scripts/dcf.py`, `scripts/epv.py`) rather than
-re-deriving it each time; `--help` is the flag reference. Reason about the *inputs* here.
+The bundled scripts cover enterprise DCF and EPV for non-financial operating companies. They do
+not replace a segment model, asset appraisal, transaction waterfall, or probability tree.
 
-## The four lenses
+## Build the enterprise-to-equity bridge
 
-### 1. Reverse-DCF — "what's already priced in" (first-class)
+Before comparing per-share values, show the bridge:
 
-Instead of forecasting, **invert**: solve for the stage-1 growth (or margin) the *current
-price* requires, then ask one question — *is that achievable?* This is the most honest lens
-when the future is uncertain, and for **hypergrowth** names it is often the *only* defensible
-one: rather than pretend you can forecast a hyper-growth decade, you judge whether the
-market's embedded expectation is too high, about right, or too low. Run it on every name as a
-reality check, even when another lens leads.
-
-```bash
-python scripts/dcf.py --mode reverse --price 150 --fcf0 1200 --years 10 \
-  --terminal-growth 3 --discount 10 --shares 500 --net-debt 200
+```text
+value of operating assets
++ excess cash and non-operating assets
+− funded debt
+− preferred and minority interests
+− pension deficits and other senior claims
+− value attributable to outstanding options or similar instruments, if not in shares
+= value of common equity
+÷ consistent diluted share count
+= value per share
 ```
 
-Read the result against reality: if the price implies 22% FCF growth for a decade and the
-company has never exceeded 12%, the bar is too high regardless of how good the story sounds.
+Avoid burying all adjustments in “net debt.” Match the bridge date to the base cash flow and
+adjust for material subsequent transactions. Reconcile basic, reported diluted, and modeled
+future shares.
 
-### 2. Forward DCF — intrinsic value under your assumptions
+## Enterprise DCF
 
-A two-stage discounted cash flow on normalized owner earnings (phase 3). Best for businesses
-with *predictable* cash flows — compounders, stable cash generators. Drive it with
-**bear/base/bull** growth cases (the script accepts comma-separated growth for a quick
-sensitivity table) so the output is a range, not a point.
+### Cash-flow basis
 
-```bash
-python scripts/dcf.py --fcf0 1200 --growth 8,12,16 --years 10 --terminal-growth 3 \
-  --discount 10 --shares 500 --net-debt 200
-```
+The DCF script accepts free cash flow to the firm (FCFF): after-tax operating cash flow before
+interest and net borrowing. Discount FCFF at WACC to obtain enterprise value, then subtract net
+debt and other senior claims. Do not pass owner earnings or FCFE that already includes interest
+and then subtract debt again.
 
-When the FCF trajectory has a **structural bend** — the near-term growth rate differs
-materially from the long-run rate — a single stage-1 rate is a forced average that
-misrepresents both phases. Use the **three-stage model** by adding `--growth2` and
-`--years2`. Stage 1 captures the distinct near-term phase, stage 2 captures the subsequent
-normalized phase, then the terminal value. The output is a stage-1 × stage-2 sensitivity
-matrix. Reach for it whenever the business has an identifiable reason for the growth rate
-to change — not just turnarounds, but any shape where one rate doesn’t fit:
+Read `guide_normalization.md` for the reconciliation. A growing terminal state must include the
+reinvestment needed to support that growth; terminal FCFF cannot assume growth while silently
+removing its capital needs.
 
-- **Turnaround / inflection:** cost-outs, margin expansion, or debt paydown free up FCF
-  faster than revenue grows (stage 1), then revenue-driven growth takes over (stage 2).
-- **Hypergrowth investing phase:** heavy S&M/R&D depresses FCF now; once the business
-  scales past the investment hump, FCF inflects sharply (stage 1), then grows at a
-  mature-compounder rate (stage 2).
-- **Cyclical recovery:** earnings snap back from trough to mid-cycle (stage 1), then grow
-  at trend (stage 2).
-- **Regulatory / deployment wave:** a defined tailwind (NG9-1-1 rollout, 5G buildout)
-  drives elevated growth for a bounded period (stage 1), then steady-state (stage 2).
-- **Post-acquisition synergies:** integration savings land over 2–3 years (stage 1),
-  then organic growth resumes (stage 2).
+### Choose the route
+
+Use the script path resolved from the installed skill.
+
+**Forward growth sensitivity** works for a positive, normalized FCFF base when a constant rate
+is a tolerable abstraction:
 
 ```bash
-python scripts/dcf.py --fcf0 5 --growth 25,35,50 --years 3 \
-  --growth2 5,8 --years2 7 --terminal-growth 2.5 --discount 12 \
-  --shares 30 --net-debt 66 --price 2.75
+python "<skill-dir>/scripts/dcf.py" forward --fcff0 1200 --growth 8,12,16 \
+  --years 10 --terminal-growth 3 --wacc 10 --shares 500 --net-claims 200 --price 75
 ```
 
-### 3. EPV — the no-growth floor
+Comma-separated growth values vary growth while holding every other input fixed. They are a
+sensitivity, not complete bear/base/bull scenarios. Run separate commands when margins,
+reinvestment, WACC, dilution, or the capital structure also differ.
 
-Earnings Power Value capitalizes *current normalized* operating earnings with **no growth
-credit** — a conservative floor that answers "what's it worth if the growth never shows up?"
-Especially clarifying for cyclicals (use mid-cycle EBIT), deep-value, and any case where you
-don't want to pay for a future you can't underwrite.
+**Explicit forecast** is preferable when FCFF begins negative or changes shape. Forecast each
+year from revenue, margin, tax, reinvestment, and working-capital drivers:
 
 ```bash
-python scripts/epv.py --ebit 600 --tax 21 --wacc 9 --shares 500 --net-debt 200
+python "<skill-dir>/scripts/dcf.py" forecast --fcff=-20,10,45,80,110 \
+  --terminal-growth 2.5 --wacc 12 --shares 30 --net-claims 66 --price 8
 ```
 
-### 4. Relative multiples — the sanity check
+The final explicit FCFF must be positive because it anchors a Gordon terminal value. Make the
+transition to stable economics plausible rather than jumping from an immature margin directly
+to perpetuity.
 
-P/E, EV/EBIT, EV/Sales, P/FCF against the peer set (`market-scout` gives you the peers).
-Never a thesis on its own — "cheap vs. peers" can mean the whole group is
-mispriced or the company deserves its discount — but a vital cross-check on the absolute
-lenses, and the right primary lens for some special situations and asset plays.
+**Reverse growth DCF** asks which constant positive-FCFF growth rate equates the model to price:
 
-## Setting the inputs honestly
+```bash
+python "<skill-dir>/scripts/dcf.py" reverse --price 75 --fcff0 1200 --years 10 \
+  --terminal-growth 3 --wacc 10 --shares 500 --net-claims 200
+```
 
-The output is only as good as three judgment calls — show your work on each:
+The answer is conditional on every other input. It is informative only when positive base FCFF
+and the model shape represent the business. It does not solve for revenue growth, margin, or
+dilution, and it should not be presented as “the market's” unique forecast. For an immature
+business, construct an operating model and test combinations of scale, margin, reinvestment,
+and dilution that reconcile to price instead.
 
-- **Discount rate.** See the dedicated section below — this is the input most analysts get
-  wrong, and it deserves its own reasoning process.
-- **Terminal value.** This is usually most of a DCF's value, so it's where false precision
-  hides. Keep terminal growth at or below long-run GDP; sanity-check the implied terminal
-  multiple — if it bakes in a permanent premium multiple, you've smuggled optimism into the
-  tail.
-- **The base cash flow.** Use *normalized* owner earnings (phase 3), not a peak or trough
-  year. Garbage in, garbage out — most valuation errors are bad inputs, not bad arithmetic.
+### Terminal value
 
-## Discount rate — reason it, don't default it
+A terminal state should be economically mature:
 
-The discount rate is the single most levered input in a DCF: a 300bps change can move
-intrinsic value by 30–50%. Yet it is the input most often set by reflex (“10% for
-equity”) rather than by reasoning. **Every memo must derive and justify its discount rate
-in a dedicated subsection of the valuation section.** A number without a rationale is an
-assumption the reader cannot audit — and cannot trust.
+- terminal growth is consistent with the currency and long-run market opportunity;
+- return on new capital and reinvestment support the growth rate;
+- margins and competitive position have faded or stabilized plausibly;
+- capital intensity, taxes, and dilution are normalized; and
+- WACC exceeds terminal growth.
 
-### The reasoning process (do this every time)
+Report the terminal value as a percentage of enterprise value and cross-check its implied
+terminal multiple. A high percentage is not automatically wrong, but it identifies where the
+model is least anchored by near-term evidence.
 
-1. **Start with the business, not the stock.** Ask: *what is the risk profile of the
-   underlying cash flows?* A government-contracted, recurring-revenue oligopoly with
-   mandated demand has fundamentally different cash-flow risk than a single-product
-   biotech or a commodity cyclical. The business risk should drive the unlevered cost of
-   capital — the stock’s trading volatility and capital structure are layered on top.
+## Earnings Power Value
 
-2. **Anchor to peers, not defaults.** Pull betas for 2–4 closest business-model peers
-   from `market-scout` (yfinance’s `.info["beta"]`). Unlever each using Hamada:
-   `beta_u = beta_l / (1 + (1 - tax_rate) * D/E)`. Average the unlevered betas — this
-   is the *business risk* of the peer group, stripped of each company’s financing
-   choices.
+EPV capitalizes normalized no-growth operating earnings at WACC. Without the optional
+maintenance-capex refinement, it assumes D&A and maintenance capex offset:
 
-3. **Re-lever for the subject’s capital structure.** Use the company’s *pro-forma or
-   target* D/E (not necessarily today’s, if the capital structure is in transition):
-   `beta_l = beta_u * (1 + (1 - tax_rate) * D/E)`. Then CAPM:
-   `Ke = Rf + beta_l * ERP`. Use the current 10-year Treasury yield for Rf and a
-   long-run ERP of 5–6% (Damodaran’s implied ERP is the standard reference).
+```text
+normalized after-tax EBIT = EBIT × (1 − normalized cash tax rate)
+operating cash earnings    = after-tax EBIT + D&A − maintenance capex
+EPV of operations          = operating cash earnings ÷ WACC
+```
 
-4. **Compute WACC if doing an enterprise DCF.** Weight cost of equity and after-tax
-   cost of debt by their shares of total capital. If there is preferred equity or
-   mezzanine debt, include it as a separate tranche at its own cost.
+Use the D&A refinement only when both D&A and maintenance capex are estimated on a consistent
+basis:
 
-5. **Sanity-check against the business description.** Before using the number, ask:
-   *does this rate make sense for what this business actually is?* A few guideposts:
+```bash
+python "<skill-dir>/scripts/epv.py" --ebit 600 --tax 21 --wacc 9 \
+  --shares 500 --net-claims 200 --da 100 --maint-capex 85 --price 10
+```
 
-   | Business type | Typical WACC range | Why |
-   | :-- | :-- | :-- |
-   | Regulated utility / infrastructure concession | 6–8% | Contracted, inflation-linked, near-monopoly |
-   | Mission-critical gov-contracted recurring revenue | 8–10% | Mandated demand, high switching costs, oligopoly |
-   | Stable consumer/enterprise compounder | 9–11% | Durable moat, predictable FCF |
-   | Cyclical industrial / commodity | 10–13% | Earnings volatility, capital intensity |
-   | Growth-stage / unproven unit economics | 12–15% | Execution risk, cash burn, TAM uncertainty |
-   | Distressed / binary outcome | 15%+ | Survival risk, option-like payoff |
+EPV is a no-growth operating case, not a guaranteed floor. It can overstate value when earnings
+are cyclical, assets are deteriorating, maintenance investment is understated, customers are
+leaving, or liabilities sit outside the model. For cyclicals, use defensible mid-cycle earnings
+and separately test trough liquidity.
 
-   If your derived WACC lands far outside the range for the business type, re-examine
-   your inputs — the beta sample, the D/E assumption, or the ERP. The guideposts are
-   not rules, but a derived rate that contradicts the business description is a red flag.
+## Relative and transaction evidence
 
-6. **Separate business risk from financial risk.** When the capital structure is
-   distressed or in transition (turnarounds, post-divestiture, over-leveraged), the
-   *business* may deserve a low discount rate while the *equity* deserves a high one.
-   Make this explicit: run the DCF at the business-appropriate WACC to value the
-   enterprise, then subtract net debt and senior claims to get equity value. Do not
-   double-count by using a high WACC *and* subtracting the debt — that penalizes the
-   cash flows for leverage risk and then penalizes the equity again.
+Use multiples only when numerator, denominator, growth, accounting, leases, and capital
+structure are comparable. Match enterprise multiples with pre-interest measures and equity
+multiples with post-interest measures. Explain why a peer deserves the same or a different
+multiple; an automated peer table is only a candidate list.
 
-7. **State it in the memo.** The valuation section must include a subsection titled
-   “**Discount Rate Derivation**” (or similar) that shows: the peer set used, their
-   betas and unlevered betas, the re-levered beta, the CAPM cost of equity, the WACC,
-   and the sanity check against the business description. A reader should be able to
-   disagree with your rate and re-run the DCF with their own — that’s the point.
+Useful anchors may include EV/EBIT, EV/FCFF, P/E, P/FCFE, unit value, replacement cost, and
+precedent transactions. Sales multiples require an explicit margin and reinvestment bridge.
+Historical multiples are evidence about prior expectations and rates, not intrinsic value.
 
-### Common mistakes
+Asset plays and special situations generally require their own arithmetic:
 
-- **Defaulting to 10% or 12%.** These are not reasoned rates; they are habits. 10% was
-  a reasonable equity return assumption when the risk-free rate was 4–5% and the ERP was
-  5–6%, but it says nothing about *this specific business*. Always derive.
-- **Using the stock’s own beta.** A distressed, thinly-traded small-cap will have a
-  high beta driven by liquidity and sentiment, not business risk. Use peer unlevered
-  betas to isolate the business risk, then re-lever.
-- **Double-counting leverage risk.** If you use a high WACC because the company is
-  leveraged, and then also subtract a large net-debt figure, you’re penalizing leverage
-  twice. The WACC already reflects the cost of the debt; subtracting net debt converts
-  enterprise value to equity value. Don’t inflate both.
-- **Ignoring capital structure transitions.** A turnaround that will be nearly debt-free
-  in 18 months should not be discounted at today’s levered cost of capital for a
-  10-year DCF. Use the *target* or *normalized* capital structure for the WACC, and
-  reflect the transition costs in the near-term cash flows instead.
+- sum-of-parts with segment-specific methods and corporate-cost allocation;
+- liquidation or realizable NAV with asset haircuts, liabilities, tax, and timing;
+- transaction outcomes with payoff, probability, timing, break value, and interim cash flows;
+  and
+- annualized expected return rather than an unadjusted spread.
 
-## Weighting by archetype
+Do not turn uncertain legal interpretation into a precise probability without qualified support.
 
-Lean on the lens the business actually fits; report the others as cross-checks.
+## Discount rate
 
-| Archetype | Lead lens | Cross-check with |
+No fixed WACC or required-return table is timeless or company-specific. Derive a rate from
+current inputs, document the date and sources, and sensitize it.
+
+For an enterprise DCF:
+
+```text
+cost of equity = risk-free rate + beta × equity risk premium
+WACC = E/(D+E) × cost of equity + D/(D+E) × pre-tax cost of debt × (1 − tax rate)
+```
+
+Add country or other risk components only when they are not already captured elsewhere. Use
+market-value capital weights where observable. Estimate debt cost from current borrowing terms,
+yield, or a defensible default spread rather than the historical coupon.
+
+A bottom-up beta can be useful: choose operationally comparable firms, unlever their equity
+betas using consistent market D/E and tax assumptions, take a robust central estimate, and
+re-lever for a defensible current or target capital structure. But beta is a noisy model input,
+not a fact. A thin or poor peer set may justify broader industry data, an alternative required
+return, or wider sensitivity rather than false precision.
+
+Using WACC for FCFF and then subtracting debt is not double-counting. WACC discounts operating
+cash flow using financing costs; the debt subtraction allocates enterprise value to common
+equity. Double-counting occurs when the same expected loss, lease burden, pension contribution,
+or distress effect is embedded in both cash flow and an additional adjustment without
+reconciliation.
+
+If leverage or survival changes across scenarios, reflect financing costs, refinancing,
+dilution, and default risk explicitly. A single normalized WACC can conceal the path dependency
+of a distressed equity.
+
+The memo should show enough of the derivation for a reader to replace the rate, but it need not
+force a ceremonial subsection or peer-beta table when another method is better supported.
+
+## Scenario design and margin of safety
+
+Name scenarios for the mechanism that differs, not merely bear/base/bull. At minimum disclose:
+
+- revenue or unit path;
+- operating margin and reinvestment;
+- taxes and working capital;
+- financing, dilution, and enterprise bridge;
+- discount and terminal assumptions; and
+- evidence supporting the scenario weight, if probabilities are used.
+
+Use sensitivity around the two or three variables that dominate value. Report value per share
+and the price discount or premium to each relevant outcome. Margin of safety is a conclusion
+about downside, uncertainty, and required return; no universal percentage substitutes for the
+quality of the inputs.
+
+## Method selection by thesis shape
+
+| Thesis shape | Usually useful | Common misuse |
 | :-- | :-- | :-- |
-| Compounder | Forward DCF (long stage-1 runway) | Reverse-DCF reality check; EPV floor |
-| Hypergrowth | **Reverse-DCF** (what's priced in) | Multiples; scenario forward DCF |
-| Cyclical | EPV on **mid-cycle** earnings | Normalized P/E; mid-cycle multiples |
-| Turnaround / inflection | Scenario DCF (post-inflection margins) | EPV today as downside floor |
-| Special situation | Event payoff / sum-of-parts | Multiples on the resulting pieces |
-| Deep value | Asset value / liquidation; EPV floor | Multiples; reverse-DCF for the catalyst |
+| Compounder | operating DCF, reinvestment/runway cases, reverse check | extrapolating current ROIC forever |
+| Cash-burning growth | explicit operating forecast, price-reconciliation scenarios | growing a negative FCFF base |
+| Cyclical | mid-cycle EPV/DCF, trough balance sheet, asset or unit values | valuing peak earnings at a spot multiple |
+| Turnaround | explicit transition cases, failure case, financing path | applying target margins immediately |
+| Special situation | payoff tree, waterfall, SOTP, annualized return | DCF obscuring the binding event terms |
+| Deep value | realizable NAV/liquidation, burn and timing, EPV where durable | calling EPV or book value a hard floor |
 
-## The output
-
-A defensible **intrinsic-value range** (low–high, anchored to bear–bull), the **margin of
-safety** at today's price, and a plain statement of the *one or two assumptions the value is
-most sensitive to* — because that's where the next reader (and reality) will push hardest.
-Carry these straight into the verdict.
+End with the range supported by the evidence, the assumptions that dominate it, and the
+conditions under which the range ceases to be useful.

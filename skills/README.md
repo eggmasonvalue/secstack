@@ -11,7 +11,7 @@ they form a research pipeline.
 | **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data to surface new investment ideas. |
 | **Data** | [`sec-edgar-skill`](sec-edgar-skill/) | Retrieve and extract SEC filings, ownership, and 13F holder data. |
 | **Data** | [`market-scout`](market-scout/) | Pull prices, returns, peers, sector screens, and transcripts. |
-| **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one ticker into an auditable investment memo. |
+| **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one operating company into scoped analysis or an auditable investment memo. |
 | **Voice** | [`pitch-like-lou`](pitch-like-lou/) | Render a finished thesis as a VIC-style pitch. |
 
 ## Data flow
@@ -28,7 +28,8 @@ they form a research pipeline.
 ```
 
 `bottom-up-analyst` is the conductor. It decides what to pull, reasons over the evidence,
-values the business, and writes the memo. The data skills never decide what matters.
+values the business, and produces the requested analysis or full memo. The data skills supply
+the underlying evidence.
 
 `signal-sweep` and `sec-edgar-skill` are independent data sources. `market-scout` is also
 swappable: the analyst can use a different market-data provider without changing its
@@ -36,7 +37,8 @@ reasoning workflow.
 
 The voice skill renders from a finished thesis; it is not an idea generator.
 
-**Production order:** signal-sweep → bottom-up-analyst → memo → optionally pitch-like-lou.
+**Production order for a full thesis:** signal-sweep → bottom-up-analyst → memo → optionally
+pitch-like-lou.
 
 ## Progressive disclosure
 
