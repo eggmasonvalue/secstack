@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Market data scripts for SecStack"
 requires-python = ">=3.11"
 dependencies = [
+    "lxml>=6.1.2",
     "pandas>=2",
     "tabulate>=0.9",
     "truststore>=0.9",
