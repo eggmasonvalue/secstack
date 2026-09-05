@@ -34,25 +34,25 @@ function renderWide(theme: Theme, width: number, showPipeline: boolean): string[
   ];
 
   if (showPipeline) {
-    if (width >= 62) {
+    if (width >= 77) {
       lines.push(
         "",
         `  ${tree("Research Pipeline:")}`,
-        `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}       ${copy("10-K · 10-Q · 8-K · XBRL statements · Proxies")}`,
-        `  ${tree("├─ ")}${gold("[SIGNALS]")}     ${copy("Form 4 insider buys · Schedule 13D blockholders")}`,
-        `  ${tree("├─ ")}${mark("[MARKET]")}      ${copy("Live quotes · Comps · Earnings call transcripts")}`,
-        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}    ${copy("Forensic MD&A · Unit economics · Margin of safety")}`,
-        `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")}   ${copy("Norbert Lou numbers-first stock pitch")}`,
+        `  ${tree("├─ ")}${gold("[SIGNALS]")}     ${copy("Insider clusters · 13D blocks · Market screens · Themes")}`,
+        `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}       ${copy("10-K/Q/8-K · XBRL financials · 13F holders · Proxies")}`,
+        `  ${tree("├─ ")}${mark("[MARKET]")}      ${copy("Live quotes · Peer comps · Trailing returns · Transcripts")}`,
+        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}    ${copy("Normalized FCFF · Reverse DCF / EPV · Moats · Pre-mortem")}`,
+        `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")}   ${copy("Norbert Lou VIC style · Hard arithmetic · Falsification")}`,
       );
     } else {
       lines.push(
         "",
         `  ${tree("Research Pipeline:")}`,
-        `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K · 10-Q · 8-K · Proxies")}`,
-        `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Form 4 insider buys · 13D")}`,
-        `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Comps · Transcripts")}`,
-        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("Forensic MD&A · Valuation")}`,
-        `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")} ${copy("Norbert Lou VIC pitch")}`,
+        `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Insider clusters · 13Ds · Screens")}`,
+        `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K/Q/8-K · XBRL · 13F holders")}`,
+        `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Peer comps · Transcripts")}`,
+        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("Normalized FCFF · DCF · Pre-mortem")}`,
+        `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")} ${copy("Norbert Lou VIC pitch · Math")}`,
       );
     }
   }
@@ -87,10 +87,10 @@ function renderCompact(theme: Theme, width: number, showPipeline: boolean): stri
     lines.push(
       "",
       `  ${tree("Research Pipeline:")}`,
-      `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K/Q/8-K · Proxies")}`,
-      `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Form 4 · 13D")}`,
-      `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Calls")}`,
-      `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("MD&A · DCF")}`,
+      `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Insiders · 13Ds · Screens")}`,
+      `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K/Q · XBRL · 13F")}`,
+      `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Comps · Calls")}`,
+      `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("FCFF · DCF · Moats")}`,
       `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")} ${copy("Norbert Lou pitch")}`,
     );
   }
@@ -116,10 +116,10 @@ function renderNarrow(theme: Theme, width: number, showPipeline: boolean): strin
   if (showPipeline) {
     lines.push(
       "",
-      tree("• EDGAR Filings (10-K/Q/8-K)"),
-      tree("• Signals (Form 4/13D)"),
+      tree("• Signals & Discovery"),
+      tree("• EDGAR Filings & 13F"),
       tree("• Market & Transcripts"),
-      tree("• Analysis & Valuation"),
+      tree("• Bottom-Up Valuation"),
       tree("• Norbert Lou VIC Pitch"),
     );
   }
