@@ -11,7 +11,7 @@ function fit(lines: string[], width: number): string[] {
   return lines.map((line) => truncateToWidth(line, width, ""));
 }
 
-function renderWide(theme: Theme, width: number, expanded: boolean): string[] {
+function renderWide(theme: Theme, width: number, showPipeline: boolean): string[] {
   const g = (text: string) => theme.fg("success", text);
   const gold = (text: string) => theme.fg("warning", text);
   const mark = (text: string) => theme.fg("accent", text);
@@ -33,7 +33,7 @@ function renderWide(theme: Theme, width: number, expanded: boolean): string[] {
     `  ${mark("▀▀▀▀▀▀▀▀▀▀▀")}`,
   ];
 
-  if (expanded) {
+  if (showPipeline) {
     if (width >= 62) {
       lines.push(
         "",
@@ -61,7 +61,7 @@ function renderWide(theme: Theme, width: number, expanded: boolean): string[] {
   return fit(lines, width);
 }
 
-function renderCompact(theme: Theme, width: number, expanded: boolean): string[] {
+function renderCompact(theme: Theme, width: number, showPipeline: boolean): string[] {
   const g = (text: string) => theme.fg("success", text);
   const gold = (text: string) => theme.fg("warning", text);
   const mark = (text: string) => theme.fg("accent", text);
@@ -83,7 +83,7 @@ function renderCompact(theme: Theme, width: number, expanded: boolean): string[]
     `  ${mark("▀▀▀▀▀▀▀▀▀▀▀")}`,
   ];
 
-  if (expanded) {
+  if (showPipeline) {
     lines.push(
       "",
       `  ${tree("Research Pipeline:")}`,
@@ -99,7 +99,7 @@ function renderCompact(theme: Theme, width: number, expanded: boolean): string[]
   return fit(lines, width);
 }
 
-function renderNarrow(theme: Theme, width: number, expanded: boolean): string[] {
+function renderNarrow(theme: Theme, width: number, showPipeline: boolean): string[] {
   const g = (text: string) => theme.fg("success", text);
   const gold = (text: string) => theme.fg("warning", text);
   const ink = (text: string) => theme.bold(theme.fg("text", text));
@@ -113,7 +113,7 @@ function renderNarrow(theme: Theme, width: number, expanded: boolean): string[] 
     copy("Bottom-Up Equity Research"),
   ];
 
-  if (expanded) {
+  if (showPipeline) {
     lines.push(
       "",
       tree("• EDGAR Filings (10-K/Q/8-K)"),
@@ -131,25 +131,29 @@ function renderNarrow(theme: Theme, width: number, expanded: boolean): string[] 
 export function renderStartupHeader(
   theme: Theme,
   width: number,
-  expanded: boolean = false,
+  showPipeline: boolean = true,
 ): string[] {
-  if (width >= WIDE_HEADER_WIDTH) return renderWide(theme, width, expanded);
-  if (width >= COMPACT_HEADER_WIDTH) return renderCompact(theme, width, expanded);
-  return renderNarrow(theme, width, expanded);
+  if (width >= WIDE_HEADER_WIDTH) return renderWide(theme, width, showPipeline);
+  if (width >= COMPACT_HEADER_WIDTH) return renderCompact(theme, width, showPipeline);
+  return renderNarrow(theme, width, showPipeline);
 }
 
 export default function startupHeaderExtension(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
 
-    let expanded = false;
+    let showPipeline = true;
 
     ctx.ui.setHeader((tui, theme) => ({
-      render: (width) => renderStartupHeader(theme, width, expanded),
+      render: (width) => renderStartupHeader(theme, width, showPipeline),
       invalidate() {},
-      setExpanded(value: boolean) {
-        if (expanded === value) return;
-        expanded = value;
+      setExpanded(toolsExpanded: boolean) {
+        // Invert: when tools are expanded for deeper inspection, collapse the
+        // header to yield vertical screen space. When tools are collapsed,
+        // show the full research capability pipeline.
+        const next = !toolsExpanded;
+        if (showPipeline === next) return;
+        showPipeline = next;
         tui.requestRender();
       },
     }));
