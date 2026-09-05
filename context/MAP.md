@@ -35,16 +35,16 @@ The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 - `agent-browser`.
 
 Pi installs and updates each source independently. The bootstrap manages only those package
-entries, the profile's Pi-managed shell path, the profile-local Python environment, and a
-relative `SYSTEM.md` symlink into the installed SecStack package. The system-prompt-viewer
-package is the sole owner of the `/system-context` overlay. SecStack's
+entries, the profile's Pi-managed shell path, the `quietStartup` preference, the profile-local
+Python environment, and a relative `SYSTEM.md` symlink into the installed SecStack package. The
+system-prompt-viewer package is the sole owner of the `/system-context` overlay. SecStack's
 `restore-tool-envelope` extension restores Pi's live tool snippets and guidelines after
 `SYSTEM.md` replaces Pi's coding-agent identity. Its `startup-header` extension replaces
-Pi's built-in header with a responsive, theme-adaptive SecStack research mark. Coding-task
-guidance files are not linked, and the filtered `pi-setup` package contributes no skills,
-including `repo-nav` and `bootstrap-docs`. Research runs in the primary Pi context;
-no sub-agent package is installed. Authentication, model selection, provider configuration,
-sessions, and unrelated settings remain profile-local and untouched.
+Pi's built-in header with a responsive, theme-adaptive SecStack research mark and interactive
+research pipeline. Coding-task guidance files are not linked, and the filtered `pi-setup` package
+contributes no skills, including `repo-nav` and `bootstrap-docs`. Research runs in the primary
+Pi context; no sub-agent package is installed. Authentication, model selection, provider
+configuration, sessions, and unrelated settings remain profile-local and untouched.
 
 ## Skill internals
 

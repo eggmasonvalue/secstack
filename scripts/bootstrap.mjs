@@ -4,7 +4,7 @@
  * SecStack profile.
  *
  * This script deliberately changes only the SecStack profile's package list,
- * shell command prefix, and optional Bash launcher.
+ * shell command prefix, quietStartup setting, and optional Bash launcher.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -150,6 +150,10 @@ function mergeSettings() {
       ? `${prefix}\n${pathCommand}`
       : pathCommand;
   }
+
+  // Silence Pi's default startup banner and raw resource listing so SecStack's
+  // custom startup header and interactive capability pipeline take center stage.
+  settings.quietStartup = true;
 
   const temp = join(agentDir, `.settings.${process.pid}.tmp`);
   writeFileSync(temp, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
