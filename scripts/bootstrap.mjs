@@ -53,6 +53,7 @@ const desiredPackages = [
       "extensions/session-context.ts",
       "extensions/tavily-web.ts",
       "extensions/vibe-spinner.ts",
+      "extensions/meta-provider.ts",
     ],
     skills: [],
     prompts: [],
