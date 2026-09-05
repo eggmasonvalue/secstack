@@ -31,7 +31,8 @@ The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 
 - this SecStack package;
 - the filtered `pi-setup` package;
-- `pi-system-prompt-viewer`; and
+- `pi-system-prompt-viewer`;
+- `pi-freeflow`; and
 - `agent-browser`.
 
 Pi installs and updates each source independently. The bootstrap manages only those package

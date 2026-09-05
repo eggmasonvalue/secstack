@@ -34,12 +34,14 @@ const piSetupSource = "git:github.com/eggmasonvalue/pi-setup";
 const systemPromptViewerSource =
   "git:github.com/eggmasonvalue/pi-system-prompt-viewer";
 const agentBrowserSource = "npm:agent-browser";
+const piFreeflowSource = "git:github.com/trefeon/pi-freeflow";
 
 const managedSources = [
   secstackSource,
   piSetupSource,
   systemPromptViewerSource,
   agentBrowserSource,
+  piFreeflowSource,
 ];
 
 const desiredPackages = [
@@ -64,6 +66,7 @@ const desiredPackages = [
     ],
   },
   agentBrowserSource,
+  piFreeflowSource,
 ];
 
 const managedPathMarker = ".pi/secstack-agent";

@@ -112,6 +112,7 @@ The SecStack profile manages these as separate top-level Pi packages:
   prompt envelope, and responsive SecStack startup header
 - `git:github.com/eggmasonvalue/pi-setup` — selected extensions and themes only
 - `git:github.com/eggmasonvalue/pi-system-prompt-viewer` — `/system-context` overlay
+- `git:github.com/trefeon/pi-freeflow` — free model provider proxy and relay
 - `npm:agent-browser`
 
 The selected `pi-setup` resources are `btw`, `notify`, `session-context`, `tavily-web`,
