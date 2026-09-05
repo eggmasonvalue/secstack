@@ -113,7 +113,29 @@ function findUv() {
 
 function findPython() {
   for (const command of ["python", "python3"]) {
-    if (commandWorks(command, ["--version"])) return command;
+    if (!commandWorks(command, ["--version"])) continue;
+
+    // Pass uv the interpreter selected by the current shell, rather than the
+    // bare command name. On Windows, uv resolves a bare `python` against the
+    // system PATH and can ignore a newer interpreter earlier in Git Bash's
+    // PATH (for example, an activated virtualenv).
+    try {
+      const executable = execFileSync(
+        command,
+        ["-c", '"import sys; print(sys.executable)"'],
+        {
+          encoding: "utf8",
+          shell: process.platform === "win32",
+        },
+      ).trim();
+      if (executable) {
+        return process.platform === "win32" && /\s/.test(executable)
+          ? `"${executable}"`
+          : executable;
+      }
+    } catch {
+      // Try the next Python command if this one cannot report its executable.
+    }
   }
   throw new Error(
     "Python was not found. Install Python 3.11 or newer, ensure python is on PATH, and rerun bootstrap.",
