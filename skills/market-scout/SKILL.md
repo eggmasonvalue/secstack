@@ -5,8 +5,7 @@ description: >-
   Yahoo Finance: quotes, market capitalization, shares, price history and trailing returns,
   industry context, peer tables, and transcript text. Use when a task needs a current market
   snapshot, performance calculation, Yahoo peer or industry data, a market-data field, or an
-  earnings-call transcript. Use primary filings for facts that Yahoo does not author or when a
-  load-bearing figure needs regulatory verification.
+  earnings-call transcript.
 ---
 
 # Market Scout
