@@ -27,12 +27,14 @@ From Bash, bootstrap the profile with one command:
 (tmp=$(mktemp -d) && git clone --depth 1 https://github.com/eggmasonvalue/secstack "$tmp" && node "$tmp/scripts/bootstrap.mjs"; status=$?; rm -rf "$tmp"; [ "$status" -eq 0 ])
 ```
 
-The bootstrap is safe to rerun. It installs the unpinned top-level Pi package sources,
-merges only SecStack-managed package entries, shell-path configuration, and `quietStartup`
-preference into the SecStack profile's `settings.json` and creates a profile-local Python environment. It links the
-profile's `SYSTEM.md` to the installed SecStack package, so `pi update --extensions` updates the
-research-agent identity and prompt envelope. It does not install coding-task guidance or link
-global `AGENTS.md` or `APPEND_SYSTEM.md` files into the profile.
+The bootstrap is safe to rerun. It configures `allowScripts` for `agent-browser` in the
+profile's npm root (`~/.pi/secstack-agent/npm/package.json`), installs the unpinned top-level
+Pi package sources, merges only SecStack-managed package entries, shell-path configuration,
+and `quietStartup` preference into the SecStack profile's `settings.json` and creates a
+profile-local Python environment. It links the profile's `SYSTEM.md` to the installed SecStack
+package, so `pi update --extensions` updates the research-agent identity and prompt envelope.
+It does not install coding-task guidance or link global `AGENTS.md` or `APPEND_SYSTEM.md` files
+into the profile.
 
 It does not overwrite the profile's `auth.json`, `models.json`, provider settings,
 model selections, UI preferences, sessions, or unrelated settings.
