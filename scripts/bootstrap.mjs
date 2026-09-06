@@ -3,8 +3,9 @@
  * Install SecStack and its independently managed Pi packages into the isolated
  * SecStack profile.
  *
- * This script deliberately changes only the SecStack profile's package list,
- * shell command prefix, quietStartup setting, and optional Bash launcher.
+ * This script deliberately changes the SecStack profile's package list,
+ * shell command prefix, quietStartup setting, allowScripts in the profile's npm
+ * root, and optional Bash launcher.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -25,7 +26,9 @@ import { dirname, join, relative, resolve } from "node:path";
 
 const agentDir = resolve(join(homedir(), ".pi", "secstack-agent"));
 const settingsPath = join(agentDir, "settings.json");
-const npmBin = join(agentDir, "npm", "node_modules", ".bin");
+const npmDir = join(agentDir, "npm");
+const npmPackageJsonPath = join(npmDir, "package.json");
+const npmBin = join(npmDir, "node_modules", ".bin");
 const venvDir = join(agentDir, ".venv");
 const systemPromptPath = join(agentDir, "SYSTEM.md");
 const bashrcPath = join(homedir(), ".bashrc");
@@ -299,8 +302,31 @@ async function offerLauncher() {
   }
 }
 
+function ensureNpmAllowScripts() {
+  mkdirSync(npmDir, { recursive: true });
+  let pkg = { name: "pi-extensions", private: true };
+  if (existsSync(npmPackageJsonPath)) {
+    try {
+      pkg = JSON.parse(readFileSync(npmPackageJsonPath, "utf8"));
+    } catch {
+      // Keep default
+    }
+  }
+  const allowScripts =
+    pkg.allowScripts && typeof pkg.allowScripts === "object"
+      ? pkg.allowScripts
+      : {};
+  if (!allowScripts["agent-browser"]) {
+    pkg.allowScripts = { ...allowScripts, "agent-browser": true };
+    const temp = join(npmDir, `.package.${process.pid}.tmp`);
+    writeFileSync(temp, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+    renameSync(temp, npmPackageJsonPath);
+  }
+}
+
 async function main() {
   console.log(`Configuring SecStack Pi under ${agentDir}`);
+  ensureNpmAllowScripts();
   for (const source of managedSources) {
     runPi(["install", source]);
   }
