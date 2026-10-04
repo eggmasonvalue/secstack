@@ -1,6 +1,6 @@
-# SecStack
+# SECStack
 
-SecStack is an isolated [Pi](https://github.com/badlogic/pi-mono) profile for rigorous
+SECStack is an isolated [Pi](https://pi.dev/) profile for rigorous
 bottom-up research on US-listed companies. It bundles five composable skills, selected
 Pi extensions and themes, and Pi-managed `agent-browser`.
 
