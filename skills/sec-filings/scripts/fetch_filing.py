@@ -100,19 +100,32 @@ def main() -> None:
     )
     parser.add_argument("--ticker", help="Ticker, CIK, or company name.")
     parser.add_argument("--form", help="Form type, e.g. 10-K, 10-Q, 8-K, 20-F, 40-F, 6-K, DEF 14A.")
-    parser.add_argument("--year", type=int, help="Calendar year of the filing.")
-    parser.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar quarter.")
+    parser.add_argument(
+        "--year",
+        type=int,
+        help="Calendar year the filing was filed (a Dec-FYE FY2024 10-K is 2025).",
+    )
+    parser.add_argument(
+        "--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar quarter the filing was filed."
+    )
     parser.add_argument(
         "--on-or-before",
         help="Select the most recent matching filing on or before YYYY-MM-DD.",
     )
     parser.add_argument(
         "--section",
-        help='Extract an SEC item code, or pass "list" to print available item codes.',
+        help=(
+            'SEC item code, e.g. "Item 1A". 10-Q items are Part-namespaced: MD&A is '
+            '"Part I, Item 2"; a bare "Item 2" is Part II. "list" prints the codes present '
+            "(on an 8-K, what it reports). 20-F: 3.D risks, 5 MD&A, 6 management, 7.A holders."
+        ),
     )
     parser.add_argument(
         "--attachment",
-        help='Attachment selector: "list", "all", zero-based index, or document/description text.',
+        help=(
+            'Attachment selector: "list", "all", zero-based index, or document/description text. '
+            '6-K, 40-F, and many 8-K results live in an exhibit, usually "ex-99.1".'
+        ),
     )
     c.add_identity_arg(parser)
     c.add_cache_arg(parser)
@@ -224,8 +237,8 @@ def main() -> None:
         if args.section.strip().lower() == "list":
             if not addressable:
                 c.log(
-                    f"{filing.form} is not item-addressable. Fetch the full filing and "
-                    "navigate its contents or attachments."
+                    f"{filing.form} is not item-addressable. Fetch the full filing, read its "
+                    "table of contents in the first ~100 lines, then grep; or list attachments."
                 )
                 return
             c.log(f"{filing.form} contains {len(items)} item(s):")

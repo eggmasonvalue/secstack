@@ -2,8 +2,8 @@
 
 Yahoo Finance market data and earnings-call transcripts for US-listed securities via
 [`yfinance`](https://github.com/ranaroussi/yfinance). Two wrappers cover the snapshot and
-transcript jobs; everything else is reached through `yfinance` directly, guided by the
-verified gotchas in `SKILL.md`.
+transcript jobs; everything else is reached through `yfinance` directly, guided by
+`references/yfinance.md`.
 
 Part of the [SecStack skills](../README.md) collection.
 
@@ -37,6 +37,7 @@ python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --list
 python "<skill-dir>/scripts/fetch_transcripts.py" --ticker AAPL --latest 1
 ```
 
-See [SKILL.md](SKILL.md) for output contracts, yfinance unit and share-class gotchas, and
-runtime discovery beyond the bundled report. Yahoo data is best-effort and can be stale or incomplete for thinly covered names;
+See [SKILL.md](SKILL.md) for commands and
+[`references/yfinance.md`](references/yfinance.md) for unit and share-class quirks. Yahoo data is
+best-effort and can be stale or incomplete for thinly covered names;
 verify load-bearing facts against an issuer or regulatory source.

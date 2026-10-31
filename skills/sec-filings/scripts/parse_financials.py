@@ -227,7 +227,11 @@ def main() -> None:
         help="Exact SEC accession. Cannot be combined with company/period selectors.",
     )
     parser.add_argument("--ticker", help="Ticker, CIK, or company name.")
-    parser.add_argument("--year", type=int, help="Calendar filing year.")
+    parser.add_argument(
+        "--year",
+        type=int,
+        help="Calendar year the filing was filed (a Dec-FYE FY2024 10-K is 2025).",
+    )
     parser.add_argument(
         "--quarter", type=int, choices=[1, 2, 3, 4], help="Calendar filing quarter."
     )

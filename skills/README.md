@@ -42,9 +42,9 @@ pitch-like-lou.
 
 ## Progressive disclosure
 
-Each `SKILL.md` carries what every run needs: commands, semantics, and the gotchas the
-scripts encode. Branch-specific detail lives in `references/`, executable helpers in
-`scripts/`, and configuration beside the skill that owns it.
+Each `SKILL.md` holds routes, commands, and pointers. A script's lessons live in its code,
+error messages, `--help`, and report text; off-script detail lives in `references/`,
+executable helpers in `scripts/`, and configuration beside the skill that owns it.
 
 ## Skill resources
 

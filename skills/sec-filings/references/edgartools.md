@@ -36,7 +36,8 @@ filing = find("0000320193-25-000079")  # exact accession
 filing.markdown()  # whole filing; it takes no section argument and ignores one
 ```
 
-- `year` belongs on `get_filings`. `EntityFilings.filter()` does not accept it.
+- `year` and `quarter` filter on the *filing* date, and `year` belongs on `get_filings`.
+  `EntityFilings.filter()` does not accept it.
 - A company's form mix changes over time (domestic to foreign filer, a new listing, a
   reorganization), so survey several years before concluding a form is absent.
 
@@ -45,14 +46,15 @@ filing.markdown()  # whole filing; it takes no section argument and ignores one
 ```python
 report = filing.obj()  # TenK, TenQ, CurrentReport, TwentyF, ...
 report.items  # the item codes actually present
-report["Item 1A"]  # None when absent
+report["Item 1A"]  # None when absent; 10-Q keys are "Part I, Item 2" style
 
 attachments = list(filing.attachments)  # use list indices
 attachments[1].markdown()
 ```
 
 Raw `filing.attachments[i]` looks attachments up by SEC sequence number, which can skip values.
-Cast to a list first.
+Cast to a list first. Free-form forms (DEF 14A, 6-K, S-1, 424B) have no `.items`. A 6-K or
+40-F body is often just a cover note, with the substance in an exhibit.
 
 ## XBRL
 
@@ -76,6 +78,7 @@ form4 = company.get_filings(form="4", amendments=False).latest().obj()
 form4.to_dataframe()  # rows with Code, Shares, Price, Remaining Shares
 form4.market_trades, form4.option_exercises
 
+# Forms were renamed in Dec 2024; history needs both spellings. Bare "13D" matches nothing.
 forms = ["SCHEDULE 13D", "SCHEDULE 13D/A", "SC 13D", "SC 13D/A"]  # same pattern for 13G
 schedule = company.get_filings(form=forms).latest().obj()  # one filing; holders need each person's chain
 schedule.issuer_info, schedule.reporting_persons, schedule.total_percent
@@ -86,4 +89,5 @@ manager.get_filings(form="13F-HR", amendments=False).latest().obj().holdings  # 
 ```
 
 Older schedules can lack structured XML. When parsed fields come back empty, read the
-filing's Markdown directly.
+filing's Markdown directly. The daily index (`edgar.get_filings(...)`) lists each schedule under
+both the filer and the subject company, so take the issuer from `issuer_info`.

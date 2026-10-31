@@ -241,6 +241,10 @@ def _render_markdown(ticker: str, url: str, data: dict) -> str:
         lines.append(f"- **Date:** {data['date']}")
     full_url = f"{_BASE}{url}" if url.startswith("/") else url
     lines.append(f"- **Source:** {full_url}")
+    lines.append(
+        "- **Note:** vendor transcript; check a consequential quote against the issuer's own "
+        "transcript or webcast."
+    )
     lines.append("")
 
     if data.get("summary"):
@@ -332,6 +336,8 @@ def main():
     transcripts = _fetch_listing(ticker)
     if transcripts is None:
         c.log(f"ERROR: transcript listing retrieval failed for {ticker}.")
+        if "." in ticker:
+            c.log(f"HINT: Yahoo writes share classes with a hyphen: {ticker.replace('.', '-')}")
         sys.exit(1)
     if not transcripts:
         c.log(f"No earnings call transcripts found for {ticker}.")

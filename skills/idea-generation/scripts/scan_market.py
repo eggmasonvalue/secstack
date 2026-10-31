@@ -98,6 +98,11 @@ def _render_markdown(
     if screen.get("description"):
         lines.append(f"_{screen['description']}_\n")
     lines.append(f"**Results returned:** {len(quotes)} of {total} matching\n")
+    if any(f["field"].startswith("lastclose52week") for f in screen.get("filters", [])):
+        lines.append(
+            "_Yahoo's `lastclose52week*` ratio fields lag the live quote; check each hit's current "
+            "price against its 52-week range before calling it near a low or high._\n"
+        )
 
     if not quotes:
         lines.append("No results matched this screen.\n")

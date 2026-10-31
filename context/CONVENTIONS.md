@@ -32,7 +32,10 @@ Terse imperative code rules. No rationale here — rationale lives in
 
 ## Markdown / docs
 
-- Keep each `SKILL.md` terse; defer detail to `references/` (progressive disclosure).
+- Keep each `SKILL.md` to routes, commands, and pointers; defer detail to `references/`
+  (progressive disclosure).
+- Put a script lesson where the mistake happens: handle it in code, else in the error
+  message, else in `--help` or report text; use `references/` only for off-script work.
 - Ensure `AGENTS.md`, `README.md`, and everything in `context/` pass markdownlint.
 - Append to `context/DECISIONS.md` only when the choice crosses the decision-log bar in `AGENTS.md`.
 

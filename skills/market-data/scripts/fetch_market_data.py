@@ -83,6 +83,8 @@ def main() -> None:
     if not has_snapshot and (close is None or close.empty):
         detail = f": {history_error}" if history_error else ""
         c.log(f"ERROR: Yahoo returned no usable snapshot or price history for {symbol}{detail}")
+        if "." in symbol:
+            c.log(f"HINT: Yahoo writes share classes with a hyphen: {symbol.replace('.', '-')}")
         sys.exit(1)
     if history_error:
         c.log(f"WARNING: price history unavailable: {history_error}")

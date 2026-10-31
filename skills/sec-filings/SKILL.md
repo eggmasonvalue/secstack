@@ -8,17 +8,12 @@ description: >-
 
 # SEC filings
 
-The filing is the primary record. Pull it to disk, then read only the slice you need.
+Pull filings to disk and read only the slice you need.
 
-## Run
-
-Run `python "<skill-dir>/scripts/<script>.py"` from the research workspace so `./sec-cache`
-lands beside the work (`--cache-dir` or `$SEC_CACHE_DIR` moves it). SEC requests need
-`EDGAR_IDENTITY="Name email@domain"`; without it the SEC returns 403. `test_setup.py --live`
-diagnoses the environment, and `--help` is the flag reference.
-
-Artifact commands print absolute paths on stdout and progress on stderr. A nonzero exit is a
-retrieval failure, never evidence that the record does not exist.
+Run `python "<skill-dir>/scripts/<script>.py"` from the research workspace, so the cache lands
+in `./sec-cache`. SEC requests need `EDGAR_IDENTITY="Name email@domain"`. Read `--help` before
+choosing selectors. A nonzero exit means retrieval failed; it is not evidence that the record is
+absent. When something misbehaves, run `test_setup.py --live`.
 
 ```bash
 orient.py --ticker AAPL                       # identity, form mix, recent accessions
@@ -34,49 +29,9 @@ fetch_13f_holders.py --manager "Berkshire Hathaway" [--history]
 fetch_13f_holders.py --manager 0001067983 --ticker AAPL      # one manager's position history
 ```
 
-Skip `orient.py` when you already have an accession or a cached file. Once you have an
-accession, use it: it is globally unique and removes every date and form guess.
-
-## Gotchas
-
-- **Selectors use the filing date.** `--year`/`--quarter` are the calendar year and quarter the
-  filing was *filed*, so a December-FYE company's FY2024 10-K is `--year 2025`.
-  `--on-or-before` can land on an older filing; stderr names the one it picked.
-- **Amendments.** Single-filing selectors exclude amendments because a 10-K/A may carry only the
-  changed items. `fetch_filings.py` keeps originals and amendments, and `--accession` fetches
-  either.
-- **Item codes.** 10-Q items are namespaced by Part: a bare `"Item 2"` resolves to Part II
-  (unregistered sales), while the MD&A is `"Part I, Item 2"`. On an 8-K, `--section list` tells
-  you what the 8-K is about (2.02 earnings, 5.02 officer change, 5.07 vote results) before you
-  read it. 20-F uses its own scheme: 3.D risk factors, 5 MD&A, 6 management and compensation,
-  7.A major holders.
-- **Exhibits hold the substance** of 6-Ks, 40-Fs, and many 8-Ks, usually in ex-99.1. An empty
-  body or a cover note means you should run `--attachment list`.
-- **Free-form filings** (DEF 14A, 6-K, S-1, 424B) are not item-addressable. Fetch them whole,
-  read the filing's own table of contents in the first ~100 lines, then grep. `rg -n '^#'`
-  maps a periodic report's headings.
-- **XBRL.** `parse_financials.py` never substitutes a different period. When several 6-Ks carry
-  statements it lists their accessions instead of guessing. Check period end and duration
-  before you label a figure quarterly, and remember that IFRS filers tag `ifrs-full:` concepts.
-- **Form 4.** Only code `P` is an open-market purchase. The transaction date and the filing
-  date differ. "Remaining shares" is one ownership line, not the insider's total. Foreign
-  private issuers file no Form 4, so absence of filings is not absence of trading.
-- **13F** comes through a distilled 13f.info route that reports SEC periods, CIKs, and
-  accessions. It reports share counts only, never dollars. A quarter becomes "latest" about 50
-  days after quarter end. Go to raw EDGAR only for fields the route omits (voting authority,
-  investment discretion) or for verification.
-- **13D/13G form names changed in December 2024.** Query both `SCHEDULE 13D`/`13D/A` and the
-  older `SC 13D`/`SC 13D/A` (and likewise for 13G). The daily index lists each schedule under
-  both the filer and the subject company, so take the issuer from `obj().issuer_info`.
-- **Cache.** Accession-keyed artifacts are reused; pass `--force` to regenerate them. Insider and
-  13F summaries refresh on every run. ripgrep skips the git-ignored cache unless you point it
-  at the directory or pass `--no-ignore`.
-- **Timing.** A release can reach issuer IR before it reaches EDGAR, so check both for a
-  same-day event.
-
-## References
+Once you have an accession, select by it.
 
 | Read | When |
 | :-- | :-- |
-| `references/edgartools.md` | writing inline `edgartools` code because no flag covers the job |
 | `references/ownership.md` | interpreting Form 4, 13F, 13D/13G, proxy ownership, compensation, or governance |
+| `references/edgartools.md` | writing inline `edgartools` code because no script covers the job |

@@ -6,7 +6,8 @@ attached to every figure, and reconcile them before combining sources.
 ## Form 4: what insiders did
 
 - Read the code, shares, price, direct or indirect ownership, footnotes, the derivative table,
-  the 10b5-1 box, and both dates together.
+  the 10b5-1 box, and both dates (transaction and filing) together. "Remaining shares" covers
+  one ownership line, not the insider's total holding.
 - `P` is the clean voluntary cash signal. `S` needs context (plan, size relative to holdings,
   history) before it says anything about motive. `M` (exercise), `F` (tax withholding), `A`
   (grant), and `G` (gift) are mechanics; keep them out of any buy/sell ratio.

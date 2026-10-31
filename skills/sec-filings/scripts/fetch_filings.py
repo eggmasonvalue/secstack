@@ -24,8 +24,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--ticker", required=True, help="Ticker, CIK, or company name.")
     parser.add_argument("--form", required=True, help="Form type, e.g. 10-Q, 8-K, 6-K.")
-    parser.add_argument("--start-year", type=int, help="First calendar year (inclusive).")
-    parser.add_argument("--end-year", type=int, help="Last calendar year (inclusive).")
+    parser.add_argument("--start-year", type=int, help="First filing year (inclusive).")
+    parser.add_argument("--end-year", type=int, help="Last filing year (inclusive).")
     parser.add_argument(
         "--attachments", action="store_true", help="Also save each filing's text attachments."
     )

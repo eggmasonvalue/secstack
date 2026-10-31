@@ -6,7 +6,7 @@ context.
 
 ## Included resources
 
-- `SKILL.md` — commands, filing semantics, and gotchas.
+- `SKILL.md` — commands and routing.
 - `references/edgartools.md` — inline `edgartools` API for jobs no script covers.
 - `references/ownership.md` — Form 4, 13F, 13D/13G, proxy, and governance semantics.
 - `scripts/` — command-line retrieval and extraction helpers.
