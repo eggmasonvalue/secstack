@@ -8,52 +8,53 @@ they form a research pipeline.
 
 | Layer | Skill | Job |
 |---|---|---|
-| **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data to surface new investment ideas. |
-| **Data** | [`sec-edgar-skill`](sec-edgar-skill/) | Retrieve and extract SEC filings, ownership, and 13F holder data. |
-| **Data** | [`market-scout`](market-scout/) | Pull prices, returns, peers, sector screens, and transcripts. |
-| **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one operating company into scoped analysis or an auditable investment memo. |
+| **Discovery** | [`idea-generation`](idea-generation/) | Surface new tickers from insider buying, 13Ds, screens, filing themes, and investor events. |
+| **Data** | [`sec-filings`](sec-filings/) | Retrieve filings, XBRL statements, insider trades, 13F holders, and blockholders. |
+| **Data** | [`market-data`](market-data/) | Pull any Yahoo Finance field and earnings-call transcripts. |
+| **Analysis** | [`due-diligence`](due-diligence/) | Turn one operating company into a scoped answer or an auditable investment memo. |
 | **Voice** | [`pitch-like-lou`](pitch-like-lou/) | Render a finished thesis as a VIC-style pitch. |
 
 ## Data flow
 
 ```text
-  signal-sweep  (surfaces tickers)
+  idea-generation  (surfaces tickers)
        │
        ▼
-  bottom-up-analyst  (deep dive on one ticker)
-       ├── sec-edgar-skill  (filings and ownership)
-       ├── market-scout  (price, peers, transcripts)
+  due-diligence  (deep dive on one ticker)
+       ├── sec-filings  (filings and ownership)
+       ├── market-data  (price, peers, transcripts)
        ▼
   pitch-like-lou  (finished pitch)
 ```
 
-`bottom-up-analyst` is the conductor. It decides what to pull, reasons over the evidence,
+`due-diligence` is the conductor. It decides what to pull, reasons over the evidence,
 values the business, and produces the requested analysis or full memo. The data skills supply
 the underlying evidence.
 
-`signal-sweep` and `sec-edgar-skill` are independent data sources. `market-scout` is also
-swappable: the analyst can use a different market-data provider without changing its
-reasoning workflow.
+`idea-generation` and `sec-filings` are independent data sources. `market-data` is also
+swappable: due diligence can use a different market-data provider without changing its
+reasoning.
 
 The voice skill renders from a finished thesis; it is not an idea generator.
 
-**Production order for a full thesis:** signal-sweep → bottom-up-analyst → memo → optionally
+**Production order for a full thesis:** idea-generation → due-diligence → memo → optionally
 pitch-like-lou.
 
 ## Progressive disclosure
 
-Each skill keeps its `SKILL.md` entry point concise. Detailed guidance lives in
-`references/`, executable helpers live in `scripts/`, and configuration/assets stay beside
-the skill that owns them. Load only the guide or script required for the current task.
+Each `SKILL.md` carries what every run needs: commands, semantics, and the gotchas the
+scripts encode. Branch-specific detail lives in `references/`, executable helpers in
+`scripts/`, and configuration beside the skill that owns it.
 
 ## Skill resources
 
-- [`signal-sweep`](signal-sweep/) contains configurable market screens, SEC discovery
+- [`idea-generation`](idea-generation/) contains configurable market screens, SEC discovery
   scanners, conference discovery, and theme search.
-- [`sec-edgar-skill`](sec-edgar-skill/) contains filing, financial, ownership, and 13F
-  retrieval helpers.
-- [`market-scout`](market-scout/) contains Yahoo Finance market and transcript helpers.
-- [`bottom-up-analyst`](bottom-up-analyst/) contains valuation arithmetic and memo frameworks.
+- [`sec-filings`](sec-filings/) contains filing, financial, ownership, and 13F
+  retrieval helpers plus an inline `edgartools` reference.
+- [`market-data`](market-data/) contains Yahoo Finance snapshot and transcript helpers.
+- [`due-diligence`](due-diligence/) contains valuation arithmetic, archetypes, and the memo
+  spine.
 - [`pitch-like-lou`](pitch-like-lou/) contains the pitch-writing workflow and reference corpus.
 
 Each skill's README documents its dependencies and usage. Invoke installed artifact-producing

@@ -170,9 +170,9 @@ function mergeSettings() {
 function ensurePythonEnvironment() {
   const uv = findUv();
   const projects = [
-    installedSecStackPath("skills", "signal-sweep"),
-    installedSecStackPath("skills", "sec-edgar-skill"),
-    installedSecStackPath("skills", "market-scout"),
+    installedSecStackPath("skills", "idea-generation"),
+    installedSecStackPath("skills", "sec-filings"),
+    installedSecStackPath("skills", "market-data"),
   ];
   for (const project of projects) {
     const pyproject = join(project, "pyproject.toml");

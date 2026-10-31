@@ -32,14 +32,14 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        working-directory: skills/signal-sweep
+        working-directory: skills/idea-generation
         run: uv sync --locked
 
       - name: Run insider scan
         env:
           EDGAR_IDENTITY: ${{ secrets.EDGAR_IDENTITY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        working-directory: skills/signal-sweep
+        working-directory: skills/idea-generation
         run: |
           DATE="${{ github.event.inputs.date || 'yesterday' }}"
           LOOKBACK="${{ github.event.inputs.lookback || '5' }}"
@@ -55,5 +55,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: insider-scan-${{ github.run_id }}
-          path: skills/signal-sweep/signal-sweep-cache/insiders/
+          path: skills/idea-generation/idea-cache/insiders/
           retention-days: 90

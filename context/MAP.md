@@ -13,10 +13,10 @@ SYSTEM.md             Research-agent identity installed into the isolated profil
 extensions/           Restores Pi's tool prompt envelope and brands the startup header
 scripts/bootstrap.mjs Isolated-profile bootstrap
 skills/               Skill collection and skill-level documentation
-  signal-sweep/       Discovery — scan the universe, surface tickers
-  sec-edgar-skill/    Data — SEC EDGAR filings, ownership, 13F holders
-  market-scout/       Data — price, peers, transcripts (Yahoo Finance)
-  bottom-up-analyst/  Analysis — one operating company → scoped answer or memo
+  idea-generation/    Discovery — scan the universe, surface tickers
+  sec-filings/        Data — SEC EDGAR filings, ownership, 13F holders
+  market-data/        Data — Yahoo Finance fields and earnings-call transcripts
+  due-diligence/      Analysis — one operating company → scoped answer or memo
   pitch-like-lou/     Voice — finished thesis → VIC-style pitch
 context/              Agent-maintained project documentation
 ```
@@ -49,39 +49,40 @@ configuration, sessions, and unrelated settings remain profile-local and untouch
 
 ## Skill internals
 
-- `skills/signal-sweep/` — `scripts/scan_insiders.py`, `scan_market.py`,
+- `skills/idea-generation/` — `scripts/scan_insiders.py`, `scan_market.py`,
   `scan_conferences.py`, `search_themes.py`; universe config in `screens.json`; shared
   bootstrap in `scripts/_common.py`.
-- `skills/sec-edgar-skill/` — `scripts/fetch_*.py`, `parse_financials.py`, `orient.py`,
-  `list_headings.py`; filing, financial, ownership, proxy/governance, and holdings guides in
-  `references/`; shared bootstrap in `scripts/_common.py`.
-- `skills/market-scout/` — `scripts/fetch_market_data.py`, `fetch_transcripts.py`, and shared
+- `skills/sec-filings/` — `scripts/fetch_*.py`, `parse_financials.py`, `orient.py`,
+  `test_setup.py`; `references/edgartools.md` (inline API) and `references/ownership.md`
+  (ownership and governance semantics, shared with `due-diligence`); shared bootstrap in
   `scripts/_common.py`.
-- `skills/bottom-up-analyst/` — valuation `scripts/dcf.py`, `epv.py`; archetypes and guides in
-  `references/`.
+- `skills/market-data/` — `scripts/fetch_market_data.py`, `fetch_transcripts.py`, and shared
+  `scripts/_common.py`.
+- `skills/due-diligence/` — valuation `scripts/dcf.py`, `epv.py`; `references/`
+  normalization, valuation, archetypes, and memo spine.
 - `skills/pitch-like-lou/` — reference corpus only, no scripts.
 
 ## Data flow
 
 ```mermaid
 flowchart TD
-    SS[signal-sweep<br/>surfaces tickers] --> BUA[bottom-up-analyst<br/>analysis + optional memo]
-    BUA --> SEC[sec-edgar-skill<br/>filings]
-    BUA --> MS[market-scout<br/>price / peers / transcripts]
+    SS[idea-generation<br/>surfaces tickers] --> BUA[due-diligence<br/>analysis + optional memo]
+    BUA --> SEC[sec-filings<br/>filings]
+    BUA --> MS[market-data<br/>price / peers / transcripts]
     BUA --> PLL[pitch-like-lou<br/>renders pitch]
 ```
 
-- `bottom-up-analyst` selects evidence, reasons over it, and produces the requested analysis or
+- `due-diligence` selects evidence, reasons over it, and produces the requested analysis or
   full memo. Retrieval contracts and source semantics remain in the data skills.
 - The two filing/market data skills know nothing of each other and are swappable.
-- `signal-sweep` and SEC-facing `sec-edgar-skill` commands read `EDGAR_IDENTITY` and use
+- `idea-generation` and SEC-facing `sec-filings` commands read `EDGAR_IDENTITY` and use
   on-disk cache contracts defined in their `_common.py` modules. The SEC skill's routine 13F
   convenience queries use 13f.info and expose underlying SEC periods and identifiers; raw
   EDGAR remains the deep-field and verification route.
 
 ## Production order
 
-For a full thesis: `signal-sweep` → `bottom-up-analyst` → memo → optionally
+For a full thesis: `idea-generation` → `due-diligence` → memo → optionally
 `pitch-like-lou`.
 
 For the package installation and isolated-profile workflow, start at the root

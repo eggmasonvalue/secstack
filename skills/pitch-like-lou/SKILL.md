@@ -1,103 +1,64 @@
 ---
 name: pitch-like-lou
 description: >-
-  Render an already-researched long or short thesis as a concise, numbers-first stock pitch
-  inspired by Norbert Lou's Value Investors Club writing. Use when the user asks for a
-  Norbert Lou or VIC-style write-up, or wants a finished value-investing thesis rewritten as
-  a direct, skeptical pitch. This is a presentation layer, not a substitute for company
-  research, thesis formation, or valuation work.
+  Write a finished long or short thesis as a Norbert Lou-style Value Investors Club pitch:
+  plainspoken, numbers-first, forensic, candid about weak points. Use for a VIC write-up,
+  stock pitch, or a punchier rewrite of an existing memo or thesis.
 ---
 
-# Pitch Like Norbert Lou
+# Pitch like Norbert Lou
 
-Turn a finished thesis into a plainspoken, decisive argument without letting the voice outrun the
-evidence. The transferable qualities are forensic specificity, numerical clarity, and candor—not
-imitation for its own sake.
+Lou's pitches persuade because a reader can audit them. Copy the forensic specificity, the
+reproducible arithmetic, and the candor, not the mannerisms.
 
-## Input gate
+## Before drafting
 
-Before drafting, locate the thesis's:
+Locate these in the research: the core mispricing or hard fact, a reference price and date,
+the evidence and where it came from, the valuation or payoff math, the strongest disconfirming
+evidence, and the path by which the gap closes, if one exists. Use only what the research
+supports. If a load-bearing piece is missing, ask for it or label the gap. Forming or validating
+the thesis is research work for `due-diligence`, not something to do while writing.
 
-- core mispricing or structural fact;
-- reference price and as-of date;
-- supporting evidence and its provenance;
-- valuation or payoff math;
-- strongest disconfirming evidence and unresolved assumptions; and
-- concrete path by which the gap may close, if one exists.
+## The moves
 
-Use only what the research supports. If a load-bearing element is missing, ask for it or label
-the gap; do not fill it with generic value-investing claims. A request to develop or validate
-the thesis belongs in the analytical workflow before this rendering pass.
+- **Lead with the disconnect.** Open with the number, contract term, or operating fact that
+  makes the situation worth explaining, and put the price-to-value contrast up front.
+- **State the market's objection at full strength,** then answer it.
+- **Prove the engine** (economics, asset coverage, capital structure, incentives, or legal
+  terms) with document-level specifics.
+- **Show the arithmetic.** Define adjusted figures, bridge them to reported numbers, and keep
+  the math reproducible. Preserve the thesis's uncertainty; a range beats a fake point
+  estimate.
+- **Expose the weak points.** Separate fact, inference, and open question, and quantify what
+  bad governance or the adverse case costs where you can.
+- **End on realization and falsification.** Name real catalysts or forcing mechanisms, or say
+  there is no discrete catalyst. State what would break the thesis.
 
-## Render the argument
-
-1. **Lead with the disconnect.** Open with the number, contractual term, or operating fact that
-   makes the situation worth explaining. Give the reader the price/value contrast early.
-2. **Name the market's objection fairly.** State the strongest reason the security may deserve
-   its price. Answer that version rather than a weakened one.
-3. **Prove the engine or hard fact.** Explain the mechanism—economics, asset coverage, capital
-   structure, incentives, or legal terms—using document-level specifics.
-4. **Show the arithmetic.** Define adjusted figures, bridge reported numbers to the figures used,
-   and make valuation or payoff math reproducible. Preserve the thesis's uncertainty rather than
-   manufacturing a precise target.
-5. **Expose the weak points.** Separate verified fact, inference, and open question. Quantify a
-   governance cost or adverse case when the evidence permits; otherwise say what remains unknown.
-6. **End on realization and falsification.** Name genuine catalysts or forcing mechanisms, but do
-   not invent one. State what evidence would break the thesis.
-
-Let the situation determine the order and weight. A contractual special situation may revolve
-around one exhibit; an asset discount around liabilities and realization; an operating business
-around unit economics, reinvestment, and capital allocation. These are examples, not required
-buckets or headings.
+The situation sets the order and weight. A special situation can revolve around one exhibit,
+an asset discount around liabilities and realization, a compounder around unit economics and
+capital allocation. A typical shape: title, position, price and date; an optional block of only
+the figures this thesis needs; a one-paragraph hook; the case; valuation; risks; realization.
+Headings exist for navigation. Rename or collapse them freely.
 
 ## Voice
 
-- Use short, declarative sentences and concrete nouns. Define nonstandard terms inline.
-- Prefer a table, bridge, or formula when it carries the argument more honestly than prose.
-- Earn confidence through specificity and concessions, not adjectives or swagger.
-- Use first person only when it clarifies a judgment or calculation; never imply that Lou himself
-  holds the view.
-- Pre-empt obvious objections without sounding defensive. Acknowledge what is genuinely bad
-  before explaining why the price may compensate for it.
-- Use analogy or dry wit only when it makes a difficult point clearer. It is optional, not a quota.
-- Discuss price history only when it bears on the thesis. A falling price is neither proof of value
-  nor proof that the thesis is broken.
-
-## Shape of the finished pitch
-
-Use the minimum structure the argument needs. A useful default is:
-
-1. **Title and position** — company/security, long or short, price and date.
-2. **Optional orientation block** — only the decision-useful figures for this thesis. Choose the
-   metrics rather than copying a fixed VIC header; label periods, units, definitions, and adjusted
-   values.
-3. **Hook** — the core disconnect in one compact paragraph.
-4. **Case** — evidence and mechanics in the order that best proves the thesis.
-5. **Valuation or payoff** — assumptions, arithmetic, downside, and sensitivity.
-6. **Risks and open questions** — the strongest contrary evidence, not boilerplate.
-7. **Catalysts / realization** — only specific mechanisms supported by the research; omit or state
-   the absence of a discrete catalyst when compounding or liquidation value is the actual path.
-
-Headings are navigation, not a form to complete. Collapse or rename them when the argument reads
-better another way.
+Short declarative sentences and concrete nouns. Define nonstandard terms inline. Use a table,
+bridge, or formula when it carries the argument better than prose. Confidence comes from
+specifics and concessions, never from adjectives. Use first person only where it clarifies a
+judgment, and never imply Lou holds the view. Admit what is genuinely bad before explaining why
+the price pays for it. Dry wit or an analogy is welcome when it clarifies. Bring in price history
+only when it bears on the thesis.
 
 ## Evidence pass
 
-Before returning the pitch:
+Before returning the pitch: trace every load-bearing claim to the research or a source; keep
+filing, transaction, fiscal-period, and price dates distinct; recompute the central math; mark
+inference in proportion to its weight; and cut every claim, metric, anecdote, or flourish that
+does not advance the case. Conviction tracks the weakest load-bearing evidence.
 
-- trace each load-bearing factual claim to the supplied research or a cited source;
-- keep filing dates, transaction dates, fiscal periods, and current-price dates distinct;
-- recalculate the central valuation or payoff math;
-- mark inference and unresolved claims in proportion to their importance; and
-- remove claims, metrics, anecdotes, and stylistic flourishes that do not advance the case.
+## Corpus
 
-Dial conviction to the weakest load-bearing evidence. The desired finish is persuasive because it
-is auditable, not persuasive despite uncertainty.
-
-## Corpus calibration
-
-The seven primary-source VIC write-ups and discussion threads in `references/corpus/` are optional
-style references. Do not load them wholesale. When closer calibration is useful, grep for one
-specific move—an opening, numerical bridge, objection, risk concession, or discussion reply—and
-read only the surrounding passage. Use the corpus to observe technique and temperament, never as
-factual support for a current thesis.
+`references/corpus/` holds seven of Lou's VIC write-ups and their discussion threads (NVR,
+Sportsman's Guide, Winmill, Quilmes, MCI, NII, Telemig). To calibrate one move (an opening, a
+numerical bridge, an objection, a risk concession, a reply to a critic), grep for it and read
+only that passage. The corpus is style reference, never factual support.
