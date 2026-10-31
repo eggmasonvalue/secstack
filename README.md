@@ -132,7 +132,7 @@ The five skills are documented in [`skills/README.md`](skills/README.md). The pr
 flow is:
 
 ```text
-signal-sweep → bottom-up-analyst → sec-edgar-skill / market-scout → pitch-like-lou
+idea-generation → due-diligence → sec-filings / market-data → pitch-like-lou
 ```
 
 ## Development

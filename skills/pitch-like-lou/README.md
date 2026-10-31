@@ -6,9 +6,9 @@ transferable craft: document-level specificity, reproducible arithmetic, a fair 
 objection, and candor about weak evidence.
 
 The skill is a presentation layer. It does not source a company, form a thesis, or confer conviction
-on incomplete work. Within [SecStack](../README.md), [`bottom-up-analyst`](../bottom-up-analyst/)
-owns the research and valuation workflow; [`sec-edgar-skill`](../sec-edgar-skill/) and
-[`market-scout`](../market-scout/) retrieve source material.
+on incomplete work. Within [SecStack](../README.md), [`due-diligence`](../due-diligence/)
+owns the research and valuation workflow; [`sec-filings`](../sec-filings/) and
+[`market-data`](../market-data/) retrieve source material.
 
 ## Layout
 

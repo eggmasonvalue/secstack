@@ -7,7 +7,7 @@ docs route agents and preserve non-obvious project rationale.
 
 - Never commit directly to `main`; work on a branch and open a PR.
 - Never commit secrets. `EDGAR_IDENTITY` and `DISCORD_WEBHOOK_URL` are supplied via environment / CI secrets, never hard-coded.
-- Never commit cache output. `sec-cache/`, `signal-sweep-cache/`, and `transcript-cache/` are regenerated on demand and are git-ignored.
+- Never commit cache output. `sec-cache/`, `idea-cache/`, and `transcript-cache/` are regenerated on demand and are git-ignored.
 - Lint and format must pass before a PR (see `context/CONVENTIONS.md`). CI runs `ruff check`, `ruff format --check`, and `markdownlint-cli2`.
 - Keep changes scoped; avoid incidental refactors.
 - Verify behavior with commands before documenting claims.

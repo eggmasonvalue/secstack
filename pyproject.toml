@@ -38,7 +38,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["bottom-up-analyst", "market-scout", "pitch-like-lou", "sec-edgar-skill", "signal-sweep"]
+known-first-party = ["due-diligence", "market-data", "pitch-like-lou", "sec-filings", "idea-generation"]
 
 [dependency-groups]
 dev = [
