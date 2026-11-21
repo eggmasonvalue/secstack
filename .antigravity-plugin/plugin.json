@@ -1,0 +1,22 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "secstack",
+  "displayName": "SECstack",
+  "version": "0.3.0",
+  "description": "Isolated bottom-up equity research agent and five composable skills for US-listed companies.",
+  "author": {
+    "name": "eggmasonvalue",
+    "url": "https://github.com/eggmasonvalue"
+  },
+  "homepage": "https://github.com/eggmasonvalue/secstack",
+  "repository": "https://github.com/eggmasonvalue/secstack",
+  "license": "MIT",
+  "keywords": [
+    "sec",
+    "edgar",
+    "equity-research",
+    "investing",
+    "finance",
+    "fundamental-analysis"
+  ]
+}

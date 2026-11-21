@@ -20,7 +20,7 @@ the shell working directory at the research workspace. This puts the default
 `./transcript-cache` beside the work rather than inside the installed skill; alternatively pass
 `--cache-dir`.
 
-The packaged SecStack profile already exposes this skill's Python dependencies. For standalone
+The packaged SECstack profile already exposes this skill's Python dependencies. For standalone
 use, run `uv sync --project "<skill-dir>"`, then either activate that environment or prefix the
 examples below with `uv run --project "<skill-dir>"`. `fetch_transcripts.py` also requires the
 `agent-browser` binary and its one-time browser installation (`agent-browser install`). No API key

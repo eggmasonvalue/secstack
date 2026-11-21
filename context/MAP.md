@@ -4,32 +4,60 @@ Where things live and how data flows. Read before touching structure or data flo
 
 ## Repository shape
 
-A Git Pi package containing five self-contained agent skills. The skills live under
-`skills/` so the root of the repository can focus on package/profile setup.
+A dual-harness repository packaging five self-contained equity research skills as both an
+Antigravity plugin and a Git Pi package from a single source of truth under
+`agents/secstack/skills/`.
 
 ```text
-package.json          Pi package manifest for the tool-envelope extension and five skills
-SYSTEM.md             Research-agent identity installed into the isolated profile
-extensions/           Restores Pi's tool prompt envelope and brands the startup header
-scripts/bootstrap.mjs Isolated-profile bootstrap
-skills/               Skill collection and skill-level documentation
-  signal-sweep/       Discovery — scan the universe, surface tickers
-  sec-edgar-skill/    Data — SEC EDGAR filings, ownership, 13F holders
-  market-scout/       Data — price, peers, transcripts (Yahoo Finance)
-  bottom-up-analyst/  Analysis — one operating company → scoped answer or memo
-  pitch-like-lou/     Voice — finished thesis → VIC-style pitch
-context/              Agent-maintained project documentation
+.antigravity-plugin/
+  plugin.json           Antigravity plugin manifest (skills 0 · agents 1 -> zero global bleed)
+agents/secstack/
+  agent.md              Antigravity bare main agent (excludeDefaultComponents, 7 tools)
+  worker.md             Private bare leaf worker for run_workflow (6 tools)
+  skills/               Single source of truth for research skills + Antigravity workflow guide
+    signal-sweep/       Discovery — scan the universe, surface tickers
+    sec-edgar-skill/    Data — SEC EDGAR filings, ownership, 13F holders
+    market-scout/       Data — price, peers, transcripts (Yahoo Finance)
+    bottom-up-analyst/  Analysis — one operating company -> scoped answer or memo
+    pitch-like-lou/     Voice — finished thesis -> VIC-style pitch
+    run-workflow/       Antigravity-only workflow guide (excluded from Pi package.json)
+package.json            Pi package manifest pointing pi.skills at the five research skills
+SYSTEM.md               Pi research-agent identity installed into the isolated Pi profile
+extensions/             Pi extensions: restores tool prompt envelope and brands startup header
+scripts/bootstrap.mjs   Isolated Pi-profile bootstrap
+context/                Agent-maintained project documentation
 ```
 
-The package manifest exposes the five individual directories under `skills/`. It does not
-expose `skills/README.md` as a skill.
+Neither harness exposes `agents/secstack/skills/README.md` as a skill. Pi's `package.json`
+exposes only the five research skills and omits `run-workflow`.
+
+## Antigravity plugin data flow
+
+Installing the repository via `agy plugin install` unpacks it to
+`~/.gemini/config/plugins/secstack/` and registers only the `secstack` main agent (`mainAgent:
+true`, `subagent: false`). Because there is no top-level `skills/` directory and `worker.md` is
+co-located under `agents/secstack/`, coding sessions (`Default`, `clean`, `bare`) never inherit
+SECstack skills, rules, or subagents.
+
+- `agent.md` runs with `excludeDefaultComponents: true` and `inheritMcp: false` (stripping
+  `<artifacts>`, `<communication_style>`, `<user_rules>`, and workspace `.agents/skills/` bleed),
+  inlines the compact skill catalog, and resolves `<skills-root>` from workspace/repo/installed
+  plugin paths.
+- Dependency-backed skill scripts (`signal-sweep`, `sec-edgar-skill`, `market-scout`) run via
+  `uv run --project` with `UV_PROJECT_ENVIRONMENT` pointed at
+  `${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>`, keeping the installed plugin folder clean
+  and workspace caches (`./sec-cache/`, `./signal-sweep-cache/`, `./transcript-cache/`) beside
+  the user's research.
+- `run_workflow` spawns `worker.md` (`type_name="worker"`) for horizontal multi-ticker fan-out,
+  peer comps, bulk transcript extraction, and independent memo verification (capped at `<= 4`
+  concurrent EDGAR workers). Single-company synthesis stays in the primary context.
 
 ## Pi profile data flow
 
 The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 `settings.json` owns separate top-level package entries for:
 
-- this SecStack package;
+- this SECstack package;
 - the filtered `pi-setup` package;
 - `pi-system-prompt-viewer`;
 - `pi-freeflow`; and
@@ -37,11 +65,12 @@ The bootstrap configures the isolated profile at `~/.pi/secstack-agent`. Its
 
 Pi installs and updates each source independently. The bootstrap manages only those package
 entries, the profile's Pi-managed shell path, the `quietStartup` preference, the profile-local
-Python environment, and a relative `SYSTEM.md` symlink into the installed SecStack package. The
-system-prompt-viewer package is the sole owner of the `/system-context` overlay. SecStack's
+Python environment (synced from `agents/secstack/skills/{signal-sweep,sec-edgar-skill,market-scout}`),
+and a relative `SYSTEM.md` symlink into the installed SECstack package. The
+system-prompt-viewer package is the sole owner of the `/system-context` overlay. SECstack's
 `restore-tool-envelope` extension restores Pi's live tool snippets and guidelines after
 `SYSTEM.md` replaces Pi's coding-agent identity. Its `startup-header` extension replaces
-Pi's built-in header with a responsive, theme-adaptive SecStack research mark and interactive
+Pi's built-in header with a responsive, theme-adaptive SECstack research mark and interactive
 research pipeline. Coding-task guidance files are not linked, and the filtered `pi-setup` package
 contributes no skills, including `repo-nav` and `bootstrap-docs`. Research runs in the primary
 Pi context; no sub-agent package is installed. Authentication, model selection, provider
@@ -49,17 +78,18 @@ configuration, sessions, and unrelated settings remain profile-local and untouch
 
 ## Skill internals
 
-- `skills/signal-sweep/` — `scripts/scan_insiders.py`, `scan_market.py`,
+- `agents/secstack/skills/signal-sweep/` — `scripts/scan_insiders.py`, `scan_market.py`,
   `scan_conferences.py`, `search_themes.py`; universe config in `screens.json`; shared
   bootstrap in `scripts/_common.py`.
-- `skills/sec-edgar-skill/` — `scripts/fetch_*.py`, `parse_financials.py`, `orient.py`,
-  `list_headings.py`; filing, financial, ownership, proxy/governance, and holdings guides in
-  `references/`; shared bootstrap in `scripts/_common.py`.
-- `skills/market-scout/` — `scripts/fetch_market_data.py`, `fetch_transcripts.py`, and shared
-  `scripts/_common.py`.
-- `skills/bottom-up-analyst/` — valuation `scripts/dcf.py`, `epv.py`; archetypes and guides in
-  `references/`.
-- `skills/pitch-like-lou/` — reference corpus only, no scripts.
+- `agents/secstack/skills/sec-edgar-skill/` — `scripts/fetch_*.py`, `parse_financials.py`,
+  `orient.py`, `list_headings.py`; filing, financial, ownership, proxy/governance, and holdings
+  guides in `references/`; shared bootstrap in `scripts/_common.py`.
+- `agents/secstack/skills/market-scout/` — `scripts/fetch_market_data.py`,
+  `fetch_transcripts.py`, and shared `scripts/_common.py`.
+- `agents/secstack/skills/bottom-up-analyst/` — valuation `scripts/dcf.py`, `epv.py`; archetypes
+  and guides in `references/`.
+- `agents/secstack/skills/pitch-like-lou/` — reference corpus only, no scripts.
+- `agents/secstack/skills/run-workflow/` — Antigravity-only `run_workflow` orchestration guide.
 
 ## Data flow
 
@@ -84,6 +114,6 @@ flowchart TD
 For a full thesis: `signal-sweep` → `bottom-up-analyst` → memo → optionally
 `pitch-like-lou`.
 
-For the package installation and isolated-profile workflow, start at the root
+For Antigravity and Pi installation workflows, start at the root
 [`README.md`](../README.md). For the collection overview, start at
-[`skills/README.md`](../skills/README.md).
+[`agents/secstack/skills/README.md`](../agents/secstack/skills/README.md).
