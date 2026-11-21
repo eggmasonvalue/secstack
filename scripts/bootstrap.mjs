@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Install SecStack and its independently managed Pi packages into the isolated
- * SecStack profile.
+ * Install SECstack and its independently managed Pi packages into the isolated
+ * SECstack profile.
  *
- * This script deliberately changes the SecStack profile's package list,
+ * This script deliberately changes the SECstack profile's package list,
  * shell command prefix, quietStartup setting, allowScripts in the profile's npm
  * root, and optional Bash launcher.
  */
@@ -118,7 +118,7 @@ function findUv() {
   );
 }
 
-function installedSecStackPath(...parts) {
+function installedSecstackPath(...parts) {
   return join(
     agentDir,
     "git",
@@ -158,7 +158,7 @@ function mergeSettings() {
       : pathCommand;
   }
 
-  // Silence Pi's default startup banner and raw resource listing so SecStack's
+  // Silence Pi's default startup banner and raw resource listing so SECstack's
   // custom startup header and interactive capability pipeline take center stage.
   settings.quietStartup = true;
 
@@ -170,16 +170,16 @@ function mergeSettings() {
 function ensurePythonEnvironment() {
   const uv = findUv();
   const projects = [
-    installedSecStackPath("skills", "signal-sweep"),
-    installedSecStackPath("skills", "sec-edgar-skill"),
-    installedSecStackPath("skills", "market-scout"),
+    installedSecstackPath("agents", "secstack", "skills", "signal-sweep"),
+    installedSecstackPath("agents", "secstack", "skills", "sec-edgar-skill"),
+    installedSecstackPath("agents", "secstack", "skills", "market-scout"),
   ];
   for (const project of projects) {
     const pyproject = join(project, "pyproject.toml");
     const lockfile = join(project, "uv.lock");
     for (const file of [pyproject, lockfile]) {
       if (!existsSync(file)) {
-        throw new Error(`Installed SecStack package is missing ${file}`);
+        throw new Error(`Installed SECstack package is missing ${file}`);
       }
     }
     // Each skill owns its dependency graph. Keep prior skills' packages in the
@@ -200,10 +200,10 @@ function ensurePythonEnvironment() {
 }
 
 function linkSystemPrompt() {
-  const installed = installedSecStackPath("SYSTEM.md");
+  const installed = installedSecstackPath("SYSTEM.md");
   if (!existsSync(installed)) {
     throw new Error(
-      `Installed SecStack package is missing SYSTEM.md: ${installed}`,
+      `Installed SECstack package is missing SYSTEM.md: ${installed}`,
     );
   }
 
@@ -325,7 +325,7 @@ function ensureNpmAllowScripts() {
 }
 
 async function main() {
-  console.log(`Configuring SecStack Pi under ${agentDir}`);
+  console.log(`Configuring SECstack Pi under ${agentDir}`);
   ensureNpmAllowScripts();
   for (const source of managedSources) {
     runPi(["install", source]);
@@ -336,13 +336,13 @@ async function main() {
   ensurePythonEnvironment();
   await offerLauncher();
 
-  console.log("\nSecStack Pi bootstrap complete.");
+  console.log("\nSECstack Pi bootstrap complete.");
   console.log("Update everything Pi-managed with:");
   console.log("  secpi update --extensions");
   console.log(
     "One-time browser setup (if not already done): agent-browser install",
   );
-  console.log("Verify from the SecStack profile: agent-browser --version");
+  console.log("Verify from the SECstack profile: agent-browser --version");
 }
 
 try {

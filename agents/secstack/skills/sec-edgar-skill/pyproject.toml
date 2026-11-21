@@ -1,7 +1,7 @@
 [project]
 name = "secstack-sec-edgar"
 version = "0.1.0"
-description = "SEC EDGAR data scripts for SecStack"
+description = "SEC EDGAR data scripts for SECstack"
 requires-python = ">=3.11"
 dependencies = [
     "edgartools>=5",

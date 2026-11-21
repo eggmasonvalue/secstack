@@ -4,12 +4,12 @@ Public market context and earnings-call transcript retrieval for US-listed stock
 [`yfinance`](https://github.com/ranaroussi/yfinance) and Yahoo Finance. The skill returns source
 material; it does not decide whether a security is attractive.
 
-Part of the [SecStack skills](../README.md) collection.
+Part of the [SECstack skills](../README.md) collection.
 
 ## Setup
 
-The SecStack bootstrap installs this skill's dependencies into the profile environment. For
-standalone use:
+The SECstack Pi bootstrap installs this skill's dependencies into the profile environment (and the
+Antigravity `secstack` agent invokes them via `uv run --project`). For standalone use:
 
 ```bash
 uv sync --project "<skill-dir>"
@@ -18,8 +18,8 @@ uv sync --project "<skill-dir>"
 Activate the resulting environment or prefix script commands with
 `uv run --project "<skill-dir>"`.
 
-Transcript retrieval also uses the Pi-managed `agent-browser` binary. Install its browser runtime
-once from an active SecStack profile:
+Transcript retrieval also uses `agent-browser` on `PATH` (installed automatically by the Pi
+bootstrap; install globally on `PATH` for Antigravity). Install its browser runtime once:
 
 ```bash
 agent-browser install

@@ -17,14 +17,15 @@ context.
 
 ## Install this skill
 
-From the SecStack repository:
+From the SECstack repository:
 
 ```bash
 npx skills add eggmasonvalue/secstack --skill sec-edgar-skill
 ```
 
-SecStack's profile bootstrap installs the Python dependencies automatically. For a standalone
-installation, run from this directory:
+SECstack's Pi bootstrap installs the Python dependencies automatically (and the Antigravity
+`secstack` agent invokes them via `uv run --project`). For a standalone installation, run from
+this directory:
 
 ```bash
 uv sync
@@ -67,4 +68,4 @@ navigation links. Raw EDGAR remains the verification and deep-field route.
 
 ---
 
-Part of the [SecStack skills](https://github.com/eggmasonvalue/secstack) collection.
+Part of the [SECstack skills](https://github.com/eggmasonvalue/secstack) collection.

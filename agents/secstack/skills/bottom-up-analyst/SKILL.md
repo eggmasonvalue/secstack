@@ -16,7 +16,7 @@ Turn evidence about one company into a long-only investment judgment. Scale the 
 question: answer a scoped valuation or earnings-quality request directly; produce the full memo
 only for a deep dive or when the user asks for one.
 
-This is the analysis layer of SecStack. Use `sec-edgar-skill` for filing evidence and
+This is the analysis layer of SECstack. Use `sec-edgar-skill` for filing evidence and
 `market-scout` for market data and transcripts. A finished memo may later feed
 `pitch-like-lou`, but this skill owns the research method and does not depend on that voice.
 

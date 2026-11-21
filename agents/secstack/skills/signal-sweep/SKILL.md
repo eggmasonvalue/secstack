@@ -20,7 +20,7 @@ Resolve bundled paths relative to this `SKILL.md` and invoke scripts by absolute
 the shell working directory at the research workspace. Generated reports then land in the
 workspace's `./signal-sweep-cache`; pass `--cache-dir` to put them elsewhere.
 
-The packaged SecStack profile already exposes this skill's Python dependencies. For standalone
+The packaged SECstack profile already exposes this skill's Python dependencies. For standalone
 use, run `uv sync --project "<skill-dir>"`, then activate that environment or prefix the commands
 below with `uv run --project "<skill-dir>"`. SEC-facing routes require `EDGAR_IDENTITY`; market
 screens do not:

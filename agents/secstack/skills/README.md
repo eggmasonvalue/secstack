@@ -1,6 +1,6 @@
-# SecStack skills
+# SECstack skills
 
-SecStack is a composable stack of five [agent skills](https://agentskills.io/home) for
+SECstack is a composable stack of five [agent skills](https://agentskills.io/home) for
 bottom-up equity research on US-listed companies. Each skill can stand on its own; together
 they form a research pipeline.
 

@@ -17,6 +17,58 @@ Status: active | superseded by <date/title>
 
 ---
 
+## 2026-11-21 — Package Antigravity plugin and Pi from a single skill root under `agents/secstack/skills/`
+
+Context: An Antigravity plugin with a top-level `skills/` folder exposes those skills to every
+session while enabled, causing equity-research prompts and slash commands to bleed into coding
+agents (`Default`, `clean`, `bare`). Meanwhile, both Pi and Antigravity must share one source of
+truth for the five research skills.
+Decision: Place `.antigravity-plugin/plugin.json` at the repo root, keep no top-level `skills/`
+directory, and relocate the five research skills into `agents/secstack/skills/` alongside
+`agent.md`, `worker.md`, and an Antigravity-only `run-workflow` skill. Point Pi's `package.json`
+and `scripts/bootstrap.mjs` at the five research directories under `agents/secstack/skills/` while
+omitting `run-workflow`.
+Tradeoff: Antigravity's plugin UI reports `0 skills · 1 agent`, and moving `skills/` updates
+`package.json`, `bootstrap.mjs`, and `.github/workflows/insider-scan.yml`; in exchange, coding
+sessions get zero bleed and both harnesses share a single skill tree.
+Status: active
+
+## 2026-11-21 — Run the Antigravity `secstack` agent bare with external `uv` cache venvs
+
+Context: On `agy v1.5.14`, omitting `excludeDefaultComponents` keeps `<artifacts>` (pushing
+reports into `~/.gemini/antigravity-cli/brain/<uuid>` instead of the research workspace),
+`<communication_style>`, and workspace `.agents/skills/` bleed. Conversely, `excludeDefaultComponents:
+true` strips `<skills>` completely and Antigravity does not expand `${PLUGIN_ROOT}` in `agent.md`.
+Separately, `agy plugin install` unpacks files without running a post-install `uv sync` or
+providing a shell-prefix hook.
+Decision: Configure `agents/secstack/agent.md` with `excludeDefaultComponents: true` and
+`inheritMcp: false`, inline the concise six-skill catalog with ordered `<skills-root>` path
+resolution, and instruct `agent.md` and `worker.md` to invoke dependency-backed skill scripts via
+`UV_PROJECT_ENVIRONMENT="${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>" uv run --project ... --no-dev --locked`.
+Tradeoff: Bare mode drops `/signal-sweep`-style slash commands and requires keeping the six short
+catalog entries in `agent.md` in sync with `SKILL.md` frontmatter; in exchange, Turn-0 overhead
+stays ~3.5k tokens (`3,457` measured on `agy v1.5.14`, ~60% below Default), isolation is complete,
+memos stay in the research workspace, and Antigravity needs no launcher or bootstrap script while
+leaving the installed plugin directory clean across updates.
+Status: active
+
+## 2026-11-21 — Allow bounded `run_workflow` fan-out in Antigravity while keeping single-company diligence in the primary context
+
+Context: `2026-08-12 — Keep research in the primary Pi context` rejected general sub-agents due to
+tool-descriptor tax, weaker-model delegation, and lossy handoffs. Antigravity's `run_workflow`
+adds only one tool (~395 tokens), spawns a bare `worker.md` (~2k tokens) on the same frontier
+model, enforces JSON-Schema `finish` outputs, supports stateful follow-up turns within a workflow,
+and shares `./sec-cache/` and `./transcript-cache/` on disk.
+Decision: Expose `run_workflow` with private `agents/secstack/worker.md` in the Antigravity
+`secstack` agent strictly for horizontal multi-ticker sweeps, shortlist triage, peer-comp
+extraction, bulk transcript scans, and independent post-memo citation audits—with lossless
+provenance schemas and `<= 4` concurrent EDGAR workers (respecting SEC's 10 req/s IP limit).
+Keep single-company thesis formation, normalization, valuation judgment, and `bottom-up-analyst`
+→ `pitch-like-lou` rendering in the primary context. Pi remains single-context.
+Tradeoff: Adds ~395 Turn-0 tokens and an Antigravity-only `run-workflow` skill; unlocks clean
+multi-ticker sweeps without polluting the primary window with 100k+ tokens of raw peer filings.
+Status: active
+
 ## 2026-08-31 — Distill routine 13F queries while preserving SEC-level provenance
 
 Context: SEC 13F filings are authoritative but awkward for reverse stock-holder lookup and
@@ -37,7 +89,7 @@ Status: active
 Context: A profile-level `SYSTEM.md` replaces Pi's default prompt, which removes the
 coding-agent identity as required but also suppresses Pi's dynamic tool snippets and guidelines.
 A copied system file would also become stale after `pi update --extensions`.
-Decision: Keep a one-line research identity in the SecStack package; bootstrap creates a relative
+Decision: Keep a one-line research identity in the SECstack package; bootstrap creates a relative
 profile `SYSTEM.md` symlink to it. A package extension reconstructs Pi's prompt envelope from
 live tool metadata, leaving all research procedure in the matching skills.
 Tradeoff: The extension mirrors a small, stable part of Pi's prompt assembly, but preserves
@@ -47,8 +99,8 @@ Status: active
 ## 2026-08-12 — Keep the profile free of coding-task resources
 
 Context: The shared `pi-setup` package now includes global coding guidance and coding-oriented
-skills, but SecStack is a dedicated research profile.
-Decision: Load only SecStack's selected `pi-setup` extensions and themes. Do not link
+skills, but SECstack is a dedicated research profile.
+Decision: Load only SECstack's selected `pi-setup` extensions and themes. Do not link
 `AGENTS.md` or `APPEND_SYSTEM.md`, and exclude `repo-nav` and `bootstrap-docs` by keeping the
 package's skill filter empty.
 Tradeoff: The profile does not inherit general coding workflow improvements, preserving a
