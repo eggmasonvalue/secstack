@@ -42,6 +42,15 @@ import _common as c
 
 _BASE = "https://finance.yahoo.com"
 _DELAY = 2.0  # polite delay between page fetches (seconds)
+_MAX_ATTEMPTS = 3
+_RETRY_DELAY = 3.0  # base backoff between transient Yahoo retries (seconds)
+_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+_OWNS_SESSION = not bool(os.environ.get("AGENT_BROWSER_SESSION"))
+_SESSION = os.environ.get("AGENT_BROWSER_SESSION") or f"secstack-transcripts-{os.getpid()}"
+_SESSION_STARTED = False
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +88,14 @@ def _find_agent_browser() -> str:
     return "agent-browser"
 
 
+def _browser_env() -> dict[str, str]:
+    """Return subprocess env with an isolated session and desktop User-Agent."""
+    env = os.environ.copy()
+    env.setdefault("AGENT_BROWSER_SESSION", _SESSION)
+    env.setdefault("AGENT_BROWSER_USER_AGENT", _USER_AGENT)
+    return env
+
+
 def _run_agent_browser(args: list[str], timeout: int = 45) -> str:
     """Run an agent-browser command and return stdout."""
     exe = _find_agent_browser()
@@ -89,6 +106,7 @@ def _run_agent_browser(args: list[str], timeout: int = 45) -> str:
             text=True,
             timeout=timeout + 15,
             shell=False,
+            env=_browser_env(),
         )
         if result.returncode != 0:
             stderr = result.stderr.strip()
@@ -108,7 +126,15 @@ def _run_agent_browser(args: list[str], timeout: int = 45) -> str:
 
 
 def _open_url(url: str, timeout: int = 45) -> bool:
+    global _SESSION_STARTED
+    _SESSION_STARTED = True
     return bool(_run_agent_browser(["open", url], timeout=timeout))
+
+
+def _close_session() -> None:
+    """Close the dedicated agent-browser session if this script started it."""
+    if _OWNS_SESSION and _SESSION_STARTED:
+        _run_agent_browser(["close"], timeout=15)
 
 
 def _run_browser_script(script: str, timeout: int = 45) -> str:
@@ -130,12 +156,14 @@ def _run_browser_script(script: str, timeout: int = 45) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _is_transient_yahoo_error(text: str) -> bool:
+    """Detect Yahoo Finance's transient 'Will be right back...' error page."""
+    return bool(re.search(r"will be right back", text, re.I))
+
+
 def _fetch_listing(ticker: str) -> list[dict] | None:
     """Fetch available transcripts, or return None when retrieval fails."""
     url = f"{_BASE}/quote/{ticker}/earnings-calls/"
-    if not _open_url(url, timeout=45):
-        return None
-    time.sleep(3)
     script = r"""
 JSON.stringify((() => {
   const links = Array.from(document.querySelectorAll('a[href*="earnings_call"]'))
@@ -149,11 +177,22 @@ JSON.stringify((() => {
   return { links, text };
 })())
 """
-    raw = _run_browser_script(script)
-    if not raw:
-        return None
-    try:
-        payload = json.loads(raw)
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        if not _open_url(url, timeout=45):
+            return None
+        time.sleep(3)
+        raw = _run_browser_script(script)
+        if not raw:
+            if attempt < _MAX_ATTEMPTS:
+                c.log(f"  Empty listing response (attempt {attempt}/{_MAX_ATTEMPTS}); retrying...")
+                time.sleep(_RETRY_DELAY * attempt)
+                continue
+            return None
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            c.log("ERROR: could not parse Yahoo's transcript listing response.")
+            return None
         if not isinstance(payload, dict) or not isinstance(payload.get("links"), list):
             return None
         if payload["links"]:
@@ -163,11 +202,18 @@ JSON.stringify((() => {
             r"no (?:earnings call )?transcripts|transcripts? (?:are )?not available", text, re.I
         ):
             return []
+        if attempt < _MAX_ATTEMPTS:
+            reason = (
+                "Yahoo returned a transient 'Will be right back' page"
+                if _is_transient_yahoo_error(text)
+                else "Yahoo loaded without a transcript list"
+            )
+            c.log(f"  {reason} (attempt {attempt}/{_MAX_ATTEMPTS}); retrying...")
+            time.sleep(_RETRY_DELAY * attempt)
+            continue
         c.log("ERROR: Yahoo loaded without a transcript list or an explicit no-data message.")
         return None
-    except json.JSONDecodeError:
-        c.log("ERROR: could not parse Yahoo's transcript listing response.")
-        return None
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -178,13 +224,15 @@ JSON.stringify((() => {
 def _fetch_transcript(url: str) -> dict | None:
     """Fetch and parse a single transcript page."""
     full_url = f"{_BASE}{url}" if url.startswith("/") else url
-    if not _open_url(full_url, timeout=50):
-        return None
-    time.sleep(4)
     script = r"""
 JSON.stringify((() => {
   const main = document.querySelector("main");
-  if (!main) return { error: "no main element" };
+  if (!main) {
+    return {
+      error: "no main element",
+      body: (document.body ? document.body.innerText || "" : "").slice(0, 500)
+    };
+  }
   const h1 = main.querySelector("h1");
   const title = h1 ? h1.textContent.trim() : "";
   const dateMatch = document.body.textContent.match(
@@ -212,18 +260,41 @@ JSON.stringify((() => {
   return { title, date, summary, blocks };
 })())
 """
-    raw = _run_browser_script(script, timeout=50)
-    if not raw:
-        return None
-    try:
-        data = json.loads(raw)
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        if not _open_url(full_url, timeout=50):
+            return None
+        time.sleep(4)
+        raw = _run_browser_script(script, timeout=50)
+        if not raw:
+            if attempt < _MAX_ATTEMPTS:
+                c.log(
+                    f"    Empty transcript response (attempt {attempt}/{_MAX_ATTEMPTS}); retrying..."
+                )
+                time.sleep(_RETRY_DELAY * attempt)
+                continue
+            return None
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            c.log("WARNING: could not parse transcript response.")
+            return None
+        if not data.get("error") and data.get("blocks"):
+            return data
+        body = str(data.get("body", ""))
+        if attempt < _MAX_ATTEMPTS:
+            reason = (
+                "Yahoo returned a transient 'Will be right back' page"
+                if _is_transient_yahoo_error(body)
+                else data.get("error") or "no transcript blocks rendered"
+            )
+            c.log(f"    {reason} (attempt {attempt}/{_MAX_ATTEMPTS}); retrying...")
+            time.sleep(_RETRY_DELAY * attempt)
+            continue
         if data.get("error"):
             c.log(f"    WARNING: {data['error']}")
             return None
         return data
-    except json.JSONDecodeError:
-        c.log("WARNING: could not parse transcript response.")
-        return None
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -327,6 +398,13 @@ def main():
 
     ticker = args.ticker.upper()
 
+    try:
+        _run_main(ticker, args)
+    finally:
+        _close_session()
+
+
+def _run_main(ticker: str, args: argparse.Namespace) -> None:
     # Step 1: Fetch listing
     c.log(f"Fetching transcript listing for {ticker}...")
     transcripts = _fetch_listing(ticker)
