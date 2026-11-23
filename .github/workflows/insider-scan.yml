@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: agents/secstack/skills/signal-sweep
-        run: uv sync --locked
+        run: uv sync --frozen
 
       - name: Run insider scan
         env:
@@ -45,7 +45,7 @@ jobs:
           LOOKBACK="${{ github.event.inputs.lookback || '5' }}"
           ZSCORE="${{ github.event.inputs.zscore || '1.5' }}"
 
-          uv run python scripts/scan_insiders.py \
+          uv run --frozen python scripts/scan_insiders.py \
             --date "$DATE" \
             --lookback "$LOOKBACK" \
             --zscore "$ZSCORE"

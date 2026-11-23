@@ -44,7 +44,7 @@ providing a shell-prefix hook.
 Decision: Configure `agents/secstack/agent.md` with `excludeDefaultComponents: true` and
 `inheritMcp: false`, inline the concise six-skill catalog with ordered `<skills-root>` path
 resolution, and instruct `agent.md` and `worker.md` to invoke dependency-backed skill scripts via
-`UV_PROJECT_ENVIRONMENT="${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>" uv run --project ... --no-dev --locked`.
+`UV_PROJECT_ENVIRONMENT="${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>" uv run --project ... --no-dev --frozen`.
 Tradeoff: Bare mode drops `/signal-sweep`-style slash commands and requires keeping the six short
 catalog entries in `agent.md` in sync with `SKILL.md` frontmatter; in exchange, Turn-0 overhead
 stays ~3.5k tokens (`3,457` measured on `agy v1.5.14`, ~60% below Default), isolation is complete,
