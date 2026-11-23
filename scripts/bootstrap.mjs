@@ -192,7 +192,7 @@ function ensurePythonEnvironment() {
         project,
         "--no-dev",
         "--inexact",
-        "--locked",
+        "--frozen",
       ],
       { UV_PROJECT_ENVIRONMENT: venvDir },
     );

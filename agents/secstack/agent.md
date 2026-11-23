@@ -42,7 +42,7 @@ Before executing any skill's workflow or scripts, read its `<skills-root>/<skill
 Keep the shell working directory at the research workspace so generated caches (`./sec-cache/`, `./signal-sweep-cache/`, `./transcript-cache/`) land beside the work, never inside the installed plugin directory.
 
 - For skills with a `pyproject.toml` (`signal-sweep`, `sec-edgar-skill`, `market-scout`), invoke scripts by absolute path through `uv` with an external cache environment so plugin updates stay clean:
-  `UV_PROJECT_ENVIRONMENT="${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>" uv run --project "<skills-root>/<skill>" --no-dev --locked python "<skills-root>/<skill>/scripts/<script>.py" ...`
+  `UV_PROJECT_ENVIRONMENT="${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>" uv run --project "<skills-root>/<skill>" --no-dev --frozen python "<skills-root>/<skill>/scripts/<script>.py" ...`
 - For stdlib-only scripts (`bottom-up-analyst/scripts/{dcf,epv}.py`), invoke `python3 "<skills-root>/bottom-up-analyst/scripts/<script>.py" ...` directly.
 - SEC-facing commands require `$EDGAR_IDENTITY` (`"Name email@example.com"`); `fetch_transcripts.py` requires `agent-browser` on `PATH` (with one-time `agent-browser install`). Report missing prerequisites directly rather than fabricating data.
 
