@@ -297,11 +297,21 @@ def collect_notable_singles(
 
 
 def scan_13d(dates: list[str], mcap_data: dict) -> tuple[list[dict], dict]:
-    """Collect Schedule 13D and 13D/A filings without presuming activism."""
+    """Collect Schedule 13D and 13D/A filings without presuming activism.
+
+    The daily index lists each schedule under both the filer and the subject company, so
+    filings are deduplicated by accession and the issuer comes from the parsed schedule.
+    """
     import edgar
 
     results = []
-    stats = {"failed_dates": [], "unresolved_ticker": 0, "unresolved_market_cap": 0}
+    seen: set[str] = set()
+    stats = {
+        "failed_dates": [],
+        "unparsed": 0,
+        "unresolved_ticker": 0,
+        "unresolved_market_cap": 0,
+    }
     for requested_date in dates:
         c.log(f"Fetching Schedule 13D index for {requested_date}...")
         try:
@@ -309,7 +319,7 @@ def scan_13d(dates: list[str], mcap_data: dict) -> tuple[list[dict], dict]:
             filings = edgar.get_filings(
                 year=parsed_date.year,
                 quarter=(parsed_date.month - 1) // 3 + 1,
-                form=["SC 13D", "SC 13D/A"],
+                form=["SCHEDULE 13D", "SCHEDULE 13D/A", "SC 13D", "SC 13D/A"],
                 filing_date=requested_date,
             )
         except Exception as exc:
@@ -320,7 +330,25 @@ def scan_13d(dates: list[str], mcap_data: dict) -> tuple[list[dict], dict]:
             continue
 
         for filing in filings:
-            issuer_cik = str(getattr(filing, "cik", "") or "").lstrip("0")
+            accession = str(
+                getattr(filing, "accession_no", "") or getattr(filing, "accession_number", "") or ""
+            )
+            if not accession or accession in seen:
+                continue
+            seen.add(accession)
+
+            try:
+                schedule = filing.obj()
+                issuer = schedule.issuer_info
+                issuer_cik = str(issuer.cik or "").lstrip("0")
+                issuer_name = str(issuer.name or "Unknown")
+            except Exception:
+                stats["unparsed"] += 1
+                continue
+            if not issuer_cik:
+                stats["unparsed"] += 1
+                continue
+
             ticker = None
             try:
                 from edgar import Company
@@ -341,30 +369,19 @@ def scan_13d(dates: list[str], mcap_data: dict) -> tuple[list[dict], dict]:
             if not c.in_universe(mcap):
                 continue
 
-            blockholders = "(see filing)"
-            try:
-                schedule = filing.obj()
-                names = [
-                    str(person.name)
-                    for person in (getattr(schedule, "reporting_persons", []) or [])
-                    if getattr(person, "name", None)
-                ]
-                if names:
-                    blockholders = "; ".join(dict.fromkeys(names))
-            except Exception:
-                pass
-
-            accession = str(
-                getattr(filing, "accession_no", "") or getattr(filing, "accession_number", "") or ""
-            )
+            names = [
+                str(person.name)
+                for person in (getattr(schedule, "reporting_persons", []) or [])
+                if getattr(person, "name", None)
+            ]
             results.append(
                 {
                     "ticker": ticker,
-                    "company": str(getattr(filing, "company", "Unknown")),
+                    "company": issuer_name,
                     "mcap": mcap,
-                    "blockholders": blockholders,
+                    "blockholders": "; ".join(dict.fromkeys(names)) or "(see filing)",
                     "filing_date": str(getattr(filing, "filing_date", requested_date)),
-                    "form": str(getattr(filing, "form", "SC 13D")),
+                    "form": str(getattr(filing, "form", "SCHEDULE 13D")),
                     "accession": accession,
                     "source_url": c.sec_filing_url(issuer_cik, accession),
                 }
@@ -469,6 +486,11 @@ def _coverage_notes(form4_stats: dict, schedule_stats: dict) -> list[str]:
     if form4_stats["parse_errors"]:
         notes.append(
             f"{form4_stats['parse_errors']} of {form4_stats['filings_seen']} Form 4 filings could not be parsed."
+        )
+    if schedule_stats["unparsed"]:
+        notes.append(
+            f"{schedule_stats['unparsed']} Schedule 13D filing(s) could not be parsed for an issuer; "
+            "those were omitted."
         )
     if schedule_stats["unresolved_ticker"]:
         notes.append(

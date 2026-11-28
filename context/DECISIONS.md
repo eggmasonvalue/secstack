@@ -131,9 +131,10 @@ Status: active
 
 Context: A fixed percentage move (e.g. -20%) is routine for a biotech but
 exceptional for a utility, so a flat threshold misfires across the universe.
-Decision: Tag dip/rip buys by the stock's trailing 30-day return z-score
-(default ±1.5σ) rather than a fixed percent move; only Form 4 open-market
-purchases (code `P`) are counted.
+Decision: Tag dip/rip buys by the z-score of the 22-trading-day return as of the
+transaction date against that stock's prior 252 rolling 22-day returns (default
+±1.5σ) rather than a fixed percent move; only Form 4 open-market purchases
+(code `P`) are counted.
 Tradeoff: Requires per-stock volatility history and tuning of the z-score
 threshold; rejects the simpler but universe-blind fixed-percent rule.
 Status: active

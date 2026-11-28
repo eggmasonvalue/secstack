@@ -410,6 +410,8 @@ def _run_main(ticker: str, args: argparse.Namespace) -> None:
     transcripts = _fetch_listing(ticker)
     if transcripts is None:
         c.log(f"ERROR: transcript listing retrieval failed for {ticker}.")
+        if "." in ticker:
+            c.log(f"HINT: Yahoo writes share classes with a hyphen: {ticker.replace('.', '-')}")
         sys.exit(1)
     if not transcripts:
         c.log(f"No earnings call transcripts found for {ticker}.")

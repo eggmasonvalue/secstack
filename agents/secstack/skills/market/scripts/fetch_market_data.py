@@ -83,6 +83,8 @@ def main() -> None:
     if not has_snapshot and (close is None or close.empty):
         detail = f": {history_error}" if history_error else ""
         c.log(f"ERROR: Yahoo returned no usable snapshot or price history for {symbol}{detail}")
+        if "." in symbol:
+            c.log(f"HINT: Yahoo writes share classes with a hyphen: {symbol.replace('.', '-')}")
         sys.exit(1)
     if history_error:
         c.log(f"WARNING: price history unavailable: {history_error}")
@@ -99,7 +101,13 @@ def main() -> None:
         price_label += f" {currency}"
     print(f"- Price: {price_label}")
     print(f"- Market cap: {_num(info.get('marketCap'), money=True)}")
-    print(f"- Shares outstanding: {_num(info.get('sharesOutstanding'), money=True)}")
+    shares = info.get("sharesOutstanding")
+    implied = info.get("impliedSharesOutstanding")
+    if implied and shares and abs(implied - shares) > 0.01 * shares:
+        print(f"- Shares outstanding (this class): {_num(shares, money=True)}")
+        print(f"- Implied shares (all classes): {_num(implied, money=True)}")
+    else:
+        print(f"- Shares outstanding: {_num(shares, money=True)}")
     print(
         f"- 52-week high / low: {_num(info.get('fiftyTwoWeekHigh'))} / "
         f"{_num(info.get('fiftyTwoWeekLow'))}"
