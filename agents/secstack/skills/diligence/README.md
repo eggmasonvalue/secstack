@@ -1,4 +1,4 @@
-# Bottom-Up Analyst
+# Diligence
 
 An [agent skill](SKILL.md) for substantive, long-only fundamental research on one
 non-financial operating company. It turns filing, market, industry, and ownership evidence
@@ -44,8 +44,8 @@ They require material assumptions explicitly. `dcf.py` accepts free cash flow to
 (FCFF), discounts it at WACC, and bridges enterprise value to equity using net claims: debt and
 other senior claims less non-operating assets.
 
-Install and configure [`sec-edgar-skill`](../sec-edgar-skill/) for SEC evidence and
-[`market-scout`](../market-scout/) for market data and transcripts. Each data skill owns its
+Install and configure [`edgar`](../edgar/) for SEC evidence and
+[`market`](../market/) for market data and transcripts. Each data skill owns its
 runtime, cache, and source instructions.
 
 ## Scope and judgment

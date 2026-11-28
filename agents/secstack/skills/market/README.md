@@ -1,4 +1,4 @@
-# Market Scout
+# Market
 
 Public market context and earnings-call transcript retrieval for US-listed stocks via
 [`yfinance`](https://github.com/ranaroussi/yfinance) and Yahoo Finance. The skill returns source

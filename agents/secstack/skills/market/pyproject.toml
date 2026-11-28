@@ -1,12 +1,12 @@
 [project]
-name = "secstack-signal-sweep"
+name = "secstack-market"
 version = "0.1.0"
-description = "Signal discovery scripts for SECstack"
+description = "Market data scripts for SECstack"
 requires-python = ">=3.11"
 dependencies = [
-    "edgartools>=5",
+    "lxml>=6.1.2",
     "pandas>=2",
-    "requests>=2",
+    "tabulate>=0.9",
     "truststore>=0.9",
     "yfinance>=0.2",
 ]

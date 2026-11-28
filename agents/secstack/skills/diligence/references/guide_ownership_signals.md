@@ -2,7 +2,7 @@
 
 Use ownership evidence when it can change alignment, liquidity, control, dilution, governance,
 or the path to value. It is supporting evidence, not a substitute for operating work. Pull the
-underlying records through `sec-edgar-skill` and follow that skill's current guides for retrieval
+underlying records through `edgar` and follow that skill's current guides for retrieval
 and form semantics.
 
 ## 13F — limited institutional position evidence

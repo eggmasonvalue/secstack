@@ -1,4 +1,4 @@
-# SEC EDGAR Research Skill
+# EDGAR
 
 An agent skill for retrieving, verifying, and inspecting SEC filings and filing-derived
 financial, ownership, compensation, and governance data without loading whole filings into
@@ -20,7 +20,7 @@ context.
 From the SECstack repository:
 
 ```bash
-npx skills add eggmasonvalue/secstack --skill sec-edgar-skill
+npx skills add eggmasonvalue/secstack --skill edgar
 ```
 
 SECstack's Pi bootstrap installs the Python dependencies automatically (and the Antigravity

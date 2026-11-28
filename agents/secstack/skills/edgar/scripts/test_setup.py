@@ -29,7 +29,7 @@ def main():
     )
     args = p.parse_args()
 
-    print("sec-edgar-skill — environment diagnostics")
+    print("edgar — environment diagnostics")
     print(f"  Python: {sys.version.split()[0]}  ({sys.executable})")
 
     ok = True

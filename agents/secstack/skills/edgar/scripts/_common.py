@@ -1,4 +1,4 @@
-"""Shared bootstrap and conventions for the sec-edgar-skill scripts.
+"""Shared bootstrap and conventions for the edgar scripts.
 
 Importing this module gives every script identical, correct runtime setup with
 zero duplication:

@@ -1,4 +1,4 @@
-"""Shared runtime and output helpers for market-scout scripts."""
+"""Shared runtime and output helpers for market scripts."""
 
 import os
 import sys

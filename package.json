@@ -12,10 +12,10 @@
       "./extensions/startup-header.ts"
     ],
     "skills": [
-      "./agents/secstack/skills/signal-sweep",
-      "./agents/secstack/skills/sec-edgar-skill",
-      "./agents/secstack/skills/market-scout",
-      "./agents/secstack/skills/bottom-up-analyst",
+      "./agents/secstack/skills/screen",
+      "./agents/secstack/skills/edgar",
+      "./agents/secstack/skills/market",
+      "./agents/secstack/skills/diligence",
       "./agents/secstack/skills/pitch-like-lou"
     ]
   }

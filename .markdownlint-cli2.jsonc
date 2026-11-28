@@ -16,7 +16,7 @@
     "**/node_modules/**",
     ".git",
     "**/sec-cache/**",
-    "**/signal-sweep-cache/**",
+    "**/screen-cache/**",
     "**/transcript-cache/**"
   ]
 }

@@ -1,6 +1,6 @@
-"""Shared bootstrap for signal-sweep scripts.
+"""Shared bootstrap for screen scripts.
 
-Follows the same conventions as sec-edgar-skill and market-scout:
+Follows the same conventions as edgar and market:
   * UTF-8 stdout/stderr on Windows
   * truststore injection for corporate proxy SSL
   * log() -> stderr, emit() -> stdout
@@ -72,22 +72,22 @@ def add_identity_arg(parser: argparse.ArgumentParser) -> None:
 
 # --- Output cache ---------------------------------------------------------
 def cache_root(cli_value: str | None = None) -> Path:
-    """Resolve cache root: --cache-dir > $SIGNAL_SWEEP_CACHE > ./signal-sweep-cache."""
-    root = cli_value or os.environ.get("SIGNAL_SWEEP_CACHE") or "signal-sweep-cache"
+    """Resolve cache root: --cache-dir > $SCREEN_CACHE_DIR > ./screen-cache."""
+    root = cli_value or os.environ.get("SCREEN_CACHE_DIR") or "screen-cache"
     return Path(root).resolve()
 
 
 def add_cache_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--cache-dir",
-        help="Cache root (default: $SIGNAL_SWEEP_CACHE or ./signal-sweep-cache).",
+        help="Cache root (default: $SCREEN_CACHE_DIR or ./screen-cache).",
     )
 
 
 def write_output(cache: Path, capability: str, slug: str, content: str) -> Path:
     """Write Markdown output to cache and emit the path.
 
-    File layout: signal-sweep-cache/{capability}/{slug}.md
+    File layout: screen-cache/{capability}/{slug}.md
     """
     out_dir = cache / capability
     out_dir.mkdir(parents=True, exist_ok=True)

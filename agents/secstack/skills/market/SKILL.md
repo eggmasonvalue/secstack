@@ -1,5 +1,5 @@
 ---
-name: market-scout
+name: market
 description: >-
   Retrieve current public market data and earnings-call transcripts for US-listed stocks via
   Yahoo Finance: quotes, market capitalization, shares, price history and trailing returns,
@@ -8,7 +8,7 @@ description: >-
   earnings-call transcript.
 ---
 
-# Market Scout
+# Market
 
 Retrieve market context and transcript text without turning the result into an investment
 conclusion.

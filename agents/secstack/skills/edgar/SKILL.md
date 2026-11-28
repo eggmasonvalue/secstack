@@ -1,5 +1,5 @@
 ---
-name: sec-edgar-skill
+name: edgar
 description: >-
   Retrieve, verify, and inspect SEC filings and filing-derived financial, ownership,
   compensation, and governance data. Use when current or auditable evidence must be pulled
@@ -9,7 +9,7 @@ description: >-
   financials; use it when source material needs to be obtained or checked.
 ---
 
-# SEC EDGAR Research Skill
+# EDGAR
 
 Retrieve filing-derived evidence without loading entire filings into context.
 

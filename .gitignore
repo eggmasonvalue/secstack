@@ -6,10 +6,10 @@ __pycache__/
 # SEC EDGAR download cache (regenerated on demand)
 sec-cache/
 
-# Signal-sweep output cache (regenerated on demand)
-signal-sweep-cache/
+# Screen output cache (regenerated on demand)
+screen-cache/
 
-# Transcript cache (market-scout, regenerated on demand)
+# Transcript cache (market, regenerated on demand)
 transcript-cache/
 
 # OS cruft

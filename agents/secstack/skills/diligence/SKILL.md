@@ -1,5 +1,5 @@
 ---
-name: bottom-up-analyst
+name: diligence
 description: >-
   Conduct substantive, long-only bottom-up research on one non-financial operating company.
   Use for an investment thesis, buy/pass/watch decision, valuation, earnings-quality review,
@@ -10,14 +10,14 @@ description: >-
   REITs, funds, or clinical-stage and other predominantly binary-asset companies.
 ---
 
-# Bottom-Up Analyst
+# Diligence
 
 Turn evidence about one company into a long-only investment judgment. Scale the work to the
 question: answer a scoped valuation or earnings-quality request directly; produce the full memo
 only for a deep dive or when the user asks for one.
 
-This is the analysis layer of SECstack. Use `sec-edgar-skill` for filing evidence and
-`market-scout` for market data and transcripts. A finished memo may later feed
+This is the analysis layer of SECstack. Use `edgar` for filing evidence and
+`market` for market data and transcripts. A finished memo may later feed
 `pitch-like-lou`, but this skill owns the research method and does not depend on that voice.
 
 ## Evidence discipline
@@ -56,7 +56,7 @@ to answer it and disclose what was not reviewed.
 
 ### 2. Build the evidence set
 
-Use `sec-edgar-skill` orientation only when the relevant form or accession is unknown. Skip it
+Use `edgar` orientation only when the relevant form or accession is unknown. Skip it
 when an accession, cached artifact, or non-SEC source is already the precise route. Read the
 latest annual filing and subsequent material updates for a full company review; choose narrower
 sources for a narrower question.

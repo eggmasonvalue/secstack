@@ -1,5 +1,5 @@
 ---
-name: signal-sweep
+name: screen
 description: >-
   Discover US-listed equity research candidates by scanning Form 4 purchases and Schedule 13D
   filings, configurable Yahoo Finance market screens, SEC filing full-text for a keyword or
@@ -9,7 +9,7 @@ description: >-
   already known and the task is diligence rather than discovery.
 ---
 
-# Signal Sweep
+# Screen
 
 Produce auditable candidate lists for further research. A match is a lead, not an investment
 thesis.
@@ -18,7 +18,7 @@ thesis.
 
 Resolve bundled paths relative to this `SKILL.md` and invoke scripts by absolute path while keeping
 the shell working directory at the research workspace. Generated reports then land in the
-workspace's `./signal-sweep-cache`; pass `--cache-dir` to put them elsewhere.
+workspace's `./screen-cache`; pass `--cache-dir` to put them elsewhere.
 
 The packaged SECstack profile already exposes this skill's Python dependencies. For standalone
 use, run `uv sync --project "<skill-dir>"`, then activate that environment or prefix the commands
@@ -96,7 +96,7 @@ filing.
 ## Output and failure semantics
 
 Each successful scan writes a date- or range-keyed Markdown report under
-`signal-sweep-cache/<route>/` and emits its absolute path to stdout. Re-running the same request
+`screen-cache/<route>/` and emits its absolute path to stdout. Re-running the same request
 refreshes that report. Shared Yahoo market-cap lookups used by SEC-facing routes have a 24-hour disk
 cache.
 

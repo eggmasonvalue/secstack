@@ -8,36 +8,36 @@ they form a research pipeline.
 
 | Layer | Skill | Job |
 |---|---|---|
-| **Discovery** | [`signal-sweep`](signal-sweep/) | Scan SEC filings and market data to surface new investment ideas. |
-| **Data** | [`sec-edgar-skill`](sec-edgar-skill/) | Retrieve and extract SEC filings, ownership, and 13F holder data. |
-| **Data** | [`market-scout`](market-scout/) | Pull prices, returns, peers, sector screens, and transcripts. |
-| **Analysis** | [`bottom-up-analyst`](bottom-up-analyst/) | Turn one operating company into scoped analysis or an auditable investment memo. |
+| **Discovery** | [`screen`](screen/) | Scan SEC filings and market data to surface new investment ideas. |
+| **Data** | [`edgar`](edgar/) | Retrieve and extract SEC filings, ownership, and 13F holder data. |
+| **Data** | [`market`](market/) | Pull prices, returns, peers, sector screens, and transcripts. |
+| **Analysis** | [`diligence`](diligence/) | Turn one operating company into scoped analysis or an auditable investment memo. |
 | **Voice** | [`pitch-like-lou`](pitch-like-lou/) | Render a finished thesis as a VIC-style pitch. |
 
 ## Data flow
 
 ```text
-  signal-sweep  (surfaces tickers)
+  screen  (surfaces tickers)
        │
        ▼
-  bottom-up-analyst  (deep dive on one ticker)
-       ├── sec-edgar-skill  (filings and ownership)
-       ├── market-scout  (price, peers, transcripts)
+  diligence  (deep dive on one ticker)
+       ├── edgar  (filings and ownership)
+       ├── market  (price, peers, transcripts)
        ▼
   pitch-like-lou  (finished pitch)
 ```
 
-`bottom-up-analyst` is the conductor. It decides what to pull, reasons over the evidence,
+`diligence` is the conductor. It decides what to pull, reasons over the evidence,
 values the business, and produces the requested analysis or full memo. The data skills supply
 the underlying evidence.
 
-`signal-sweep` and `sec-edgar-skill` are independent data sources. `market-scout` is also
+`screen` and `edgar` are independent data sources. `market` is also
 swappable: the analyst can use a different market-data provider without changing its
 reasoning workflow.
 
 The voice skill renders from a finished thesis; it is not an idea generator.
 
-**Production order for a full thesis:** signal-sweep → bottom-up-analyst → memo → optionally
+**Production order for a full thesis:** screen → diligence → memo → optionally
 pitch-like-lou.
 
 ## Progressive disclosure
@@ -48,12 +48,12 @@ the skill that owns them. Load only the guide or script required for the current
 
 ## Skill resources
 
-- [`signal-sweep`](signal-sweep/) contains configurable market screens, SEC discovery
+- [`screen`](screen/) contains configurable market screens, SEC discovery
   scanners, conference discovery, and theme search.
-- [`sec-edgar-skill`](sec-edgar-skill/) contains filing, financial, ownership, and 13F
+- [`edgar`](edgar/) contains filing, financial, ownership, and 13F
   retrieval helpers.
-- [`market-scout`](market-scout/) contains Yahoo Finance market and transcript helpers.
-- [`bottom-up-analyst`](bottom-up-analyst/) contains valuation arithmetic and memo frameworks.
+- [`market`](market/) contains Yahoo Finance market and transcript helpers.
+- [`diligence`](diligence/) contains valuation arithmetic and memo frameworks.
 - [`pitch-like-lou`](pitch-like-lou/) contains the pitch-writing workflow and reference corpus.
 
 Each skill's README documents its dependencies and usage. Invoke installed artifact-producing

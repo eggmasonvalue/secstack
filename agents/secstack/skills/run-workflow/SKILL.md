@@ -16,7 +16,7 @@ A workflow is a Python script executed by `run_workflow` to coordinate isolated 
 1. **Always pass `type_name="worker"`**: Built-in `"self"` is unavailable on custom agents (`subagent "self" not found`). Every `agent(...)` call must pass `type_name="worker"`.
 2. **Brief workers explicitly**: `worker` runs bare (`excludeDefaultComponents: true`, `inheritMcp: false`). Include in every worker prompt:
    - Absolute research workspace path (`WORKSPACES[0]`) and absolute `<skills-root>` path.
-   - Exact `SKILL.md` path(s) to read (e.g., `<skills-root>/sec-edgar-skill/SKILL.md`).
+   - Exact `SKILL.md` path(s) to read (e.g., `<skills-root>/edgar/SKILL.md`).
    - Required provenance fields so handoffs stay lossless (figures, units, periods, SEC accession or URL, cached file path, verbatim quote, explicit errors/gaps).
 3. **Cap EDGAR concurrency (`<= 4`) and isolate per-ticker failures**: SEC EDGAR enforces a 10 req/s per-IP rate limit, and `parallel(...)` cancels all siblings if one worker fails. Wrap EDGAR fan-outs with `asyncio.Semaphore(4)` and `asyncio.gather(..., return_exceptions=True)` so one bad or delisted ticker does not abort the sweep.
 
@@ -84,7 +84,7 @@ async def extract_one(ticker: str):
         return await agent(
             f"""Workspace: {WS}
 Skills root: {SKILLS_ROOT}
-Read {SKILLS_ROOT}/sec-edgar-skill/SKILL.md first.
+Read {SKILLS_ROOT}/edgar/SKILL.md first.
 For {ticker}, pull the last 3 fiscal years of the requested disclosure from its latest 10-K/20-F.
 Return exact figures, SEC accession, absolute cached file path, verbatim footnote excerpt, and caveats.""",
             schema=SCHEMA,
@@ -105,7 +105,7 @@ print(json.dumps(results, indent=2))
 
 ```python
 w = agent(
-    f"Workspace: {WORKSPACES[0]}. Skills root: {args['skills_root']}. Read sec-edgar-skill/SKILL.md first.",
+    f"Workspace: {WORKSPACES[0]}. Skills root: {args['skills_root']}. Read edgar/SKILL.md first.",
     type_name="worker",
     role=f"{ticker}: deep footnote check",
 )

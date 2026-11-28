@@ -1,4 +1,4 @@
-# Signal Sweep
+# Screen
 
 An [agent skill](SKILL.md) that discovers equity-research candidates from SEC filings and Yahoo
 Finance market data. It emits shortlists with source links and coverage notes; every match still
@@ -14,7 +14,7 @@ requires company-level diligence.
 | Investor-event discovery across relevant 8-K disclosures | `scan_conferences.py` |
 
 Within [SECstack](../README.md), the skill sits upstream of
-[`bottom-up-analyst`](../bottom-up-analyst/): it proposes tickers; the analyst investigates them.
+[`diligence`](../diligence/): it proposes tickers; diligence investigates them.
 
 ## Setup
 
@@ -32,7 +32,7 @@ Set `EDGAR_IDENTITY` for insider, theme, and investor-event scans (see
 [profile setup](../../../../README.md#one-time-runtime-setup)). Market screens use Yahoo Finance only.
 
 Keep the research workspace as the current directory and invoke installed scripts by resolved
-absolute path. This keeps `signal-sweep-cache/` with the research rather than the installed skill.
+absolute path. This keeps `screen-cache/` with the research rather than the installed skill.
 See [SKILL.md](SKILL.md) for routes, semantics, and output contracts.
 
 ## Screen customization
