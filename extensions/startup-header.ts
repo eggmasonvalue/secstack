@@ -38,20 +38,20 @@ function renderWide(theme: Theme, width: number, showPipeline: boolean): string[
       lines.push(
         "",
         `  ${tree("Research Pipeline:")}`,
-        `  ${tree("├─ ")}${gold("[SIGNALS]")}     ${copy("Insider clusters · 13D blocks · Market screens · Themes")}`,
+        `  ${tree("├─ ")}${gold("[SCREEN]")}      ${copy("Insider clusters · 13D blocks · Market screens · Themes")}`,
         `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}       ${copy("10-K/Q/8-K · XBRL financials · 13F holders · Proxies")}`,
         `  ${tree("├─ ")}${mark("[MARKET]")}      ${copy("Live quotes · Peer comps · Trailing returns · Transcripts")}`,
-        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}    ${copy("Normalized FCFF · Reverse DCF / EPV · Moats · Pre-mortem")}`,
+        `  ${tree("├─ ")}${theme.fg("mdHeading", "[DILIGENCE]")}   ${copy("Normalized FCFF · Reverse DCF / EPV · Moats · Pre-mortem")}`,
         `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")}   ${copy("Norbert Lou VIC style · Hard arithmetic · Falsification")}`,
       );
     } else {
       lines.push(
         "",
         `  ${tree("Research Pipeline:")}`,
-        `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Insider clusters · 13Ds · Screens")}`,
+        `  ${tree("├─ ")}${gold("[SCREEN]")}    ${copy("Insider clusters · 13Ds · Screens")}`,
         `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K/Q/8-K · XBRL · 13F holders")}`,
         `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Peer comps · Transcripts")}`,
-        `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("Normalized FCFF · DCF · Pre-mortem")}`,
+        `  ${tree("├─ ")}${theme.fg("mdHeading", "[DILIGENCE]")} ${copy("Normalized FCFF · DCF · Pre-mortem")}`,
         `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")} ${copy("Norbert Lou VIC pitch · Math")}`,
       );
     }
@@ -87,10 +87,10 @@ function renderCompact(theme: Theme, width: number, showPipeline: boolean): stri
     lines.push(
       "",
       `  ${tree("Research Pipeline:")}`,
-      `  ${tree("├─ ")}${gold("[SIGNALS]")}   ${copy("Insiders · 13Ds · Screens")}`,
+      `  ${tree("├─ ")}${gold("[SCREEN]")}    ${copy("Insiders · 13Ds · Screens")}`,
       `  ${tree("├─ ")}${theme.fg("mdCode", "[EDGAR]")}     ${copy("10-K/Q · XBRL · 13F")}`,
       `  ${tree("├─ ")}${mark("[MARKET]")}    ${copy("Quotes · Comps · Calls")}`,
-      `  ${tree("├─ ")}${theme.fg("mdHeading", "[ANALYSIS]")}  ${copy("FCFF · DCF · Moats")}`,
+      `  ${tree("├─ ")}${theme.fg("mdHeading", "[DILIGENCE]")} ${copy("FCFF · DCF · Moats")}`,
       `  ${tree("└─ ")}${theme.fg("syntaxType", "[VIC PITCH]")} ${copy("Norbert Lou pitch")}`,
     );
   }
@@ -116,10 +116,10 @@ function renderNarrow(theme: Theme, width: number, showPipeline: boolean): strin
   if (showPipeline) {
     lines.push(
       "",
-      tree("• Signals & Discovery"),
+      tree("• Screen & Discovery"),
       tree("• EDGAR Filings & 13F"),
       tree("• Market & Transcripts"),
-      tree("• Bottom-Up Valuation"),
+      tree("• Company Diligence"),
       tree("• Norbert Lou VIC Pitch"),
     );
   }

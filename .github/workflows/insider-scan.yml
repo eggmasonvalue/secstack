@@ -32,14 +32,14 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        working-directory: agents/secstack/skills/signal-sweep
+        working-directory: agents/secstack/skills/screen
         run: uv sync --frozen
 
       - name: Run insider scan
         env:
           EDGAR_IDENTITY: ${{ secrets.EDGAR_IDENTITY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        working-directory: agents/secstack/skills/signal-sweep
+        working-directory: agents/secstack/skills/screen
         run: |
           DATE="${{ github.event.inputs.date || 'yesterday' }}"
           LOOKBACK="${{ github.event.inputs.lookback || '5' }}"
@@ -55,5 +55,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: insider-scan-${{ github.run_id }}
-          path: agents/secstack/skills/signal-sweep/signal-sweep-cache/insiders/
+          path: agents/secstack/skills/screen/screen-cache/insiders/
           retention-days: 90

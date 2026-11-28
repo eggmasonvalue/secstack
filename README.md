@@ -20,7 +20,7 @@ load SECstack's research skills or instructions.
 - [Antigravity CLI (`agy`)](https://antigravity.google/)
 - Python 3.11 or newer and [uv](https://docs.astral.sh/uv/) on `PATH`
 - [`agent-browser`](https://www.npmjs.com/package/agent-browser) on `PATH` plus its one-time
-  browser install (`agent-browser install`) for `market-scout` earnings-call transcripts
+  browser install (`agent-browser install`) for `market` earnings-call transcripts
 - `EDGAR_IDENTITY` exported in your shell for SEC-facing requests (see
   [One-time runtime setup](#one-time-runtime-setup))
 
@@ -44,16 +44,16 @@ You can also switch to `secstack` interactively inside any `agy` session via `/a
 No shell launcher or manual `uv sync` is required: the `secstack` agent invokes dependency-backed
 skill scripts via `uv run --project` using an external cache environment
 (`${XDG_CACHE_HOME:-$HOME/.cache}/secstack/<skill>`), keeping the installed plugin directory clean
-across updates and writing `./sec-cache/`, `./signal-sweep-cache/`, and `./transcript-cache/` in
+across updates and writing `./sec-cache/`, `./screen-cache/`, and `./transcript-cache/` in
 your research workspace.
 
 ### Workflows in Antigravity
 
 The `secstack` agent includes `run_workflow` with a private bare `worker.md` for horizontal
-fan-out—multi-ticker thematic sweeps, shortlist triage after `signal-sweep`, peer-comp extraction,
+fan-out—multi-ticker thematic sweeps, shortlist triage after `screen`, peer-comp extraction,
 bulk transcript scans, and independent red-team citation audits—capped at `<= 4` concurrent EDGAR
 workers. Single-company thesis synthesis, normalization, valuation judgment, and
-`bottom-up-analyst` → `pitch-like-lou` rendering stay in the primary context.
+`diligence` → `pitch-like-lou` rendering stay in the primary context.
 
 ## Pi profile
 
@@ -155,7 +155,7 @@ context; the profile does not install or invoke sub-agents.
 
 ## One-time runtime setup
 
-`market-scout` transcript fetching uses `agent-browser`. Its browser/runtime installation is a
+`market` transcript fetching uses `agent-browser`. Its browser/runtime installation is a
 one-time step (on Antigravity, install `agent-browser` globally on `PATH` first; on Pi, the
 bootstrap installs it as a Pi-managed npm package):
 
@@ -184,7 +184,7 @@ The five research skills are documented in
 [`agents/secstack/skills/README.md`](agents/secstack/skills/README.md). The production flow is:
 
 ```text
-signal-sweep → bottom-up-analyst → sec-edgar-skill / market-scout → pitch-like-lou
+screen → diligence → edgar / market → pitch-like-lou
 ```
 
 ## Development
